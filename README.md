@@ -10,6 +10,7 @@ This is blip company.
 | 🦠 바이러스 시뮬레이터 | /Blip/virus/ | `virus/index.html`, `virus/style.css`, `virus/script.js`, `virus/data/world.js` |
 | 🪐 쌍성 궤도 | /Blip/balldance/ | `balldance/index.html` |
 | 🐄 머드락 섬 | /Blip/mudlark/ | `mudlark/index.html` (3D 생존 로그라이크) |
+| 🏀 하프코트 레전드 | /Blip/hoops/ | `hoops/index.html` (3D 1대1 농구 · 로비 · 뽑기) |
 
 - 모든 게임 화면에 「🏠 허브」 버튼이 있어요.
 - 예전 냥냥 점프 주소(`/CatJump/CatJump.html`)는 새 주소로 자동 이동해요.

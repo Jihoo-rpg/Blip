@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>blip — 게임</title>
-<meta name="description" content="blip 게임 허브 · 냥냥 점프, 바이러스 시뮬레이터, 쌍성 궤도, 머드락 섬">
+<meta name="description" content="blip 게임 허브 · 냥냥 점프, 바이러스 시뮬레이터, 쌍성 궤도, 머드락 섬, 하프코트 레전드">
 <style>
   /* =========== 색상 (밝은 테마 / 어두운 테마) =========== */
   :root{--bg:#f2f4f5;--panel:#fff;--panel2:#f7f8f9;--line:#e3e5e8;--text:#232527;--sub:#606162;--blue:#0b74e5;--green:#00b06f;--green2:#00995f;--chip:#e9ecef;--shadow:0 1px 3px rgba(0,0,0,.08)}
@@ -229,6 +229,13 @@ const GAMES = [
     desc: '넓은 로우폴리 섬에 맨몸으로 떨어져 살아남는 3D 생존 로그라이크예요. 나무를 치고 돌을 주워 작업대와 화로를 만들고, 나무에서 금까지 장비를 올리세요. 밤마다 몬스터가 몰려오고 3일마다 보스가 나와요. 코인으로 상자를 열어 파워업을 쌓으세요.',
     info: [['장르', '3D 생존 로그라이크'], ['기기', 'PC (키보드 · 마우스)'], ['맵', '매번 새로 생성되는 섬'], ['조작', 'WASD · 마우스 · E · Tab · M']],
     tags: ['제작', '낮·밤', '보스', '파워업', '섬 지도'],
+  },
+  {
+    id: 'hoops', name: '하프코트 레전드', url: '../hoops/',
+    sq: 'sq_hoops.jpg', bn: 'bn_hoops.jpg', genre: '스포츠', icon: '🏀',
+    desc: '로블록스 스타일 캐릭터로 하는 3D 1대1 길거리 농구예요. 로비를 걸어다니며 뽑기 머신에서 캐릭터를 뽑고, 코트의 원 안에 서면 경기가 시작돼요. 캐릭터마다 고유 스킬과 궁극기가 있고, 크로스오버·스핀·스텝백으로 상대의 발목을 꺾을 수 있어요. 상대가 없으면 AI와, 같은 키보드로는 친구와 대결해요.',
+    info: [['장르', '3D 스포츠 · 1대1 농구'], ['기기', 'PC (키보드) · 모바일 터치'], ['모드', 'AI 3단계 · 2인 로컬'], ['조작', 'WASD · Space · Z X C V · Q R']],
+    tags: ['캐릭터 뽑기', '스킬 · 궁극기', '앵클 브레이크', 'AI 대전', '3D 로비'],
   },
 ];
 const GENRES = ['전체', ...new Set(GAMES.map(g => g.genre))];
