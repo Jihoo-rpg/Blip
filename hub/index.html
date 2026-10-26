@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>blip — 게임</title>
-<meta name="description" content="blip 게임 허브 · 냥냥 점프, 바이러스 시뮬레이터, 쌍성 궤도">
+<meta name="description" content="blip 게임 허브 · 냥냥 점프, 바이러스 시뮬레이터, 쌍성 궤도, 머드락 섬">
 <style>
   /* =========== 색상 (밝은 테마 / 어두운 테마) =========== */
   :root{--bg:#f2f4f5;--panel:#fff;--panel2:#f7f8f9;--line:#e3e5e8;--text:#232527;--sub:#606162;--blue:#0b74e5;--green:#00b06f;--green2:#00995f;--chip:#e9ecef;--shadow:0 1px 3px rgba(0,0,0,.08)}
@@ -163,6 +163,13 @@ const GAMES = [
     desc: '두 행성이 번갈아 서로를 돌며 길을 따라가는 리듬 게임이에요. 도는 행성이 다음 칸에 닿는 순간 박자에 맞춰 누르세요. 12개 월드, 직접 만드는 맵, 공유 코드까지 있어요.',
     info: [['장르', '리듬'], ['기기', '모바일 · PC'], ['월드', '12개 + 맵 만들기'], ['조작', '아무 키 · 탭']],
     tags: ['12개 월드', '맵 에디터', '공유 코드', '연습 모드'],
+  },
+  {
+    id: 'mudlark', name: '머드락 섬', url: '../mudlark/',
+    sq: 'sq_mudlark.jpg', bn: 'bn_mudlark.jpg', genre: '생존', icon: '🐄',
+    desc: '넓은 로우폴리 섬에 맨몸으로 떨어져 살아남는 3D 생존 로그라이크예요. 나무를 치고 돌을 주워 작업대와 화로를 만들고, 나무에서 금까지 장비를 올리세요. 밤마다 몬스터가 몰려오고 3일마다 보스가 나와요. 코인으로 상자를 열어 파워업을 쌓으세요.',
+    info: [['장르', '3D 생존 로그라이크'], ['기기', 'PC (키보드 · 마우스)'], ['맵', '매번 새로 생성되는 섬'], ['조작', 'WASD · 마우스 · E · Tab · M']],
+    tags: ['제작', '낮·밤', '보스', '파워업', '섬 지도'],
   },
 ];
 const GENRES = ['전체', ...new Set(GAMES.map(g => g.genre))];
