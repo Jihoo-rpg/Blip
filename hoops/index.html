@@ -370,9 +370,9 @@ const CHARS=[
 ];
 const CH=id=>CHARS.find(c=>c.id===id);
 const DIFF={
-  easy:{react:.4,block:.3,steal:.22,noise:.13,move:.14,skill:.35,gap:1.45},
-  normal:{react:.25,block:.55,steal:.42,noise:.075,move:.26,skill:.7,gap:1.25},
-  hard:{react:.15,block:.75,steal:.65,noise:.045,move:.38,skill:1,gap:1.1},
+  easy:{react:.46,block:.24,steal:.17,noise:.15,move:.11,skill:.3,gap:1.55},
+  normal:{react:.31,block:.45,steal:.33,noise:.092,move:.2,skill:.58,gap:1.34},
+  hard:{react:.19,block:.64,steal:.53,noise:.056,move:.3,skill:.88,gap:1.18},
 };
 
 /* ---------------- SAVE ---------------- */
@@ -424,7 +424,7 @@ sun.shadow.mapSize.set(1024,1024);Object.assign(sun.shadow.camera,{left:-12,righ
 scene.add(sun);
 const rimLight=new THREE.PointLight(0xff9a4a,.6,22);rimLight.position.set(0,7,-3);scene.add(rimLight);
 
-const RIM=new THREE.Vector3(0,3.05,1.575);
+const RIM=new THREE.Vector3(0,3.05,1.79);
 const ARC=6.75;
 const distRim=(x,z)=>Math.hypot(x-RIM.x,z-RIM.z);
 const isThree=(x,z)=>(Math.abs(x)>=6.6&&z<2.99)||distRim(x,z)>ARC;
@@ -475,13 +475,13 @@ const hoop=new THREE.Group();scene.add(hoop);
   const fm=new THREE.MeshBasicMaterial({color:0xffffff});
   [[0,3.94,1.8,.05],[0,2.9,1.8,.05]].forEach(([x,y,w,h])=>{const b=new THREE.Mesh(new THREE.BoxGeometry(w,h,.06),fm);b.position.set(x,y,1.21);hoop.add(b);});
   [-.9,.9].forEach(x=>{const b=new THREE.Mesh(new THREE.BoxGeometry(.05,1.05,.06),fm);b.position.set(x,3.42,1.21);hoop.add(b);});
-  const sq=new THREE.Mesh(new THREE.BoxGeometry(.59,.45,.02),new THREE.MeshBasicMaterial({color:0xff4a2a,wireframe:true}));sq.position.set(0,3.3,1.23);hoop.add(sq);
+  const sq=new THREE.Mesh(new THREE.BoxGeometry(.9,.55,.02),new THREE.MeshBasicMaterial({color:0xff4a2a,wireframe:true}));sq.position.set(0,3.3,1.23);hoop.add(sq);
 }
 const rimG=new THREE.Group();rimG.position.copy(RIM);scene.add(rimG);
-const rimMesh=new THREE.Mesh(new THREE.TorusGeometry(.23,.022,8,28),new THREE.MeshStandardMaterial({color:0xff5a10,roughness:.4,metalness:.5,emissive:0x401000}));
+const rimMesh=new THREE.Mesh(new THREE.TorusGeometry(.42,.03,10,40),new THREE.MeshStandardMaterial({color:0xff5a10,roughness:.4,metalness:.5,emissive:0x401000}));
 rimMesh.rotation.x=Math.PI/2;rimG.add(rimMesh);
-const net=new THREE.Mesh(new THREE.CylinderGeometry(.23,.14,.45,14,3,true),new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:.8}));
-net.position.y=-.24;rimG.add(net);
+const net=new THREE.Mesh(new THREE.CylinderGeometry(.42,.27,.62,18,4,true),new THREE.MeshBasicMaterial({color:0xffffff,wireframe:true,transparent:true,opacity:.8}));
+net.position.y=-.33;rimG.add(net);
 let netKick=0,rimKick=0;
 
 /* stands + crowd */
@@ -510,7 +510,7 @@ function ballTexture(){const cv=document.createElement('canvas');cv.width=256;cv
   return new THREE.CanvasTexture(cv);}
 const ballMesh=new THREE.Mesh(new THREE.SphereGeometry(.12,24,16),new THREE.MeshStandardMaterial({map:ballTexture(),roughness:.65}));
 // 잘 보이게: 공을 크게 + 검은 테두리 + 살짝 빛나게
-ballMesh.scale.setScalar(1.8);ballMesh.material.emissive=new THREE.Color(0xff6a00);ballMesh.material.emissiveIntensity=.22;
+ballMesh.scale.setScalar(2.3);ballMesh.material.emissive=new THREE.Color(0xff6a00);ballMesh.material.emissiveIntensity=.22;
 {const ol=new THREE.Mesh(new THREE.SphereGeometry(.12,20,14),new THREE.MeshBasicMaterial({color:0x1a0a02,side:THREE.BackSide}));ol.scale.setScalar(1.13);ballMesh.add(ol);}
 const ballLift=y=>y<.36?(.36-Math.max(.12,y))/.24*.156:0;
 ballMesh.castShadow=true;scene.add(ballMesh);
@@ -1430,7 +1430,7 @@ const PADS=[
   PADS.forEach(p=>{
     blk(.25,3.6,.25,'#3a3d44',p.x,1.8,-15.85);COLL.push({x:p.x,z:-15.85,r:.4});
     blk(1.6,1,.08,'#f4f4f4',p.x,3.4,-15.45);
-    const rim=new THREE.Mesh(new THREE.TorusGeometry(.23,.025,8,24),new THREE.MeshStandardMaterial({color:0xff5a10,metalness:.4,roughness:.4}));rim.rotation.x=Math.PI/2;rim.position.set(p.x,3.05,-15.05);lobby.add(rim);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(.4,.03,8,32),new THREE.MeshStandardMaterial({color:0xff5a10,metalness:.4,roughness:.4}));rim.rotation.x=Math.PI/2;rim.position.set(p.x,3.05,-14.85);lobby.add(rim);
     const disk=new THREE.Mesh(new THREE.CircleGeometry(1.5,40),new THREE.MeshBasicMaterial({color:p.color,transparent:true,opacity:.22}));disk.rotation.x=-Math.PI/2;disk.position.set(p.x,.03,p.z);lobby.add(disk);
     const ring=new THREE.Mesh(new THREE.RingGeometry(1.32,1.55,48),new THREE.MeshBasicMaterial({color:p.color,transparent:true,opacity:.9,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.set(p.x,.04,p.z);lobby.add(ring);
     const beam=new THREE.Mesh(new THREE.CylinderGeometry(1.45,1.45,3,32,1,true),new THREE.MeshBasicMaterial({color:p.color,transparent:true,opacity:.12,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending}));beam.position.set(p.x,1.5,p.z);lobby.add(beam);
@@ -1954,7 +1954,7 @@ const ARENA={x:0,z:21.5,spots:[{x:-2.4,z:19.4,color:'#38d6ff',label:'1P'},{x:2.4
   const pth=new THREE.Mesh(new THREE.PlaneGeometry(3,6.5),new THREE.MeshStandardMaterial({color:'#b9a98d',roughness:.9}));pth.rotation.x=-Math.PI/2;pth.position.set(0,.012,13.3);lobby.add(pth);
   blk(.25,3.6,.25,'#3a3d44',0,1.8,26.85);COLL.push({x:0,z:26.85,r:.4});
   blk(1.6,1,.08,'#f4f4f4',0,3.4,26.45);
-  const rim=new THREE.Mesh(new THREE.TorusGeometry(.23,.025,8,24),new THREE.MeshStandardMaterial({color:0xff5a10,metalness:.4,roughness:.4}));rim.rotation.x=Math.PI/2;rim.position.set(0,3.05,26.05);lobby.add(rim);
+  const rim=new THREE.Mesh(new THREE.TorusGeometry(.4,.03,8,32),new THREE.MeshStandardMaterial({color:0xff5a10,metalness:.4,roughness:.4}));rim.rotation.x=Math.PI/2;rim.position.set(0,3.05,25.85);lobby.add(rim);
   ARENA.spots.forEach(p=>{
     const disk=new THREE.Mesh(new THREE.CircleGeometry(1.3,40),new THREE.MeshBasicMaterial({color:p.color,transparent:true,opacity:.22}));disk.rotation.x=-Math.PI/2;disk.position.set(p.x,.03,p.z);lobby.add(disk);
     const ring=new THREE.Mesh(new THREE.RingGeometry(1.12,1.33,48),new THREE.MeshBasicMaterial({color:p.color,transparent:true,opacity:.9,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.set(p.x,.04,p.z);lobby.add(ring);
@@ -2078,7 +2078,6 @@ function frame(now){
   net.scale.y=1+Math.sin(netKick*20)*netKick*.35;rimG.rotation.x=Math.sin(rimKick*30)*rimKick*.06;
   updParts(dt);updCamera(dt);
   if(G.phase!=='lobby'&&!$('#hud').hidden)updHUD();
-  {const want=(ball.mode==='shot'&&ball.pos.y>2.1)?1.75:2.3,cur=ballMesh.scale.x;ballMesh.scale.setScalar(cur+(want-cur)*.25);}
   renderer.render(activeScene,camera);
 }
 
