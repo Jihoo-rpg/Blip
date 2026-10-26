@@ -181,6 +181,19 @@ kbd{font-family:var(--body);font-weight:700;font-size:12px;background:var(--pane
 @media (prefers-reduced-motion:reduce){.gcard.charge .gback,.slot.ult.ready{animation:none}.gin{transition:none}}
 .hubBack{display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:12px;background:var(--gui);color:#fff;font-size:14px;font-weight:700;text-decoration:none}
 .hubBack:hover{background:rgba(40,40,52,.9)}
+#onbody{display:grid;gap:14px;min-width:min(440px,80vw)}
+#onbody .ob{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px}
+#onbody .code{font-family:var(--display);font-size:32px;letter-spacing:.14em;color:var(--gold)}
+#onbody input{height:46px;border-radius:10px;border:2px solid var(--line);background:var(--panel);color:var(--fg);padding:0 12px;font:700 18px var(--body);letter-spacing:.12em;text-transform:uppercase;min-width:0;flex:1}
+#onbody .fr{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;background:var(--panel)}
+#onbody .fr b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#onbody .fr small{color:var(--good);font-weight:700}
+#onbody .msg{min-height:20px;font-weight:700}
+#onbody .msg.err{color:var(--bad)}#onbody .msg.ok{color:var(--good)}
+#onbody .wait{display:flex;align-items:center;gap:10px;color:var(--muted)}
+#onbody .wait i{width:14px;height:14px;border-radius:50%;border:3px solid var(--accent);border-top-color:transparent;animation:spin 1s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#netTag{position:fixed;top:max(8px,env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%) translateY(64px);z-index:12;background:var(--gui);color:#fff;border-radius:10px;padding:4px 10px;font-size:12px;font-weight:700;pointer-events:none}
 </style>
 </head>
 <body>
@@ -191,7 +204,7 @@ kbd{font-family:var(--body);font-weight:700;font-size:12px;background:var(--pane
 <!-- LOBBY GUI -->
 <div id="lobbyUI">
   <div class="lb-top">
-    <div style="display:flex;gap:8px;align-items:flex-start;pointer-events:auto"><div class="badge">하프코트<span>레전드</span></div><a href="../hub/" class="hubBack" aria-label="허브로 돌아가기">🏠 허브</a></div>
+    <div style="display:flex;gap:8px;align-items:flex-start;pointer-events:auto"><div class="badge">하프코트<span>레전드</span></div><a href="../hub/" class="hubBack" aria-label="허브로 돌아가기">🏠 허브</a><button class="hubBack" id="bOnline" style="border:0;cursor:pointer;background:#ff7a1a;color:#241003">🌐 온라인 대결</button></div>
     <div class="lstats"><span>뽑기권</span><b id="lsT">3</b><span>코인</span><b id="lsC">0</b><span>캐릭터</span><b id="lsO">0/8</b><button id="bMuteL">소리 켬</button></div>
   </div>
   <div id="lhelp">이동 <kbd>WASD</kbd> · 점프 <kbd>Space</kbd><br>달리기 <kbd>Shift</kbd> · 상호작용 <kbd>E</kbd><br>화면 드래그: 시점 회전 · 휠: 줌</div>
@@ -234,6 +247,15 @@ kbd{font-family:var(--body);font-weight:700;font-size:12px;background:var(--pane
     <div class="mini" id="p2pick"></div>
     <div class="keys" id="keysBox"></div>
     <div><button class="btn" id="p2start">경기 시작</button></div>
+  </div>
+</div>
+
+<!-- ONLINE MODAL -->
+<div id="onmodal" class="modal" hidden>
+  <div class="panel">
+    <button class="close" id="onclose" aria-label="닫기">✕</button>
+    <h2>온라인 1:1 대결</h2>
+    <div id="onbody"></div>
   </div>
 </div>
 
@@ -286,6 +308,7 @@ kbd{font-family:var(--body);font-weight:700;font-size:12px;background:var(--pane
   </div>
 </div>
 <div id="fade"></div>
+<div id="netTag" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
@@ -620,7 +643,7 @@ function handle(p,a){
     if(holder){if(p.state!=='free')return;
       if(distRim(p.pos.x,p.pos.z)<dunkRange(p))startDunk(p,{});else startShot(p);}
     else if(p.state==='free'||p.state==='reach'){jump(p);}
-  }else if(a==='shootUp'){if(p.state==='shoot'&&!p.released)releaseShot(p);}
+  }else if(a==='shootUp'){if(p.state==='shoot'&&!p.released){if(p.netHold!=null){p.meter=clamp(p.netHold/.9,0,1.6);p.netHold=null;}releaseShot(p);}}
   else if(a.startsWith('move:')){if(holder&&p.state==='free'&&p.moveCd<=0&&canAct(p))startMove(p,a.slice(5));}
   else if(a==='autoMove'){if(holder&&p.state==='free'&&p.moveCd<=0&&canAct(p))startMove(p,autoMoveType(p));}
   else if(a==='steal'){if(!holder&&p.state==='free'&&p.stealCd<=0&&canAct(p))attemptSteal(p);}
@@ -896,7 +919,7 @@ function updPlayer(p,dt){
   const frozen=has(p,'frozen'),stun=has(p,'stun');
   let free=!frozen&&!stun;let airCtl=1;
   switch(p.state){
-    case 'shoot':free=false;p.meter+=dt/.9;p.y=.55*Math.sin(Math.min(p.st/.95,1)*Math.PI);if(p.meter>=1.12&&!p.released)releaseShot(p);break;
+    case 'shoot':free=false;p.meter+=dt/.9;p.y=.55*Math.sin(Math.min(p.st/.95,1)*Math.PI);if(p.meter>=(p.ctrl==='net'?1.9:1.12)&&!p.released)releaseShot(p);break;
     case 'follow':free=false;p.y=.55*Math.sin(Math.min(p.st/.95,1)*Math.PI);if(p.st>=.95||p.y<=0){p.y=0;p.state='free';}break;
     case 'dunk':free=false;updDunk(p,dt);break;
     case 'land':free=false;p.vy-=12*dt;p.y+=p.vy*dt;if(p.y<=0){p.y=0;p.state='free';}break;
@@ -1087,7 +1110,7 @@ window.addEventListener('keydown',e=>{
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight','Enter','Slash'].includes(e.code))e.preventDefault();
   if(e.repeat)return;keys[e.code]=true;
   for(const c of ['p1','p2']){const p=playerByCtrl(c);if(!p)continue;const km=KEYMAP[c];
-    const alt=(c==='p1'&&G.mode==='ai')?KEYMAP.p2:null;
+    const alt=(c==='p1'&&(G.mode==='ai'||G.mode==='online'))?KEYMAP.p2:null;
     const hit=(code,k)=>code===km[k]||(alt&&code===alt[k]);
     if(hit(e.code,'shoot'))q(p,'shootDown');
     if(hit(e.code,'steal'))q(p,'steal');
@@ -1097,14 +1120,15 @@ window.addEventListener('keydown',e=>{
   }
 });
 window.addEventListener('keyup',e=>{keys[e.code]=false;if(!inGame())return;
-  for(const c of ['p1','p2']){const p=playerByCtrl(c);if(!p)continue;const km=KEYMAP[c];const alt=(c==='p1'&&G.mode==='ai')?KEYMAP.p2:null;
+  for(const c of ['p1','p2']){const p=playerByCtrl(c);if(!p)continue;const km=KEYMAP[c];const alt=(c==='p1'&&(G.mode==='ai'||G.mode==='online'))?KEYMAP.p2:null;
     if(e.code===km.shoot||(alt&&e.code===alt.shoot))q(p,'shootUp');}
 });
 window.addEventListener('blur',()=>{for(const k in keys)keys[k]=false;});
 const touch={x:0,z:0,sprint:false,active:false};
 function readInput(p){
-  if(p.ctrl==='ai')return;
-  const km=KEYMAP[p.ctrl];const alt=(p.ctrl==='p1'&&G.mode==='ai')?KEYMAP.p2:null;
+  if(p.ctrl==='ai'||p.ctrl==='remote')return;
+  if(p.ctrl==='net'){netReadInput(p);return;}
+  const km=KEYMAP[p.ctrl];const alt=(p.ctrl==='p1'&&(G.mode==='ai'||G.mode==='online'))?KEYMAP.p2:null;
   const k=n=>km[n].some(c=>keys[c])||(alt&&alt[n].some(c=>keys[c]));
   let x=(k('right')?1:0)-(k('left')?1:0),z=(k('down')?1:0)-(k('up')?1:0);
   let sprint=k('sprint');
@@ -1155,11 +1179,12 @@ function setupHUD(){
   const [a,b]=G.players;
   $('#i0').src=a.char.portrait;$('#i1').src=b.char.portrait;
   $('#n0').textContent=a.char.name;$('#n1').textContent=b.char.name;
-  $('#g0').textContent='P1';$('#g1').textContent=G.mode==='ai'?'AI · '+{easy:'쉬움',normal:'보통',hard:'어려움'}[G.diff]:'P2';
-  $('#ab0').innerHTML=abilHTML(a,['Q','R']);$('#ab1').innerHTML=abilHTML(b,G.mode==='ai'?['AI','AI']:['K','L']);
+  $('#g0').textContent=G.mode==='online'?NET.hn+(NET.myTeam===0?' (나)':''):'P1';$('#g1').textContent=G.mode==='ai'?'AI · '+{easy:'쉬움',normal:'보통',hard:'어려움'}[G.diff]:G.mode==='online'?NET.gn+(NET.myTeam===1?' (나)':''):'P2';
+  const mine=G.mode==='online'?NET.myTeam:0;
+  $('#ab0').innerHTML=abilHTML(a,mine===0?['Q','R']:['·','·']);$('#ab1').innerHTML=abilHTML(b,G.mode==='ai'?['AI','AI']:G.mode==='online'?(mine===1?['Q','R']:['·','·']):['K','L']);
   $('#ab0').hidden=isTouch&&G.mode==='ai';
-  setTouchMode(G.mode==='ai'?'match':'none');
-  $('#tSkill').querySelector('b').textContent=a.char.skill.name;$('#tUlt').querySelector('b').textContent=a.char.ult.name;
+  setTouchMode(G.mode==='ai'||G.mode==='online'?'match':'none');
+  {const me=G.mode==='online'?G.players[NET.myTeam]:a;$('#tSkill').querySelector('b').textContent=me.char.skill.name;$('#tUlt').querySelector('b').textContent=me.char.ult.name;}
   $('#help').innerHTML=helpHTML();$('#help').hidden=isTouch;
 }
 function helpHTML(){
@@ -1178,14 +1203,14 @@ function updHUD(){
   const [a,b]=G.players;if(!a)return;
   $('#s0').textContent=G.score[0];$('#s1').textContent=G.score[1];
   const c=Math.max(0,Math.ceil(G.clock));$('#clock').textContent=G.golden?'골든 볼':`${Math.floor(c/60)}:${String(c%60).padStart(2,'0')}`;
-  const offP=G.players.find(p=>p.team===G.offense);$('#poss').textContent='공격 · '+(offP.ctrl==='ai'?'AI':offP.ctrl.toUpperCase());
+  const offP=G.players.find(p=>p.team===G.offense);$('#poss').textContent='공격 · '+plabel(offP);
   $('#clearTag').hidden=!(G.phase==='play'&&!G.cleared&&ball.holder);
-  if(!$('#clearTag').hidden){const h=ball.holder;$('#clearTag').textContent=(h.ctrl==='ai'?'AI':h.ctrl.toUpperCase())+' 볼 클리어 필요 · 3점 라인 밖으로';}
+  if(!$('#clearTag').hidden){const h=ball.holder;$('#clearTag').textContent=plabel(h)+' 볼 클리어 필요 · 3점 라인 밖으로';}
   updSlot($('#ab0 [data-s]'),a,false);updSlot($('#ab0 [data-u]'),a,true);
   updSlot($('#ab1 [data-s]'),b,false);updSlot($('#ab1 [data-u]'),b,true);
-  if(!$('#touch').hidden){updSlot($('#tSkill'),a,false);updSlot($('#tUlt'),a,true);}
+  if(!$('#touch').hidden){const me=G.mode==='online'?G.players[NET.myTeam]:a;updSlot($('#tSkill'),me,false);updSlot($('#tUlt'),me,true);}
   // meter for human shooter
-  const sh=G.players.find(p=>p.ctrl!=='ai'&&p.state==='shoot'&&!p.released);
+  const sh=(NET.on&&NET.role==='guest')?(NET.localShoot?G.players[NET.myTeam]:null):G.players.find(p=>(p.ctrl==='p1'||p.ctrl==='p2')&&p.state==='shoot'&&!p.released);
   if(sh){meter.hidden=false;const s=toScreen(_v.set(sh.pos.x,1.6*sh.scale,sh.pos.z));meter.style.left=(s.x+46)+'px';meter.style.top=(s.y-60)+'px';
     const half=has(sh,'inferno')?.5:perfectHalf(sh);const lo=clamp(.84-half,0,1),hi=clamp(.84+half,0,1);
     const z=meter.querySelector('.zone');z.style.bottom=(lo*100)+'%';z.style.height=((hi-lo)*100)+'%';
@@ -1206,8 +1231,10 @@ function startGame(){
   const c1=CH(save.active);
   let c2;
   if(G.mode==='ai'){const pool=CHARS.filter(c=>c.id!==c1.id);c2=pool[(Math.random()*pool.length)|0];}
+  else if(G.mode==='online')c2=CH(NET.peer&&NET.peer.char)||c1;
   else c2=CH(G.p2id)||c1;
-  const p1=makePlayer(c1,0,'p1'),p2=makePlayer(c2,1,G.mode==='ai'?'ai':'p2');
+  const p1=makePlayer(c1,0,'p1'),p2=makePlayer(c2,1,G.mode==='ai'?'ai':G.mode==='online'?'net':'p2');
+  if(G.mode==='online'){NET.mid=Date.now();NET.evs=[];NET.lastInAt=Date.now();NET.actsDone=NET.actsDone||0;}
   G.players=[p1,p2];G.score=[0,0];G.clock=180;G.golden=false;G.t=0;G.pending=null;G.paused=false;
   resetPossession(0);G.phase='intro';G.phaseT=0;G.countdown=4;
   $('#hud').hidden=false;setupHUD();
@@ -1218,11 +1245,14 @@ function endGame(){
   const win0=G.score[0]>G.score[1];
   let reward='';
   if(G.mode==='ai'){const coins=win0?(G.diff==='hard'?200:G.diff==='normal'?140:100):40;save.coins+=coins;persist();reward=`코인 +${coins}${win0?' · 승리 보상':''} (보유 ${save.coins})`;}
+  const meWin=G.mode==='online'?G.score[NET.myTeam]>G.score[1-NET.myTeam]:win0;
+  if(G.mode==='online'){const coins=meWin?120:40;save.coins+=coins;persist();reward=`온라인 대결 코인 +${coins} (보유 ${save.coins})`;}
   setTimeout(()=>{
     if(G.phase!=='over')return;
     $('#hud').hidden=true;setTouchMode('none');
     $('#rScore').innerHTML=`${G.score[0]}<span>:</span>${G.score[1]}`;
     if(G.mode==='ai'){$('#rTitle').textContent=win0?'승리!':'패배';$('#rTitle').style.color=win0?'var(--gold)':'var(--muted)';}
+    else if(G.mode==='online'){$('#rTitle').textContent=meWin?'승리!':'패배';$('#rTitle').style.color=meWin?'var(--gold)':'var(--muted)';const ag=$('#bAgain');ag.disabled=NET.role!=='host';ag.textContent=NET.role==='host'?'재대결':'방장이 재대결을 누르면 시작해요';}
     else{$('#rTitle').textContent=win0?'P1 승리!':'P2 승리!';$('#rTitle').style.color=win0?'var(--accent)':'var(--p2)';}
     $('#rReward').textContent=reward+(G.mode==='ai'&&save.coins>=100?' · 로비 뽑기 머신에서 뽑기권으로 바꿀 수 있어요':'');
     $('#result').hidden=false;
@@ -1230,10 +1260,11 @@ function endGame(){
 }
 function togglePause(){
   if(G.phase==='lobby'||G.phase==='over')return;
+  if(G.mode==='online'){$('#pause').hidden=!$('#pause').hidden;return;}  // 온라인은 멈추지 않고 메뉴만
   G.paused=!G.paused;$('#pause').hidden=!G.paused;
 }
 function backToLobby(){
-  if(launching)return;launching=true;
+  if(launching)return;launching=true;$('#bAgain').disabled=false;$('#bAgain').textContent='다시 하기';$('#netTag').hidden=true;if(G.mode==='online')G.mode='ai';
   fade(()=>{
     G.paused=false;$('#pause').hidden=true;$('#result').hidden=true;clearPlayers();$('#hud').hidden=true;
     pops.innerHTML='';$('#banner').innerHTML='';
@@ -1519,8 +1550,8 @@ function infoHTML(ch){
 }
 
 /* ---------------- LOBBY GUI ---------------- */
-function modalOpen(){return !$('#gacha').hidden||!$('#p2modal').hidden;}
-function closeModals(force){if(!pulling||force){$('#gacha').hidden=true;}$('#p2modal').hidden=true;}
+function modalOpen(){return !$('#gacha').hidden||!$('#p2modal').hidden||!$('#onmodal').hidden;}
+function closeModals(force){if(!pulling||force){$('#gacha').hidden=true;}$('#p2modal').hidden=true;if(force||!NET.waiting)$('#onmodal').hidden=true;}
 function chips(){return `<span class="chip"><i class="tk">권</i>뽑기권 ${save.tickets}</span><span class="chip"><i class="cn">C</i>코인 ${save.coins}</span>`;}
 function toast(t){const d=document.createElement('div');d.className='toast';d.textContent=t;document.body.appendChild(d);setTimeout(()=>d.remove(),2400);}
 function updLobbyStats(){$('#lsT').textContent=save.tickets;$('#lsC').textContent=save.coins;$('#lsO').textContent=ownedList().length+'/'+CHARS.length;}
@@ -1570,17 +1601,241 @@ function openP2(){
 }
 $('#p2close').onclick=()=>{$('#p2modal').hidden=true;};
 $('#p2start').onclick=()=>{$('#p2modal').hidden=true;launchMatch({mode:'pvp'});};
-$('#bResume').onclick=()=>togglePause();
-$('#bQuit').onclick=()=>backToLobby();
+$('#bResume').onclick=()=>{if(G.mode==='online'){$('#pause').hidden=true;return;}togglePause();};
+$('#bQuit').onclick=()=>{if(NET.on)netLeave(true);backToLobby();};
 $('#bPause').onclick=()=>togglePause();
 $('#bHelp').onclick=()=>toggleHelp();
 const muteBtns=()=>{$('#bMute').textContent=muted?'소리 꺼짐':'소리 켬';$('#bMuteL').textContent=muted?'소리 꺼짐':'소리 켬';};
 $('#bMute').onclick=()=>{muted=!muted;muteBtns();};
 $('#bMuteL').onclick=()=>{muted=!muted;muteBtns();};
-$('#bAgain').onclick=()=>{fade(()=>{$('#result').hidden=true;startGame();});};
-$('#bHome').onclick=()=>backToLobby();
+$('#bAgain').onclick=()=>{if(G.mode==='online'&&NET.role!=='host')return;fade(()=>{$('#result').hidden=true;startGame();});};
+$('#bHome').onclick=()=>{if(NET.on)netLeave(true);backToLobby();};
 $('#prompt').onclick=()=>interact();
 document.querySelectorAll('.hudbtns button,#bResume,#prompt,#bMuteL').forEach(b=>b.addEventListener('click',()=>b.blur()));
+
+/* ---------------- ONLINE 1:1 (blip 허브 친구와) ----------------
+   방장(host)이 실제 경기를 계산하고, 참가자(guest)는 조작만 보내고 경기 화면을 받아요.
+   - 참가자의 이동은 자기 화면에서 바로 계산해서 반응이 빨라요 (방장에게 위치를 보냄)
+   - 슛 타이밍은 참가자가 누른 시간을 그대로 보내서, 인터넷이 느려도 판정이 같아요
+   데이터: Firebase  hub/hoops/{방장 친구코드}/  h(방장) · g(참가자+조작) · s(경기 상태) */
+const NET={on:false,role:null,room:'',myTeam:0,peer:null,hn:'',gn:'',mid:0,es:null,waiting:false,
+  in:{x:0,z:0,sp:false},actsDone:0,acts:[],actId:0,evs:[],evId:0,evSeen:0,
+  lastSnapAt:0,lastInAt:0,snapT:0,localShoot:null,ch:null,tgt:[null,null],btgt:null,ping:0};
+const FBH=()=>(window.BLIP_FB||'https://cat-jump-3afbb-default-rtdb.firebaseio.com')+'/hub/hoops/';
+const nreq=(path,method,body)=>fetch(FBH()+path+'.json',{method:method||'GET',body:body===undefined?undefined:JSON.stringify(body),keepalive:method==='DELETE'}).then(r=>r.ok?r.json():Promise.reject(r.status));
+/** 보내기 통로: 동시에 2개까지, 최신 것만 */
+function makeChan(path,minMs){
+  const c={busy:0,next:null,last:0,timer:null};
+  const go=()=>{c.timer=null;if(!c.next||c.busy>=2)return;const body=c.next;c.next=null;c.busy++;c.last=performance.now();
+    nreq(path(),'PUT',body).catch(()=>{}).finally(()=>{c.busy--;if(c.next)plan();});};
+  const plan=()=>{if(c.timer)return;c.timer=setTimeout(go,Math.max(0,minMs-(performance.now()-c.last)));};
+  return {send(b){c.next=b;plan();}};
+}
+const r2=v=>Math.round(v*100)/100;
+const unarr=v=>{if(!v||typeof v!=='object')return v;if(Array.isArray(v))return v.map(unarr);const ks=Object.keys(v);if(ks.length&&ks.every((k,i)=>k===String(i)))return ks.map(k=>unarr(v[k]));const o={};for(const k of ks)o[k]=unarr(v[k]);return o;};
+const arr=v=>Array.isArray(v)?v:(v&&typeof v==='object'?Object.keys(v).sort((a,b)=>a-b).map(k=>v[k]):[]);
+const myBlip=()=>window.BLIP?BLIP.me:{code:'GUEST0',nick:'나',ava:'🙂'};
+function plabel(p){if(!p)return '';if(G.mode==='online')return p.team===0?NET.hn:NET.gn;return p.ctrl==='ai'?'AI':p.ctrl.toUpperCase();}
+
+/* --- 방장: 이벤트(글자·배너·소리·파티클)를 참가자 화면에도 보여주기 --- */
+const _popAt=popAt,_banner=banner,_burst=burst,_SFX={};
+function netEv(e){if(NET.on&&NET.role==='host'){e.i=++NET.evId;NET.evs.push(e);if(NET.evs.length>30)NET.evs.shift();}}
+popAt=function(text,pos,h,cls){netEv({k:'p',t:text,x:r2(pos.x),z:r2(pos.z),h,c:cls||''});return _popAt(text,pos,h,cls);};
+banner=function(title,sub,color,dur){netEv({k:'b',t:title,s:sub||'',c:color||'',d:dur||1.2});return _banner(title,sub,color,dur);};
+burst=function(pos,color,n=14,spd=3,life=.7,up=2){if(n>=10)netEv({k:'u',x:r2(pos.x),y:r2(pos.y),z:r2(pos.z),c:color,n,sp:spd,l:life,u:up});return _burst(pos,color,n,spd,life,up);};
+for(const k of Object.keys(SFX)){_SFX[k]=SFX[k];SFX[k]=function(...a){netEv({k:'s',n:k});return _SFX[k](...a);};}
+function playEv(e){
+  if(e.k==='p')_popAt(e.t,new THREE.Vector3(e.x,0,e.z),e.h,e.c);
+  else if(e.k==='b')_banner(e.t,e.s||null,e.c,e.d);
+  else if(e.k==='u')_burst(new THREE.Vector3(e.x,e.y,e.z),e.c,e.n,e.sp,e.l,e.u);
+  else if(e.k==='s'&&_SFX[e.n])_SFX[e.n]();
+}
+
+/* --- 방장: 참가자의 조작 받기 --- */
+function netReadInput(p){
+  const n=NET.in;p.input.x=n.x||0;p.input.z=n.z||0;p.input.sprint=!!n.sp;
+  // 참가자가 자기 화면에서 움직인 위치를 믿어 줌 (밀리거나 얼었을 땐 방장 계산)
+  if(n.px!=null&&['free','reach','block'].includes(p.state)&&!has(p,'stun')&&!has(p,'frozen')&&p.knock.lengthSq()<.3){
+    p.pos.x+=(n.px-p.pos.x)*.6;p.pos.z+=(n.pz-p.pos.z)*.6;}
+}
+function hostOnGuest(g){
+  if(!g||typeof g!=='object'){if(NET.peer&&G.phase!=='lobby'&&G.phase!=='over'){_banner('상대가 나갔어요',null,'#ff4d5e',2);endGame();}NET.peer=null;return;}
+  NET.lastInAt=Date.now();
+  if(g.in){NET.in=g.in;const acts=arr(g.in.acts);const p=G.players[1];
+    for(const a of acts){if(!a||a.i<=NET.actsDone)continue;NET.actsDone=a.i;if(!p||p.ctrl!=='net')continue;
+      if(a.a==='shootUp'&&typeof a.h==='number')p.netHold=a.h;q(p,a.a);}}
+  if(!NET.peer&&NET.waiting&&g.code){NET.peer=g;NET.gn=String(g.nick||'친구').slice(0,12);NET.waiting=false;
+    $('#onmodal').hidden=true;G.mode='online';NET.actsDone=Math.max(NET.actsDone,arr(g.in&&g.in.acts).reduce((m,a)=>Math.max(m,a&&a.i||0),0));
+    nreq(NET.room+'/h/st','PUT','play').catch(()=>{});
+    launchMatch({mode:'online'});setTimeout(()=>_banner('온라인 대결!',NET.gn+'님과 1:1','#38d6ff',1.6),500);}
+}
+function snapP(p){const fx={};for(const k in p.fx){const r=p.fx[k]-G.t;if(r>0)fx[k]=r2(r);}
+  return [r2(p.pos.x),r2(p.pos.z),r2(p.y),r2(p.face),p.state,r2(p.st),r2(p.vel.x),r2(p.vel.z),r2(p.scale),r2(p.spin),p.moveType||'',p.handSide,Math.floor(p.ult),r2(p.skillCd),fx,r2(p.meter),p.released?1:0,p.char.id,r2(p.moveCd),r2(p.stealCd)];}
+function hostSend(){
+  if(!NET.on||NET.role!=='host'||!G.players.length)return;
+  if(!NET.ch)NET.ch=makeChan(()=>NET.room+'/s',66);
+  const hi=G.players.indexOf(ball.holder);
+  NET.ch.send({mid:NET.mid,ts:Date.now(),ph:G.phase,cd:r2(G.countdown),ck:r2(G.clock),sc:G.score,gd:G.golden?1:0,of:G.offense,cl:G.cleared?1:0,
+    p:G.players.map(snapP),b:{x:r2(ball.pos.x),y:r2(ball.pos.y),z:r2(ball.pos.z),vx:r2(ball.vel.x),vy:r2(ball.vel.y),vz:r2(ball.vel.z),m:ball.mode,h:hi},
+    ev:NET.evs,hn:NET.hn,gn:NET.gn,ac:NET.actsDone});
+}
+
+/* --- 참가자: 경기 상태 받기 --- */
+function guestStart(s){
+  clearPlayers();pops.innerHTML='';$('#banner').innerHTML='';$('#result').hidden=true;$('#pause').hidden=true;
+  NET.mid=s.mid;NET.hn=s.hn||'방장';NET.gn=s.gn||myBlip().nick;G.mode='online';
+  const c0=CH(s.p[0][17])||CHARS[0],c1=CH(s.p[1][17])||CHARS[0];
+  const a=makePlayer(c0,0,'remote'),b=makePlayer(c1,1,'p1');G.players=[a,b];G.t=0;G.paused=false;
+  NET.evSeen=Math.max(0,...arr(s.ev).map(e=>e.i||0));NET.tgt=[null,null];
+  $('#lobbyUI').hidden=true;activeScene=scene;$('#onmodal').hidden=true;$('#hud').hidden=false;
+  applySnap(s,true);setupHUD();camSnap=true;
+  _banner('온라인 대결!',NET.hn+'님과 1:1','#38d6ff',1.6);
+}
+function applySnap(s,first){
+  NET.lastSnapAt=Date.now();NET.ping=Math.max(0,Date.now()-(s.ts||Date.now()));
+  if(!G.players.length||s.mid!==NET.mid){if(G.phase!=='lobby'||first||launchingGuest)guestStart(s);return;}
+  const prevPh=G.phase;
+  G.phase=s.ph;G.countdown=s.cd;G.clock=s.ck;G.score=s.sc;G.golden=!!s.gd;G.offense=s.of;G.cleared=!!s.cl;
+  s.p.forEach((a,i)=>{const p=G.players[i];if(!p)return;
+    const mine=i===NET.myTeam,shooting=mine&&NET.localShoot;
+    NET.tgt[i]={x:a[0],z:a[1],vx:a[6],vz:a[7],face:a[3],at:performance.now()};
+    if(first||(!mine&&Math.hypot(a[0]-p.pos.x,a[1]-p.pos.z)>3)){p.pos.x=a[0];p.pos.z=a[1];}
+    if(mine&&(Math.hypot(a[0]-p.pos.x,a[1]-p.pos.z)>2.2||prevPh!==s.ph&&s.ph==='play')){p.pos.x=a[0];p.pos.z=a[1];}
+    p.y=a[2];if(!mine)p.face=a[3];
+    if(!shooting){p.state=a[4];p.st=a[5];p.meter=a[15];p.released=!!a[16];}
+    if(!mine){p.vel.x=a[6];p.vel.z=a[7];}
+    p.scale=a[8];p.spin=a[9];p.moveType=a[10]||null;p.handSide=a[11];p.ult=a[12];p.skillCd=a[13];p.moveCd=a[18];p.stealCd=a[19];
+    p.fx={};for(const k in (a[14]||{}))p.fx[k]=G.t+a[14][k];});
+  const B=s.b;ball.mode=B.m;ball.holder=B.h>=0?G.players[B.h]:null;NET.btgt=B;if(first){ball.pos.set(B.x,B.y,B.z);}
+  for(const e of arr(s.ev)){if(e.i>NET.evSeen){NET.evSeen=e.i;if(!first)playEv(e);}}
+  if(s.ph==='over'&&prevPh!=='over')endGame();
+}
+let launchingGuest=false;
+function guestStep(dt){
+  G.t+=dt;const me=G.players[NET.myTeam],op=G.players[1-NET.myTeam];if(!me||!op)return;
+  readInput(me);
+  for(const a of me.actions.splice(0)){
+    let h;
+    if(a==='shootDown'&&ball.holder===me&&me.state==='free'&&G.phase==='play'&&canAct(me)){NET.localShoot={t0:performance.now()};me.state='shoot';me.st=0;me.meter=0;me.released=false;}
+    if(a==='shootUp'&&NET.localShoot){h=(performance.now()-NET.localShoot.t0)/1000;NET.localShoot=null;me.released=true;me.state='follow';}
+    NET.acts.push({i:++NET.actId,a,h});if(NET.acts.length>24)NET.acts.shift();
+  }
+  if(NET.localShoot){me.meter=(performance.now()-NET.localShoot.t0)/900;if(me.meter>1.9){NET.localShoot=null;}}
+  const lat=Math.min(.15,NET.ping/2000+.03);
+  // 내 선수: 자유롭게 움직일 수 있으면 바로 내 화면에서 이동
+  const freeMe=['free','reach','block'].includes(me.state)&&!has(me,'stun')&&!has(me,'frozen')&&G.phase!=='scored'&&G.phase!=='over';
+  if(freeMe&&(G.phase==='play'||G.phase==='intro')){
+    const i=me.input;let L=Math.hypot(i.x,i.z),dx=0,dz=0;if(L>.08){dx=i.x/Math.max(1,L);dz=i.z/Math.max(1,L);}
+    let spd=3.6+stat(me,'spd')*.28;if(i.sprint)spd*=1.3;if(ball.holder===me)spd*=.93;
+    if(has(me,'speed'))spd*=1.35;if(has(me,'untouch'))spd*=1.4;if(has(me,'slow'))spd*=.5;
+    spd*=(me.state==='block'?.45:me.state==='reach'?.35:1)*(me.scale>1.2?.92:1);
+    const k=Math.min(1,dt*(me.state==='block'?3:12));
+    me.vel.x+=(dx*spd-me.vel.x)*k;me.vel.z+=(dz*spd-me.vel.z)*k;
+    me.pos.addScaledVector(me.vel,dt);me.pos.x=clamp(me.pos.x,-7.3,7.3);me.pos.z=clamp(me.pos.z,.35,13.7);
+    if(Math.abs(me.pos.x)<.5&&me.pos.z<.8)me.pos.z=.8;
+    let tf=null;const sp=Math.hypot(me.vel.x,me.vel.z);
+    if(ball.holder===op)tf=Math.atan2(op.pos.x-me.pos.x,op.pos.z-me.pos.z);else if(sp>.6)tf=Math.atan2(me.vel.x,me.vel.z);else if(ball.holder===me){const f=toRimDir(me);tf=Math.atan2(f.x,f.z);}
+    if(tf!==null){let da=((tf-me.face+Math.PI)%(Math.PI*2)+Math.PI*2)%(Math.PI*2)-Math.PI;me.face+=da*Math.min(1,dt*12);}
+    const T=NET.tgt[NET.myTeam];if(T&&Math.hypot(T.x-me.pos.x,T.z-me.pos.z)>.9&&!ball.holder){me.pos.x+=(T.x-me.pos.x)*dt*1.5;me.pos.z+=(T.z-me.pos.z)*dt*1.5;}
+  }else{const T=NET.tgt[NET.myTeam];if(T){me.pos.x+=(T.x-me.pos.x)*Math.min(1,dt*14);me.pos.z+=(T.z-me.pos.z)*Math.min(1,dt*14);me.face=T.face;me.vel.set(T.vx,0,T.vz);}}
+  // 상대 선수: 받은 위치 + 속도로 지금 위치를 예측해서 부드럽게
+  {const T=NET.tgt[1-NET.myTeam];if(T){const age=Math.min(.22,lat+(performance.now()-T.at)/1000);const ex=T.x+T.vx*age,ez=T.z+T.vz*age;
+    op.pos.x+=(ex-op.pos.x)*Math.min(1,dt*14);op.pos.z+=(ez-op.pos.z)*Math.min(1,dt*14);}}
+  // 공
+  if(ball.mode==='held'&&ball.holder){const p=ball.holder;const sp=Math.hypot(p.vel.x,p.vel.z);p.phase+=dt*(6+sp*.9);if(heldBallPos(p,ball.pos)&&p.state==='free'&&p===me)_SFX.bounce&&_SFX.bounce();ballMesh.rotation.x+=dt*8;}
+  else if(NET.btgt){const B=NET.btgt;ball.pos.x+=(B.x-ball.pos.x)*Math.min(1,dt*16);ball.pos.y+=(B.y-ball.pos.y)*Math.min(1,dt*16);ball.pos.z+=(B.z-ball.pos.z)*Math.min(1,dt*16);ballMesh.rotation.x-=dt*6;}
+  ballMesh.position.copy(ball.pos);
+  for(const p of G.players)animate(p,dt);
+  // 내 조작 보내기
+  if(!NET.ch)NET.ch=makeChan(()=>NET.room+'/g/in',55);
+  NET.ch.send({x:r2(me.input.x),z:r2(me.input.z),sp:me.input.sprint?1:0,px:r2(me.pos.x),pz:r2(me.pos.z),acts:NET.acts,t:Date.now()});
+}
+
+/* --- 연결 관리 --- */
+function netListen(path,onData){
+  if(NET.es)NET.es.close();
+  const es=new EventSource(FBH()+path+'.json');NET.es=es;let tree=null;
+  const set=(p,v)=>{const ks=String(p).split('/').filter(Boolean);if(!ks.length){tree=v;return;}if(!tree||typeof tree!=='object')tree={};let o=tree;for(let i=0;i<ks.length-1;i++){if(!o[ks[i]]||typeof o[ks[i]]!=='object')o[ks[i]]={};o=o[ks[i]];}if(v===null)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v;};
+  es.addEventListener('put',e=>{try{const d=JSON.parse(e.data);set(d.path,d.data);onData(tree);}catch(x){console.warn('net',x);}});
+  es.addEventListener('patch',e=>{try{const d=JSON.parse(e.data);for(const k in d.data)set(String(d.path).replace(/\/$/,'')+'/'+k,d.data[k]);onData(tree);}catch(x){}});
+}
+function netLeave(remove){
+  if(NET.es){NET.es.close();NET.es=null;}
+  if(remove&&NET.room){if(NET.role==='host')nreq(NET.room,'DELETE').catch(()=>{});else nreq(NET.room+'/g','DELETE').catch(()=>{});}
+  Object.assign(NET,{on:false,role:null,room:'',peer:null,waiting:false,ch:null,localShoot:null,acts:[],actId:0,actsDone:0,evs:[],evId:0,evSeen:0,mid:0});
+  if(window.BLIP)BLIP.setGame('hoops');
+}
+function netWatch(){
+  const now=Date.now();
+  const tag=$('#netTag');
+  if(G.phase!=='lobby'&&G.mode==='online'){tag.hidden=false;tag.textContent=`🌐 ${NET.role==='host'?'방장':'참가'} · ${NET.role==='host'?NET.gn:NET.hn}님과 대결`+(NET.role==='guest'?` · 지연 ${Math.round(NET.ping)}ms`:'');}
+  if(NET.role==='guest'&&G.phase!=='lobby'&&G.phase!=='over'&&NET.lastSnapAt&&now-NET.lastSnapAt>9000){toast('방장과 연결이 끊겼어요');netLeave(false);backToLobby();}
+  if(NET.role==='host'&&NET.peer&&G.phase!=='lobby'&&G.phase!=='over'&&now-NET.lastInAt>12000){_banner('상대 연결이 끊겼어요',null,'#ff4d5e',2);NET.peer=null;endGame();}
+}
+async function hostRoom(){
+  if(!ownedList().length){onMsg('먼저 뽑기 머신에서 캐릭터를 뽑아 주세요','err');return;}
+  const me=myBlip();netLeave(false);
+  Object.assign(NET,{on:true,role:'host',room:me.code,myTeam:0,hn:me.nick,waiting:true});
+  try{await nreq(me.code,'PUT',{h:{code:me.code,nick:me.nick,ava:me.ava,char:save.active,t:{'.sv':'timestamp'},st:'wait'}});}
+  catch(e){netLeave(false);onMsg('서버에 연결하지 못했어요','err');return;}
+  netListen(me.code+'/g',hostOnGuest);
+  renderOnline();
+}
+async function joinRoom(code){
+  code=String(code||'').trim().toUpperCase();
+  if(!/^[A-Z0-9]{6}$/.test(code)){onMsg('친구 코드 6자리를 입력하세요','err');return;}
+  if(!ownedList().length){onMsg('먼저 뽑기 머신에서 캐릭터를 뽑아 주세요','err');return;}
+  const me=myBlip();if(code===me.code){onMsg('내 코드예요. 친구의 코드를 넣어 주세요','err');return;}
+  onMsg('방을 찾는 중…');
+  let room=null;try{room=await nreq(code);}catch(e){onMsg('서버에 연결하지 못했어요','err');return;}
+  if(!room||!room.h){onMsg('그 친구가 아직 방을 만들지 않았어요. 친구에게 "방 만들기"를 눌러 달라고 하세요','err');return;}
+  if(room.g&&room.g.code&&room.g.code!==me.code&&Date.now()-(Number(room.g.t)||0)<20000){onMsg('이미 다른 사람이 들어가 있어요','err');return;}
+  netLeave(false);
+  Object.assign(NET,{on:true,role:'guest',room:code,myTeam:1,gn:me.nick,hn:String(room.h.nick||'방장').slice(0,12)});
+  launchingGuest=true;
+  netListen(code+'/s',s=>{s=unarr(s);if(s&&s.mid){s.p=arr(s.p);s.ev=arr(s.ev);}if(s&&s.mid&&s.p.length===2){applySnap(s,!G.players.length||s.mid!==NET.mid);launchingGuest=false;}});
+  try{await nreq(code+'/g','PUT',{code:me.code,nick:me.nick,ava:me.ava,char:save.active,t:{'.sv':'timestamp'},in:{x:0,z:0,acts:[]}});}
+  catch(e){netLeave(false);onMsg('서버에 연결하지 못했어요','err');return;}
+  if(window.BLIP)BLIP.setGame('hoops');
+  renderOnline();
+}
+
+/* --- 온라인 창 --- */
+let onMsgTxt='',onMsgCls='';
+function onMsg(t,c){onMsgTxt=t;onMsgCls=c||'';const m=$('#onbody .msg');if(m){m.textContent=t;m.className='msg '+onMsgCls;}}
+const escH=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+async function renderOnline(){
+  const me=myBlip(),b=$('#onbody');
+  if(NET.on&&NET.role==='host'&&NET.waiting){
+    b.innerHTML=`<div class="ob"><span class="label">내 방 코드</span><div class="code">${me.code}</div>
+      <div class="wait"><i></i>친구가 들어오기를 기다리는 중… 들어오면 바로 시작해요</div></div>
+      <div class="ob"><span class="label">친구 초대</span><div id="onFriends" style="display:grid;gap:6px"><span style="color:var(--muted)">친구 목록을 불러오는 중…</span></div></div>
+      <div class="msg ${onMsgCls}">${escH(onMsgTxt)}</div>
+      <div class="row"><button class="btn alt small" id="onCancel">방 닫기</button></div>`;
+    $('#onCancel').onclick=()=>{netLeave(true);onMsg('');renderOnline();};
+    if(window.BLIP){try{const fr=await BLIP.friendList();const box=$('#onFriends');if(!box)return;
+      box.innerHTML=fr.length?fr.map(f=>`<div class="fr"><span>${f.ava}</span><b>${escH(f.nick)}</b>${f.online?'<small>접속 중</small>':''}<button class="btn small" data-oninv="${f.code}">초대</button></div>`).join(''):'<span style="color:var(--muted)">아직 친구가 없어요. blip 허브의 👥 친구에서 추가할 수 있어요. 친구에게 위 코드를 알려줘도 돼요.</span>';
+      box.querySelectorAll('[data-oninv]').forEach(x=>x.onclick=async()=>{x.disabled=true;x.textContent='보내는 중';try{await BLIP.invite(x.dataset.oninv,'hoops');x.textContent='✔ 보냄';}catch(e){x.textContent='실패';x.disabled=false;}});}catch(e){}}
+    return;
+  }
+  if(NET.on&&NET.role==='guest'&&G.phase==='lobby'){
+    b.innerHTML=`<div class="ob"><div class="wait"><i></i>${escH(NET.hn)}님의 방에 들어왔어요. 곧 시작해요…</div></div><div class="msg ${onMsgCls}">${escH(onMsgTxt)}</div><div class="row"><button class="btn alt small" id="onCancel">나가기</button></div>`;
+    $('#onCancel').onclick=()=>{netLeave(true);onMsg('');renderOnline();};return;
+  }
+  b.innerHTML=`<p style="margin:0;color:var(--muted)">blip 허브 친구와 다른 컴퓨터·휴대폰에서 1:1로 대결해요. 내 캐릭터는 지금 출전 중인 캐릭터예요.</p>
+    <div class="ob"><span class="label">방 만들기</span><p style="margin:0;color:var(--muted)">방을 만들고 친구를 초대하거나 내 코드 <b style="color:var(--gold)">${me.code}</b>를 알려 주세요.</p><div><button class="btn" id="onHost">방 만들기</button></div></div>
+    <div class="ob"><span class="label">친구 방에 참가</span><div class="row" style="justify-content:flex-start;flex-wrap:nowrap"><input id="onCode" maxlength="6" placeholder="친구 코드" autocomplete="off"><button class="btn" id="onJoin">참가</button></div></div>
+    <div class="msg ${onMsgCls}">${escH(onMsgTxt)}</div>`;
+  $('#onHost').onclick=()=>{onMsg('');hostRoom();};
+  $('#onJoin').onclick=()=>joinRoom($('#onCode').value);
+  $('#onCode').onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')joinRoom($('#onCode').value);};
+}
+function openOnline(){if(G.phase!=='lobby'||launching)return;$('#onmodal').hidden=false;renderOnline();}
+$('#bOnline').onclick=()=>{audioOn();openOnline();};
+$('#onclose').onclick=()=>{if(NET.on&&(NET.waiting||(NET.role==='guest'&&G.phase==='lobby')))netLeave(true);onMsg('');$('#onmodal').hidden=true;};
+window.addEventListener('pagehide',()=>{if(NET.on)netLeave(true);});
+// 허브에서 '따라 들어가기'나 초대로 왔으면 그 친구 방에 바로 참가
+setTimeout(()=>{const f=(new URLSearchParams(location.search).get('follow')||'').toUpperCase();if(/^[A-Z0-9]{6}$/.test(f)&&G.phase==='lobby'){openOnline();joinRoom(f);}},1200);
 
 /* ---------------- LOOP ---------------- */
 let last=performance.now();
@@ -1589,8 +1844,10 @@ function frame(now){
   let dt=Math.min(.05,(now-last)/1000);last=now;
   if(G.slow>0){G.slow-=dt;dt*=.35;}
   if(G.phase==='lobby')updLobby(dt);
-  else if(G.phase==='over'){G.t+=dt;updBall(dt);G.players.forEach(p=>{updPlayer(p,dt);animate(p,dt);});}
-  else if(!G.paused)stepGame(dt);
+  else if(NET.on&&NET.role==='guest')guestStep(dt);
+  else if(G.phase==='over'){G.t+=dt;updBall(dt);G.players.forEach(p=>{updPlayer(p,dt);animate(p,dt);});if(NET.on)hostSend();}
+  else if(!G.paused){stepGame(dt);if(NET.on)hostSend();}
+  if(NET.on)netWatch();
   netKick=Math.max(0,netKick-dt*2.5);rimKick=Math.max(0,rimKick-dt*3);
   net.scale.y=1+Math.sin(netKick*20)*netKick*.35;rimG.rotation.x=Math.sin(rimKick*30)*rimKick*.06;
   updParts(dt);updCamera(dt);
