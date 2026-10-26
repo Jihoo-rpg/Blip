@@ -64,6 +64,9 @@ html,body{height:100%;margin:0;overflow:hidden;background:var(--ink);color:var(-
 #loot .r{font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
 #loot .nm{font-family:var(--display);font-size:30px;margin:2px 0}
 #loot .d{color:var(--muted);font-size:14px}
+[hidden]{display:none!important}
+.blipBack{position:absolute;left:16px;top:16px;z-index:5;display:inline-flex;align-items:center;gap:4px;padding:7px 14px;border-radius:20px;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.3);color:#fff;font:700 14px/1.2 system-ui,sans-serif;text-decoration:none;backdrop-filter:blur(4px)}
+.blipBack:hover{background:rgba(255,255,255,.26)}
 .screen{position:fixed;inset:0;display:grid;place-items:center;background:rgba(14,12,22,.5);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:16px;overflow:auto}
 .card{background:var(--panel2);border:1px solid var(--line);border-radius:18px;padding:28px;max-width:560px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.45)}
 h1{font-family:var(--display);font-weight:400;font-size:clamp(48px,10vw,88px);line-height:.9;margin:0;letter-spacing:.01em;text-wrap:balance;color:var(--text);text-shadow:0 6px 0 #3b2c22}
@@ -124,6 +127,7 @@ button:focus-visible{outline:3px solid var(--coin);outline-offset:3px}
 </div>
 
 <div class="screen" id="menu">
+  <a class="blipBack" href="../hub/" aria-label="허브로 돌아가기">🏠 허브</a>
   <div class="card">
     <h1>Mudlark<br><em>Isle</em></h1>
     <p class="lede">You wash up on an island with nothing. Punch trees, pick up sticks and stones, build a workbench and a furnace, and work up from wood to gold gear. Every night more creatures come, and every third night something big comes with them. Spend coins on chests to stack powers.</p>
@@ -146,6 +150,7 @@ button:focus-visible{outline:3px solid var(--coin);outline-offset:3px}
 </div>
 
 <div class="screen" id="pause" hidden>
+  <a class="blipBack" href="../hub/" aria-label="허브로 돌아가기">🏠 허브</a>
   <div class="card" style="max-width:380px;text-align:center">
     <h2>Paused</h2>
     <p class="muted" style="margin:0 0 16px">Day <span id="pday">1</span></p>
@@ -163,6 +168,7 @@ button:focus-visible{outline:3px solid var(--coin);outline-offset:3px}
 </div>
 
 <div class="screen" id="dead" hidden>
+  <a class="blipBack" href="../hub/" aria-label="허브로 돌아가기">🏠 허브</a>
   <div class="card" style="max-width:420px;text-align:center">
     <h2 id="deadtitle">You fell on day 1</h2>
     <p class="muted" id="deadstats" style="margin:0 0 18px"></p>
