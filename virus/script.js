@@ -1049,6 +1049,7 @@ $('btnMenu').onclick = () => {
   $('gNew').onclick = () => { modalClose = null; confirmBox('지금 게임을 저장하고 새 게임을 시작할까요?', () => { saveGame(); newGameFlow(); }, () => setSpeed(prev)); };
   $('gTitle').onclick = () => { modalClose = null; saveGame(); showTitle(); };
 };
+$('btnHub').onclick = () => { if (running) saveGame(); location.href = '../hub/'; };
 $('btnFull').onclick = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen && document.documentElement.requestFullscreen().catch(() => toast('이 브라우저에서는 전체 화면을 쓸 수 없어요')); else document.exitFullscreen(); };
 
 /** 랜덤 이벤트 팝업 */
