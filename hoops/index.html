@@ -509,6 +509,10 @@ function ballTexture(){const cv=document.createElement('canvas');cv.width=256;cv
   [0,128].forEach(o=>{c.beginPath();for(let y=0;y<=128;y+=4){const x=o+64+Math.sin(y/128*Math.PI)*40*(o?1:-1)+ (o?0:128);c.lineTo(x%256,y);}c.stroke();});
   return new THREE.CanvasTexture(cv);}
 const ballMesh=new THREE.Mesh(new THREE.SphereGeometry(.12,24,16),new THREE.MeshStandardMaterial({map:ballTexture(),roughness:.65}));
+// 잘 보이게: 공을 크게 + 검은 테두리 + 살짝 빛나게
+ballMesh.scale.setScalar(1.8);ballMesh.material.emissive=new THREE.Color(0xff6a00);ballMesh.material.emissiveIntensity=.22;
+{const ol=new THREE.Mesh(new THREE.SphereGeometry(.12,20,14),new THREE.MeshBasicMaterial({color:0x1a0a02,side:THREE.BackSide}));ol.scale.setScalar(1.13);ballMesh.add(ol);}
+const ballLift=y=>y<.36?(.36-Math.max(.12,y))/.24*.156:0;
 ballMesh.castShadow=true;scene.add(ballMesh);
 const ball={pos:new THREE.Vector3(0,.12,10),vel:new THREE.Vector3(),mode:'loose',holder:null,shot:null,noPick:0,lastBounce:0,lastTeam:0};
 
@@ -927,7 +931,7 @@ function updBall(dt){
           popAt(off?'리바운드':'공격 리바운드',p.pos,3,'b');break;}}
     }
   }
-  ballMesh.position.copy(ball.pos);
+  ballMesh.position.copy(ball.pos);ballMesh.position.y+=ballLift(ball.pos.y);
 }
 
 /* ---------------- PLAYER UPDATE ---------------- */
@@ -1021,6 +1025,9 @@ function animate(p,dt){
   m.root.position.set(p.pos.x,p.y,p.pos.z);m.root.rotation.y=p.face;m.root.scale.setScalar(p.scale);
   m.ring.position.y=.02-p.y/p.scale;
   m.ind.position.y=2.75+Math.sin(G.t*4)*.08;
+  // 공 가진 사람: 머리 위 표시가 주황색으로 커짐
+  if(m.ind.userData.c0==null)m.ind.userData.c0=m.ind.material.color.getHex();
+  if(holder!==m.ind.userData.h){m.ind.userData.h=holder;m.ind.material.color.setHex(holder?0xff7a1a:m.ind.userData.c0);m.ind.scale.setScalar(holder?1.7:1);}
   const anyUlt=['giant','awaken','paint','inferno','untouch','shadowstep'].some(k=>has(p,k));
   m.aura.visible=anyUlt;if(anyUlt){m.aura.rotation.y+=dt*2;m.aura.material.opacity=.16+Math.sin(G.t*8)*.06;}
   m.ice.visible=has(p,'frozen');
@@ -1299,7 +1306,7 @@ function backToLobby(){
   fade(()=>{
     G.paused=false;$('#pause').hidden=true;$('#result').hidden=true;clearPlayers();$('#hud').hidden=true;
     pops.innerHTML='';$('#banner').innerHTML='';
-    ball.holder=null;ball.mode='loose';ball.shot=null;ball.pos.set(0,.12,9);ball.vel.set(0,0,0);ballMesh.position.copy(ball.pos);
+    ball.holder=null;ball.mode='loose';ball.shot=null;ball.pos.set(0,.12,9);ball.vel.set(0,0,0);ballMesh.position.copy(ball.pos);ballMesh.position.y+=ballLift(ball.pos.y);
     G.phase='lobby';activeScene=lobby;
     const pad=curPad||PADS[0];LP.pos.set(pad.x,0,pad.z+3.4);LP.vel.set(0,0,0);LP.y=0;LP.vy=0;LP.face=Math.PI;curPad=null;padT=0;
     CAM.yaw=0;
@@ -1836,7 +1843,7 @@ function guestStep(dt){
   // 공
   if(ball.mode==='held'&&ball.holder){const p=ball.holder;const sp=Math.hypot(p.vel.x,p.vel.z);p.phase+=dt*(4.6+sp*.35);if(heldBallPos(p,ball.pos)&&p.state==='free'&&p===me)_SFX.bounce&&_SFX.bounce();ballMesh.rotation.x+=dt*8;}
   else if(NET.btgt){const B=NET.btgt;ball.pos.x+=(B.x-ball.pos.x)*Math.min(1,dt*16);ball.pos.y+=(B.y-ball.pos.y)*Math.min(1,dt*16);ball.pos.z+=(B.z-ball.pos.z)*Math.min(1,dt*16);ballMesh.rotation.x-=dt*6;}
-  ballMesh.position.copy(ball.pos);
+  ballMesh.position.copy(ball.pos);ballMesh.position.y+=ballLift(ball.pos.y);
   for(const p of G.players)animate(p,dt);
   // 내 조작 보내기
   if(!NET.ch)NET.ch=makeChan(()=>NET.room+'/g/in',55);
@@ -2071,6 +2078,7 @@ function frame(now){
   net.scale.y=1+Math.sin(netKick*20)*netKick*.35;rimG.rotation.x=Math.sin(rimKick*30)*rimKick*.06;
   updParts(dt);updCamera(dt);
   if(G.phase!=='lobby'&&!$('#hud').hidden)updHUD();
+  {const want=(ball.mode==='shot'&&ball.pos.y>2.1)?1.75:2.3,cur=ballMesh.scale.x;ballMesh.scale.setScalar(cur+(want-cur)*.25);}
   renderer.render(activeScene,camera);
 }
 
