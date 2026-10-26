@@ -53,6 +53,10 @@
     return fetch(FB + '/hub/' + path + '.json', { method: method || 'GET', body: body === undefined ? undefined : JSON.stringify(body), keepalive: !!keep })
       .then(r => r.ok ? r.json() : Promise.reject(r.status));
   }
+  function raw(path, method, body) {
+    return fetch(FB + '/' + path + '.json', { method: method || 'GET', body: body === undefined ? undefined : JSON.stringify(body) })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status));
+  }
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const validCode = c => /^[A-Z0-9]{6}$/.test(String(c || '').toUpperCase());
 
@@ -60,7 +64,7 @@
   let curGame = GAME === 'hub' ? '' : GAME;
   async function beat() {
     try {
-      const r = await req('users/' + me.code, 'PATCH', { nick: me.nick, ava: me.ava, game: curGame, away: false, t: { '.sv': 'timestamp' } });
+      const r = await req('users/' + me.code, 'PATCH', { nick: me.nick, ava: me.ava, acc: me.acc || '', game: curGame, away: false, t: { '.sv': 'timestamp' } });
       if (r && typeof r.t === 'number') off = r.t - Date.now();
     } catch (e) { }
   }
@@ -72,24 +76,31 @@
     const map = await req('friends/' + me.code).catch(() => null) || {};
     const codes = Object.keys(map).filter(validCode);
     const users = await Promise.all(codes.map(c => req('users/' + c).catch(() => null)));
-    const list = codes.map((c, i) => { const u = users[i] || {}; return { code: c, nick: String(u.nick || '친구').slice(0, 12), ava: AVAS.includes(u.ava) ? u.ava : '🙂', online: isOnline(u), game: GAMES[u.game] ? u.game : '', t: Number(u.t) || 0 }; });
+    const list = codes.map((c, i) => { const u = users[i] || {}; return { code: c, acc: /^[a-z0-9_]{4,12}$/.test(u.acc || '') ? u.acc : '', nick: String(u.nick || '친구').slice(0, 12), ava: AVAS.includes(u.ava) ? u.ava : '🙂', online: isOnline(u), game: GAMES[u.game] ? u.game : '', t: Number(u.t) || 0 }; });
     list.sort((a, b) => (b.online - a.online) || (!!b.game - !!a.game) || (b.t - a.t));
     me.friends = list.map(f => ({ code: f.code, nick: f.nick, ava: f.ava })); saveMe();
     return list;
   }
-  async function requestFriend(code) {
-    code = String(code || '').trim().toUpperCase();
-    if (!validCode(code)) throw new Error('친구 코드는 6자리예요');
-    if (code === me.code) throw new Error('내 코드예요');
-    const u = await req('users/' + code).catch(() => null);
-    if (!u) throw new Error('그 코드의 플레이어가 없어요');
+  /** 친구 코드(6자리) 또는 아이디로 친구 요청 */
+  async function requestFriend(input) {
+    const raw_in = String(input || '').trim();
+    if (!raw_in) throw new Error('친구 코드나 아이디를 입력하세요');
+    let code = '', name = '', viaId = false;
+    const up = raw_in.toUpperCase();
+    if (/^[A-Z0-9]{6}$/.test(up)) { const u = await req('users/' + up).catch(() => null); if (u) { code = up; name = u.nick; } }
+    if (!code && /^[a-z0-9_]{4,12}$/i.test(raw_in)) {
+      const h = await raw('users/' + raw_in.toLowerCase() + '/hub').catch(() => null);
+      if (h && /^[A-Z0-9]{6}$/.test(h.code || '')) { code = h.code; name = h.nick; viaId = true; }
+    }
+    if (!code && /^[A-Z0-9]{6}$/.test(up)) { code = up; name = ''; }        // 아직 blip에 안 들어온 코드: 요청만 남겨 둠
+    if (!code) throw new Error('그런 친구 코드나 아이디가 없어요');
+    if (code === me.code) throw new Error('나 자신이에요');
     const already = await req('friends/' + me.code + '/' + code).catch(() => null);
     if (already) throw new Error('이미 친구예요');
-    // 상대도 나에게 요청을 보냈다면 바로 친구
     const back = await req('req/' + me.code + '/' + code).catch(() => null);
-    if (back) { await accept(code); return 'friends'; }
-    await req('req/' + code + '/' + me.code, 'PUT', { nick: me.nick, ava: me.ava, t: { '.sv': 'timestamp' } });
-    return String(u.nick || '친구');
+    if (back) { await accept(code); return { done: true, name: name || back.nick || '친구' }; }
+    await req('req/' + code + '/' + me.code, 'PUT', { nick: me.nick, ava: me.ava, acc: me.acc || '', t: { '.sv': 'timestamp' } });
+    return { done: false, name: name || '', pending: !name, viaId };
   }
   async function accept(from) {
     await req('friends/' + me.code + '/' + from, 'PUT', true);
@@ -106,7 +117,7 @@
   async function invite(code, game) { await req('inv/' + code + '/' + me.code, 'PUT', { game, nick: me.nick, ava: me.ava, t: { '.sv': 'timestamp' } }); }
   async function inbox() {
     const [r, v] = await Promise.all([req('req/' + me.code).catch(() => null), req('inv/' + me.code).catch(() => null)]);
-    const reqs = Object.keys(r || {}).filter(validCode).map(c => ({ code: c, nick: String(r[c].nick || '누군가').slice(0, 12), ava: AVAS.includes(r[c].ava) ? r[c].ava : '🙂', t: Number(r[c].t) || 0 }));
+    const reqs = Object.keys(r || {}).filter(validCode).map(c => ({ code: c, acc: /^[a-z0-9_]{4,12}$/.test(r[c].acc || '') ? r[c].acc : '', nick: String(r[c].nick || '누군가').slice(0, 12), ava: AVAS.includes(r[c].ava) ? r[c].ava : '🙂', t: Number(r[c].t) || 0 }));
     const invs = Object.keys(v || {}).filter(validCode).map(c => ({ code: c, nick: String(v[c].nick || '친구').slice(0, 12), ava: AVAS.includes(v[c].ava) ? v[c].ava : '🙂', game: v[c].game, t: Number(v[c].t) || 0 }))
       .filter(x => GAMES[x.game] && now() - x.t < 10 * 60000);
     return { reqs, invs };
@@ -119,6 +130,94 @@
     if (nick != null) me.nick = String(nick).trim().slice(0, 12) || me.nick;
     if (ava != null && AVAS.includes(ava)) me.ava = ava;
     saveMe(); beat();
+    if (me.acc) raw('users/' + me.acc + '/hub', 'PATCH', { nick: me.nick, ava: me.ava }).catch(() => { });
+  }
+
+  /* ---------- 계정 (냥냥 점프와 같은 아이디·비밀번호) ---------- */
+  const SESS = 'nyangjump_session', SK = 'nyangjump_save_v2';
+  const getSess = () => { try { const x = JSON.parse(localStorage.getItem(SESS) || 'null'); return x && x.id && x.hash ? x : null; } catch (e) { return null; } };
+  async function hashPw(pw, salt) {
+    const d = new TextEncoder().encode(salt + '|nyang|' + pw);
+    const h = await crypto.subtle.digest('SHA-256', d);
+    return Array.from(new Uint8Array(h)).map(b => b.toString(16).padStart(2, '0')).join('');
+  }
+  const normId = x => String(x || '').trim().toLowerCase();
+  const newCode = () => Array.from({ length: 6 }, () => CH[Math.floor(Math.random() * CH.length)]).join('');
+  /** 게스트 때 사귄 친구들을 계정 코드로 옮김 */
+  async function migrateFriends(oldC, newC) {
+    if (!oldC || oldC === newC) return;
+    const fr = await req('friends/' + oldC).catch(() => null) || {};
+    for (const f of Object.keys(fr)) {
+      if (!validCode(f) || f === newC) continue;
+      await req('friends/' + newC + '/' + f, 'PUT', true).catch(() => { });
+      await req('friends/' + f + '/' + newC, 'PUT', true).catch(() => { });
+      await req('friends/' + f + '/' + oldC, 'DELETE').catch(() => { });
+    }
+    await req('friends/' + oldC, 'DELETE').catch(() => { });
+  }
+  /** 계정을 이 기기에 연결: 친구 코드·닉네임·아바타를 계정 것으로 맞춤 */
+  async function linkAccount(id, u) {
+    const prevAcc = me.acc, oldCode = me.code;
+    const hub = u.hub || {};
+    const code = validCode(hub.code) ? hub.code : (u.save && validCode(u.save.fcode) ? u.save.fcode : me.code);
+    if (!prevAcc) me.guestCode = me.code;
+    me.acc = id; me.code = code;
+    if (hub.nick) me.nick = String(hub.nick).slice(0, 12); else if (u.save && u.save.nick && /^플레이어/.test(me.nick)) me.nick = String(u.save.nick).slice(0, 12);
+    if (AVAS.includes(hub.ava)) me.ava = hub.ava;
+    me.friends = [];
+    saveMe();
+    await raw('users/' + id + '/hub', 'PUT', { code: me.code, nick: me.nick, ava: me.ava }).catch(() => { });
+    if (!prevAcc && oldCode !== code) await migrateFriends(oldCode, code);
+    if (oldCode !== code) req('users/' + oldCode, 'PATCH', { away: true, game: '' }).catch(() => { });
+    beat();
+  }
+  /** 냥냥 점프 저장 데이터도 계정 것으로 (냥냥 점프의 로그인과 똑같이) */
+  function adoptGameSave(u) {
+    try { if (u.save) { const cur = localStorage.getItem(SK); if (cur) localStorage.setItem(SK + '_guest', cur); localStorage.setItem(SK, JSON.stringify(u.save)); } } catch (e) { }
+  }
+  async function login(id, pw) {
+    id = normId(id);
+    if (!id || !pw) throw new Error('아이디와 비밀번호를 입력하세요');
+    let u;
+    try { u = await raw('users/' + id); } catch (e) { throw new Error('서버에 연결하지 못했어요'); }
+    if (!u || !u.salt) throw new Error('없는 아이디예요');
+    const h = await hashPw(pw, u.salt);
+    if (h !== u.hash) throw new Error('비밀번호가 틀렸어요');
+    adoptGameSave(u);
+    try { localStorage.setItem(SESS, JSON.stringify({ id, hash: h })); } catch (e) { }
+    await linkAccount(id, u);
+    return me;
+  }
+  async function signup(id, pw, nick) {
+    id = normId(id); nick = String(nick || '').trim().slice(0, 12);
+    if (!/^[a-z0-9_]{4,12}$/.test(id)) throw new Error('아이디는 영어 소문자·숫자 4~12자예요');
+    if (String(pw || '').length < 4) throw new Error('비밀번호는 4자 이상이에요');
+    if (!nick) throw new Error('닉네임을 입력하세요');
+    let ex;
+    try { ex = await raw('users/' + id); } catch (e) { throw new Error('서버에 연결하지 못했어요'); }
+    if (ex) throw new Error('이미 있는 아이디예요');
+    const salt = Array.from({ length: 12 }, () => CH[Math.floor(Math.random() * CH.length)]).join('');
+    const h = await hashPw(pw, salt);
+    me.nick = nick; saveMe();
+    await raw('users/' + id, 'PUT', { salt, hash: h, created: Date.now(), hub: { code: me.code, nick: me.nick, ava: me.ava } });
+    try { localStorage.setItem(SESS, JSON.stringify({ id, hash: h })); } catch (e) { }
+    await linkAccount(id, { hub: { code: me.code, nick: me.nick, ava: me.ava } });
+    return me;
+  }
+  function logout() {
+    leave();
+    try { localStorage.removeItem(SESS); const g = localStorage.getItem(SK + '_guest'); if (g) localStorage.setItem(SK, g); else localStorage.removeItem(SK); } catch (e) { }
+    const gc = validCode(me.guestCode) && me.guestCode !== me.code ? me.guestCode : newCode();
+    me.acc = ''; me.code = gc; me.friends = []; me.nick = '플레이어' + gc.slice(0, 3);
+    saveMe(); beat();
+  }
+  /** 다른 곳(냥냥 점프)에서 로그인·로그아웃했으면 허브도 맞춰 줌 */
+  async function syncAccount() {
+    const ss = getSess();
+    if (ss && me.acc !== ss.id) {
+      const u = await raw('users/' + ss.id).catch(() => null);
+      if (u && u.hash === ss.hash) await linkAccount(ss.id, u);
+    } else if (!ss && me.acc) { logout(); }
   }
 
   /* ---------- 게임 화면용 작은 알림창 (초대 · 친구 요청 · 따라오기) ---------- */
@@ -162,6 +261,7 @@
   /* ---------- 시작 ---------- */
   const followCode = (new URLSearchParams(location.search).get('follow') || '').toUpperCase();
   function start() {
+    syncAccount().catch(() => { }).finally(() => { if (window.BLIP && window.BLIP._onAccount) window.BLIP._onAccount(); });
     beat(); setInterval(beat, 20000);
     window.addEventListener('pagehide', leave);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
@@ -177,6 +277,6 @@
   window.BLIP = {
     get me() { return me; }, GAMES, AVAS, now, isOnline, followCode,
     friendList, requestFriend, accept, decline, removeFriend, invite, inbox, clearInvite, allUsers,
-    gameUrl, go, setProfile, saveMe, beat, notify, setGame(g) { curGame = g || ''; beat(); },
+    gameUrl, go, setProfile, saveMe, beat, notify, login, signup, logout, syncAccount, get loggedIn() { return !!me.acc; }, setGame(g) { curGame = g || ''; beat(); },
   };
 })();

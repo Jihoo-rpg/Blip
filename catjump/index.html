@@ -2400,7 +2400,7 @@ PANELS.online=function(){
 const CODECH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 /* blip 허브와 친구 코드·친구 목록 공유 */
 function hubCode(){try{const h=JSON.parse(localStorage.getItem('blip_hub_v1')||'{}');return /^[A-Z0-9]{6}$/.test(h.code||'')?h.code:'';}catch(e){return '';}}
-function mergeHubFriends(){try{const h=JSON.parse(localStorage.getItem('blip_hub_v1')||'{}');let ch=false;if(!save.nick&&h.nick){save.nick=String(h.nick).slice(0,10);ch=true;}for(const f of (h.friends||[])){if(!/^[A-Z0-9]{6}$/.test(f.code||'')||f.code===save.fcode)continue;if(!save.friends.some(x=>x.code===f.code)){save.friends.push({code:f.code,nick:String(f.nick||'친구').slice(0,10),best:0});ch=true;}}if(ch)persist();}catch(e){}}
+function mergeHubFriends(){try{const h=JSON.parse(localStorage.getItem('blip_hub_v1')||'{}');let ch=false;try{const ss=JSON.parse(localStorage.getItem('nyangjump_session')||'null');if(ss&&h.acc&&h.acc===ss.id&&/^[A-Z0-9]{6}$/.test(h.code||'')&&save.fcode!==h.code){save.fcode=h.code;ch=true;}}catch(x){}if(!save.nick&&h.nick){save.nick=String(h.nick).slice(0,10);ch=true;}for(const f of (h.friends||[])){if(!/^[A-Z0-9]{6}$/.test(f.code||'')||f.code===save.fcode)continue;if(!save.friends.some(x=>x.code===f.code)){save.friends.push({code:f.code,nick:String(f.nick||'친구').slice(0,10),best:0});ch=true;}}if(ch)persist();}catch(e){}}
 const mkCode=n=>Array.from({length:n},()=>CODECH[Math.random()*CODECH.length|0]).join('');
 if(!save.fcode){save.fcode=hubCode()||mkCode(6);persist();}
 mergeHubFriends();

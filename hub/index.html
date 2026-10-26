@@ -111,7 +111,7 @@
   .fr.add .av{background:transparent;border:2px dashed var(--line);font-size:30px;color:var(--sub)}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
   .addrow{display:flex;gap:8px;flex-wrap:wrap}
-  .addrow input{flex:1;min-width:160px;height:42px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:0 12px;font-size:16px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;font-family:inherit}
+  .addrow input{flex:1;min-width:160px;height:42px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:0 12px;font-size:16px;font-weight:700;font-family:inherit}
   .gbtn{height:42px;padding:0 16px;border:0;border-radius:8px;background:var(--green);color:#fff;font-weight:800;font-size:14px}
   .gbtn.gray{background:var(--chip);color:var(--text)}
   .gbtn.blue{background:var(--blue)}
@@ -129,6 +129,12 @@
   .fbtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
   .msg{min-height:20px;margin-top:8px;font-size:14px;font-weight:700}
   .msg.ok{color:var(--green)}.msg.err{color:#e2231a}
+  .accbox{margin-top:16px;padding:12px 14px;border-radius:10px;background:var(--panel2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .accbox .tx{flex:1;min-width:0}
+  .field{display:grid;gap:6px;margin-top:12px}
+  .field label{font-weight:800;font-size:14px}
+  .field input{height:44px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:0 12px;font-size:16px;font-family:inherit}
+  .field small{color:var(--sub);font-size:12.5px}
   .pop{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;flex-direction:column;gap:8px;max-width:min(360px,calc(100vw - 32px))}
   .pop .fitem{box-shadow:0 10px 30px rgba(0,0,0,.25);animation:pop .2s ease-out}
   .avs{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin:10px 0}
@@ -148,6 +154,7 @@
     .dtop{grid-template-columns:1fr}
     .stats{grid-template-columns:repeat(2,1fr)}
     .me span:last-child{display:none}.me{padding:0 4px}
+    #loginBtn{padding:0 10px}
     .pop{left:16px;right:16px;bottom:74px}
     .avs{grid-template-columns:repeat(6,1fr)}
     .bnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--line);height:62px}
@@ -162,6 +169,7 @@
   <a class="logo" href="./"><i>b</i><span>blip</span></a>
   <label class="search">🔍<input id="q" type="search" placeholder="게임 검색" autocomplete="off"></label>
   <button class="tbtn" id="theme" title="밝게 / 어둡게">🌙</button>
+  <button class="gbtn sm" id="loginBtn" style="flex:0 0 auto">로그인</button>
   <button class="me" id="meBtn" title="내 프로필"><span class="av" id="meAva">😺</span><span id="meNick">나</span></button>
 </header>
 
@@ -363,18 +371,18 @@ function homeFriendsHTML() {
       <button class="fr add" data-v="friends"><span class="av">＋</span><b>친구 추가</b></button></div>`;
 }
 function friendItem(f) {
-  return `<div class="fitem"><span class="av ${f.online ? 'on' : ''}">${f.ava}</span><div class="tx"><b>${esc(f.nick)}</b><small class="${f.online ? 'on' : ''}">${esc(statusText(f))} · ${f.code}</small></div>
+  return `<div class="fitem"><span class="av ${f.online ? 'on' : ''}">${f.ava}</span><div class="tx"><b>${esc(f.nick)}${f.acc ? ` <small style="color:var(--sub);font-weight:600">@${esc(f.acc)}</small>` : ''}</b><small class="${f.online ? 'on' : ''}">${esc(statusText(f))} · ${f.code}</small></div>
     <div class="fbtns">${f.online && f.game ? `<button class="gbtn sm" data-follow="${f.code}" data-game="${f.game}">따라 들어가기</button>` : ''}<button class="gbtn sm blue" data-invfriend="${f.code}">초대</button><button class="gbtn sm gray" data-unfriend="${f.code}">삭제</button></div></div>`;
 }
 function friendsListHTML() {
-  return `${FR.reqs.length ? `<div class="sech"><h2>📨 받은 친구 요청</h2></div><div class="flist">${FR.reqs.map(r => `<div class="fitem"><span class="av">${r.ava}</span><div class="tx"><b>${esc(r.nick)}</b><small>코드 ${r.code}</small></div><div class="fbtns"><button class="gbtn sm" data-accept="${r.code}">수락</button><button class="gbtn sm gray" data-decline="${r.code}">거절</button></div></div>`).join('')}</div><div style="height:22px"></div>` : ''}
+  return `${FR.reqs.length ? `<div class="sech"><h2>📨 받은 친구 요청</h2></div><div class="flist">${FR.reqs.map(r => `<div class="fitem"><span class="av">${r.ava}</span><div class="tx"><b>${esc(r.nick)}</b><small>${r.acc ? '@' + esc(r.acc) + ' · ' : ''}코드 ${r.code}</small></div><div class="fbtns"><button class="gbtn sm" data-accept="${r.code}">수락</button><button class="gbtn sm gray" data-decline="${r.code}">거절</button></div></div>`).join('')}</div><div style="height:22px"></div>` : ''}
     <div class="sech"><h2>내 친구</h2><span>${FR.list.filter(f => f.online).length}명 접속 중 · 전체 ${FR.list.length}명</span></div>
-    <div class="flist">${FR.list.length ? FR.list.map(friendItem).join('') : `<div class="empty">${FR.loaded ? '아직 친구가 없어요. 위에서 친구 코드로 추가해 보세요!' : '친구 목록을 불러오는 중…'}</div>`}</div>`;
+    <div class="flist">${FR.list.length ? FR.list.map(friendItem).join('') : `<div class="empty">${FR.loaded ? '아직 친구가 없어요. 위에서 친구 코드나 아이디로 추가해 보세요!' : '친구 목록을 불러오는 중…'}</div>`}</div>`;
 }
 function friendsViewHTML() {
   return `<div class="sec"><div class="sech"><h2>👥 친구</h2></div>
-    <div class="card"><b>친구 추가</b><div style="color:var(--sub);font-size:14px;margin:4px 0 10px">친구의 6자리 코드를 넣으면 친구 요청을 보내요.</div>
-      <div class="addrow"><input id="addCode" maxlength="6" placeholder="친구 코드" autocomplete="off"><button class="gbtn" id="addBtn">요청 보내기</button></div>
+    <div class="card"><b>친구 추가</b><div style="color:var(--sub);font-size:14px;margin:4px 0 10px">친구의 <b>6자리 친구 코드</b>나 <b>아이디</b>를 넣으면 친구 요청을 보내요.</div>
+      <div class="addrow"><input id="addCode" maxlength="12" placeholder="친구 코드 또는 아이디" autocomplete="off" autocapitalize="off"><button class="gbtn" id="addBtn">요청 보내기</button></div>
       <div class="msg" id="addMsg"></div>
       <div class="mycode">내 친구 코드 <b id="myCode">${BLIP.me.code}</b><button class="gbtn sm gray" id="copyCode">복사</button></div></div></div>
     <div class="sec" id="frList">${friendsListHTML()}</div>`;
@@ -382,8 +390,12 @@ function friendsViewHTML() {
 function bindFriendsView() {
   const inp = document.getElementById('addCode'), msg = document.getElementById('addMsg');
   const send = async () => {
-    const code = inp.value.trim().toUpperCase(); msg.className = 'msg'; msg.textContent = '보내는 중…';
-    try { const r = await BLIP.requestFriend(code); msg.className = 'msg ok'; msg.textContent = r === 'friends' ? '서로 요청해서 바로 친구가 됐어요!' : `${r}님에게 친구 요청을 보냈어요. 상대가 수락하면 친구가 돼요.`; inp.value = ''; pollFriends(); }
+    const code = inp.value.trim(); msg.className = 'msg'; msg.textContent = '보내는 중…';
+    try {
+      const r = await BLIP.requestFriend(code); msg.className = 'msg ok';
+      msg.textContent = r.done ? `${r.name}님과 바로 친구가 됐어요! (서로 요청했어요)` : r.pending ? `${code.toUpperCase()} 코드로 친구 요청을 남겼어요. 그 친구가 blip에 들어오면 요청이 보여요.` : `${r.name}님에게 친구 요청을 보냈어요. 상대가 수락하면 친구가 돼요.`;
+      inp.value = ''; pollFriends();
+    }
     catch (e) { msg.className = 'msg err'; msg.textContent = typeof e === 'number' ? '서버에 연결하지 못했어요. 잠시 후 다시 해 보세요.' : (e.message || '보내지 못했어요'); }
   };
   document.getElementById('addBtn').onclick = send;
@@ -432,13 +444,48 @@ function openProfile() {
     <div style="display:flex;align-items:center;gap:14px"><span class="av on" id="pAva" style="width:72px;height:72px;font-size:40px">${ava}</span><div><div style="color:var(--sub);font-size:13px">친구 코드</div><div style="font-size:24px;font-weight:900;letter-spacing:.18em">${me.code}</div></div></div>
     <div style="margin-top:16px;font-weight:800">닉네임</div><div class="addrow" style="margin-top:6px"><input id="pNick" maxlength="12" value="${esc(me.nick)}" style="letter-spacing:0;text-transform:none"></div>
     <div style="margin-top:14px;font-weight:800">아바타</div><div class="avs">${BLIP.AVAS.map(a => `<button data-ava="${a}" class="${a === ava ? 'on' : ''}">${a}</button>`).join('')}</div>
-    <div class="addrow" style="justify-content:flex-end"><button class="gbtn gray" id="pCopy">코드 복사</button><button class="gbtn" id="pSave">저장</button></div><div class="msg" id="pMsg"></div></div>`;
+    <div class="addrow" style="justify-content:flex-end"><button class="gbtn gray" id="pCopy">코드 복사</button><button class="gbtn" id="pSave">저장</button></div><div class="msg" id="pMsg"></div>
+    <div class="accbox">${me.acc ? `<div class="tx"><b>@${esc(me.acc)}</b> 계정으로 로그인 중<br><small style="color:var(--sub)">친구 목록과 냥냥 점프 기록이 계정에 저장돼요</small></div><button class="gbtn sm gray" id="pOut">로그아웃</button>` : `<div class="tx"><b>게스트</b>로 플레이 중<br><small style="color:var(--sub)">로그인하면 다른 기기에서도 친구와 기록이 그대로예요</small></div><button class="gbtn sm" id="pIn">로그인 / 가입</button>`}</div></div>`;
   document.getElementById('ov').classList.add('show'); document.getElementById('dx').onclick = closeDetail;
   document.querySelectorAll('[data-ava]').forEach(b => b.onclick = () => { ava = b.dataset.ava; document.querySelectorAll('[data-ava]').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('pAva').textContent = ava; });
   document.getElementById('pCopy').onclick = async e => { try { await navigator.clipboard.writeText(me.code); e.target.textContent = '✔ 복사됨'; } catch (x) { prompt('내 친구 코드', me.code); } };
+  const po = document.getElementById('pOut'), pi = document.getElementById('pIn');
+  if (po) po.onclick = () => { if (!po.dataset.sure) { po.dataset.sure = '1'; po.textContent = '정말 로그아웃'; return; } BLIP.logout(); FR.list = []; FR.reqs = []; FR.invs = []; showMe(); render(); pollFriends(); openProfile(); };
+  if (pi) pi.onclick = () => openLogin('login');
   document.getElementById('pSave').onclick = () => { BLIP.setProfile(document.getElementById('pNick').value, ava); showMe(); const m = document.getElementById('pMsg'); m.className = 'msg ok'; m.textContent = '저장했어요!'; render(); };
 }
-function showMe() { document.getElementById('meAva').textContent = BLIP.me.ava; document.getElementById('meNick').textContent = BLIP.me.nick; }
+function openLogin(tab) {
+  const isUp = tab === 'signup';
+  document.getElementById('det').innerHTML = `<button class="x" id="dx" title="닫기">✕</button><div class="sheet" style="max-width:440px;margin:0 auto">
+    <h3>${isUp ? '회원가입' : '로그인'}</h3>
+    <div class="tabs" style="padding:0;margin-bottom:6px"><button class="tab ${isUp ? '' : 'on'}" id="tLogin">로그인</button><button class="tab ${isUp ? 'on' : ''}" id="tUp">회원가입</button></div>
+    <p style="color:var(--sub);font-size:14px;margin:10px 0 0">냥냥 점프 계정과 같아요. 이미 냥냥 점프 아이디가 있으면 그대로 로그인하세요.</p>
+    <form id="accForm" autocomplete="on">
+      <div class="field"><label for="aId">아이디</label><input id="aId" name="username" autocomplete="username" autocapitalize="off" maxlength="12" placeholder="영어 소문자·숫자 4~12자"></div>
+      <div class="field"><label for="aPw">비밀번호</label><input id="aPw" name="password" type="password" autocomplete="${isUp ? 'new-password' : 'current-password'}" placeholder="4자 이상"></div>
+      ${isUp ? `<div class="field"><label for="aNick">닉네임</label><input id="aNick" maxlength="12" value="${esc(/^플레이어/.test(BLIP.me.nick) ? '' : BLIP.me.nick)}" placeholder="친구들에게 보이는 이름"><small>지금 기기의 친구 코드 ${BLIP.me.code}와 친구 목록이 이 계정으로 옮겨져요.</small></div>` : ''}
+      <div class="addrow" style="margin-top:16px"><button class="gbtn" type="submit" id="aGo" style="flex:1">${isUp ? '가입하고 로그인' : '로그인'}</button></div>
+      <div class="msg" id="aMsg"></div>
+    </form></div>`;
+  document.getElementById('ov').classList.add('show'); document.getElementById('dx').onclick = closeDetail;
+  document.getElementById('tLogin').onclick = () => openLogin('login');
+  document.getElementById('tUp').onclick = () => openLogin('signup');
+  setTimeout(() => { const i = document.getElementById('aId'); if (i) i.focus(); }, 50);
+  document.getElementById('accForm').onsubmit = async e => {
+    e.preventDefault();
+    const btn = document.getElementById('aGo'), msg = document.getElementById('aMsg');
+    btn.disabled = true; msg.className = 'msg'; msg.textContent = isUp ? '가입하는 중…' : '로그인하는 중…';
+    try {
+      const id = document.getElementById('aId').value, pw = document.getElementById('aPw').value;
+      if (isUp) await BLIP.signup(id, pw, document.getElementById('aNick').value); else await BLIP.login(id, pw);
+      msg.className = 'msg ok'; msg.textContent = '환영해요, ' + BLIP.me.nick + '님!';
+      FR.list = []; FR.reqs = []; FR.invs = []; showMe(); render(); pollFriends();
+      setTimeout(closeDetail, 700);
+    } catch (err) { msg.className = 'msg err'; msg.textContent = err.message || '다시 시도해 주세요'; btn.disabled = false; }
+  };
+}
+function showMe() { document.getElementById('meAva').textContent = BLIP.me.ava; document.getElementById('meNick').textContent = BLIP.me.nick; document.getElementById('loginBtn').hidden = !!BLIP.me.acc; }
+BLIP._onAccount = () => { showMe(); render(); pollFriends(); };
 async function friendAction(t) {
   const d = t.dataset;
   try {
@@ -469,6 +516,7 @@ document.addEventListener('click', e => {
   if (t) { e.stopPropagation(); friendAction(t); }
 }, true);
 document.getElementById('meBtn').onclick = openProfile;
+document.getElementById('loginBtn').onclick = () => openLogin('login');
 
 /* ===================== 클릭 / 입력 ===================== */
 document.addEventListener('click', e => {
