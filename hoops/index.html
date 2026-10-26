@@ -117,6 +117,7 @@ kbd{font-family:var(--body);font-weight:700;font-size:12px;background:var(--pane
 .board .tm img{width:34px;height:40px;object-fit:cover;border-radius:7px;background:var(--panel2)}
 .board .tm .nm{display:flex;flex-direction:column;line-height:1.15;max-width:96px}
 .board .tm .nm b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.board .sc.bump{animation:scBump .55s cubic-bezier(.2,1.6,.4,1)}@keyframes scBump{0%{transform:scale(1)}35%{transform:scale(1.9);color:#ffd23f;text-shadow:0 0 18px #ff7a1a}100%{transform:scale(1)}}
 .board .tm .nm small{font-size:10px;font-weight:700;letter-spacing:.12em}
 .board .t0 .nm small{color:var(--accent)}
 .board .t1 .nm small{color:var(--p2)}
@@ -370,9 +371,9 @@ const CHARS=[
 ];
 const CH=id=>CHARS.find(c=>c.id===id);
 const DIFF={
-  easy:{react:.46,block:.24,steal:.17,noise:.15,move:.11,skill:.3,gap:1.55},
-  normal:{react:.31,block:.45,steal:.33,noise:.092,move:.2,skill:.58,gap:1.34},
-  hard:{react:.19,block:.64,steal:.53,noise:.056,move:.3,skill:.88,gap:1.18},
+  easy:{react:.58,block:.15,steal:.1,noise:.19,move:.08,skill:.22,gap:1.75,acc:-.12},
+  normal:{react:.4,block:.32,steal:.22,noise:.12,move:.15,skill:.45,gap:1.48,acc:-.08},
+  hard:{react:.25,block:.5,steal:.4,noise:.075,move:.24,skill:.75,gap:1.26,acc:-.04},
 };
 
 /* ---------------- SAVE ---------------- */
@@ -404,6 +405,9 @@ const SFX={
   reveal:r=>{[523,659,784,1046].slice(0,r+1).forEach((f,i)=>tone(f,.25,'triangle',.1,0,i*.09));if(r===3)noise(.8,.2,2400);},
   charge:()=>tone(200,.9,'sawtooth',.05,4),
   jump:()=>tone(330,.14,'square',.04,2),
+  score:()=>{[523,659,784,1046].forEach((f,i)=>tone(f,.16,'triangle',.11,0,i*.055));noise(.5,.18,2600);},
+  score3:()=>{[523,659,784,1046,1318,1568].forEach((f,i)=>tone(f,.2,'triangle',.12,0,i*.05));noise(.9,.25,2400);tone(130,.4,'square',.1,.6);},
+  fire:()=>{tone(200,.6,'sawtooth',.08,4);noise(.6,.3,900);},
 };
 
 /* ---------------- THREE SETUP ---------------- */
@@ -674,7 +678,7 @@ function jump(p){p.state='block';p.st=0;p.vy=(4.3+stat(p,'jmp')*.1)*Math.sqrt(p.
 function startShot(p){p.state='shoot';p.st=0;p.meter=0;p.released=false;p.vel.set(0,0,0);
   const f=toRimDir(p);p.face=Math.atan2(f.x,f.z);}
 
-function perfectHalf(p){return (has(p,'ignite')?.12:.06);}
+function perfectHalf(p){return (has(p,'ignite')?.15:p.ctrl==='ai'?.06:.09);}
 
 function releaseShot(p){
   p.released=true;p.state='follow';
@@ -692,7 +696,7 @@ function releaseShot(p){
   base+=(stat(p,'sht')-5)*.035;
   let contest=0;const c=xz(p.pos,o.pos);const oOff=has(o,'frozen')||o.state==='fall'||has(o,'stun');
   if(!oOff){contest=c<1.1?.26:c<1.8?.14:c<2.5?.05:0;contest*=o.scale>1.2?1.6:1;if(o.y>.2&&c<2.2)contest+=.08;}
-  let bonus=0;if(G.t-p.stepT<1.1)bonus+=.08;if(has(p,'ignite'))bonus+=.12;if(has(p,'inferno'))bonus+=.15;
+  let bonus=p.ctrl==='ai'?((DIFF[G.diff]||DIFF.normal).acc||0):.1;if(G.t-p.stepT<1.1)bonus+=.08;if(has(p,'ignite'))bonus+=.12;if(has(p,'inferno'))bonus+=.15;
   const prob=clamp(base+timing-contest+bonus,.03,.96);
   const made=Math.random()<prob;
   if(p.ctrl!=='ai'||cls==='g')popAt(word,p.pos,3.2,cls);
@@ -706,7 +710,7 @@ function releaseShot(p){
   const to=RIM.clone();
   if(!made){const a=rand(0,Math.PI*2),r=rand(.24,.38);to.x+=Math.cos(a)*r;to.z+=Math.sin(a)*r;to.y+=.04;}
   ball.mode='shot';ball.holder=null;ball.lastTeam=p.team;
-  ball.shot={from,to,T:.75+d*.06,t:0,made,pts,shooter:p,arc:1.4+d*.13,valid:G.cleared,three};
+  ball.shot={from,to,T:.48+d*.032,t:0,made,pts,shooter:p,arc:1.1+d*.1,valid:G.cleared,three,perfect:cls==='g'};
 }
 function doBlock(o,p){
   ball.holder=null;ball.mode='loose';ball.shot=null;
@@ -843,10 +847,23 @@ function useUlt(p){
 }
 
 /* ---------------- SCORING ---------------- */
-function scored(p,pts,valid){
+function scored(p,pts,valid,perfect){
   if(!valid){popAt('무효 · 클리어 안 함',p.pos,3.6,'r big');banner('득점 무효','볼 클리어를 하지 않았어요','#ff4d5e',1.3);}
   else{G.score[p.team]+=pts;p.ult=Math.min(100,p.ult+25);
-    const tag=pts>=3?`+${pts}`:'+2';popAt(tag,new THREE.Vector3(RIM.x,0,RIM.z),4.1,'y big');}
+    const tag=pts>=3?`+${pts}`:'+2';popAt(tag,new THREE.Vector3(RIM.x,0,RIM.z),4.1,'y big');
+    // 도파민: 슬로모션 · 화면 흔들림 · 줌 · 폭죽 · 연속 득점
+    const o=opp(p);if(o)o.streak=0;p.streak=(p.streak||0)+1;
+    G.slow=Math.max(G.slow,pts>=3?.45:.32);G.shake=Math.max(G.shake,pts>=3?.6:.42);G.punch=pts>=3?1.3:1;
+    ['#ffd23f','#ff7a1a','#38d6ff','#3ee07a','#ff5ea8'].forEach((c,i)=>burst(RIM.clone(),c,pts>=3?16:11,4.2+i*.3,1.1,4));
+    burst(new THREE.Vector3(RIM.x,.3,RIM.z),'#ffffff',18,5,.6,1);
+    (pts>=3?SFX.score3:SFX.score)();
+    const words=pts>=3?['3점 폭발!','쓰리!!','미쳤다!']:['나이스!','쏙!','깔끔!'];
+    if(perfect)popAt('퍼펙트 스위시!',new THREE.Vector3(RIM.x,0,RIM.z+.6),3.4,'g big');
+    else popAt(words[(Math.random()*words.length)|0],new THREE.Vector3(RIM.x,0,RIM.z+.6),3.4,'o big');
+    if(p.streak>=3){banner(`🔥 ${p.streak}연속 ON FIRE!`,p.ctrl==='ai'?'상대가 불붙었어요':'아무도 못 막아!','#ff7a1a',1.3);SFX.fire();burst(new THREE.Vector3(p.pos.x,1.4,p.pos.z),'#ff7a1a',26,3.5,.9,3);}
+    else if(p.streak===2)banner('2연속!',null,'#ffd23f',.9);
+    const se=$('#s'+p.team);if(se){se.classList.remove('bump');void se.offsetWidth;se.classList.add('bump');}
+  }
   G.phase='scored';G.phaseT=0;G.nextOff=1-p.team;
   if(G.golden&&valid)G.pending='end';
   else if(G.score[p.team]>=G.target)G.pending='end';
@@ -910,8 +927,8 @@ function updBall(dt){
       if(_v.distanceTo(ball.pos)<reach){const p=S.shooter;doBlock(o,p);return;}}
     if(s>=1){
       if(S.made){ball.mode='drop';ball.pos.copy(RIM);ball.vel.set(rand(-.2,.2),-3,rand(-.2,.2));netKick=1;SFX.swish();
-        scored(S.shooter,S.pts,S.valid);if(S.pts>=3)burst(RIM.clone(),'#ffd23f',20,3,.8);}
-      else{ball.mode='loose';const dx=ball.pos.x-RIM.x,dz=ball.pos.z-RIM.z,L=Math.hypot(dx,dz)||1;
+        scored(S.shooter,S.pts,S.valid,S.perfect);if(S.pts>=3)burst(RIM.clone(),'#ffd23f',20,3,.8);}
+      else{if(S.shooter)S.shooter.streak=0;ball.mode='loose';const dx=ball.pos.x-RIM.x,dz=ball.pos.z-RIM.z,L=Math.hypot(dx,dz)||1;
         ball.vel.set(dx/L*rand(1.8,3.6)+rand(-.6,.6),rand(2.4,4.4),dz/L*rand(1.8,3.6)+.5);ball.noPick=.25;rimKick=.6;SFX.rim();
         popAt('노골',new THREE.Vector3(RIM.x,0,RIM.z),3.9,'r');}
       ball.shot=null;
@@ -1355,6 +1372,7 @@ function updCamera(dt){
   const look=_v.set(b.x*.4,1.3,Math.min(b.z,9)*.6+.9);
   if(camSnap){camera.position.copy(camPos);camLook.copy(look);camSnap=false;}
   camera.position.lerp(camPos,Math.min(1,dt*3));camLook.lerp(look,Math.min(1,dt*4));
+  {G.punch=Math.max(0,(G.punch||0)-dt*2.2);const fv=50-G.punch*7;if(Math.abs(camera.fov-fv)>.01){camera.fov=fv;camera.updateProjectionMatrix();}}
   if(G.shake>0){camera.position.x+=rand(-1,1)*G.shake*.3;camera.position.y+=rand(-1,1)*G.shake*.3;G.shake=Math.max(0,G.shake-dt*1.6);}
   camera.lookAt(camLook);
 }
