@@ -95,6 +95,49 @@
   .tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
   .tags span{background:var(--chip);border-radius:6px;padding:4px 9px;font-size:12.5px;font-weight:700}
 
+  /* =========== 친구 · 프로필 =========== */
+  .me{display:flex;align-items:center;gap:8px;height:38px;padding:0 10px 0 4px;border-radius:20px;border:1px solid var(--line);background:var(--panel2);font-weight:800;font-size:14px;flex:0 0 auto;max-width:180px}
+  .me .av{width:30px;height:30px;font-size:18px}
+  .me span:last-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .av{position:relative;display:grid;place-items:center;border-radius:50%;background:var(--chip);flex:0 0 auto}
+  .av.on::after{content:"";position:absolute;right:-1px;bottom:-1px;width:28%;height:28%;min-width:10px;min-height:10px;border-radius:50%;background:var(--green);border:2px solid var(--panel)}
+  .badge{display:inline-grid;place-items:center;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:#e2231a;color:#fff;font-size:11px;font-weight:800}
+  .frow{display:flex;gap:18px;overflow-x:auto;padding:4px 2px 10px;scrollbar-width:thin}
+  .fr{display:flex;flex-direction:column;align-items:center;gap:6px;width:84px;flex:0 0 84px;border:0;background:transparent;padding:0}
+  .fr .av{width:72px;height:72px;font-size:38px;box-shadow:var(--shadow)}
+  .fr b{font-size:13px;max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .fr small{font-size:11px;color:var(--green);font-weight:700;max-width:84px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:-4px}
+  .fr small.off{color:var(--sub)}
+  .fr.add .av{background:transparent;border:2px dashed var(--line);font-size:30px;color:var(--sub)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:var(--shadow)}
+  .addrow{display:flex;gap:8px;flex-wrap:wrap}
+  .addrow input{flex:1;min-width:160px;height:42px;border-radius:8px;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:0 12px;font-size:16px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;font-family:inherit}
+  .gbtn{height:42px;padding:0 16px;border:0;border-radius:8px;background:var(--green);color:#fff;font-weight:800;font-size:14px}
+  .gbtn.gray{background:var(--chip);color:var(--text)}
+  .gbtn.blue{background:var(--blue)}
+  .gbtn.sm{height:34px;padding:0 12px;font-size:13px}
+  .gbtn:disabled{opacity:.45;cursor:not-allowed}
+  .mycode{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;color:var(--sub);font-size:14px}
+  .mycode b{font-size:22px;letter-spacing:.18em;color:var(--text)}
+  .flist{display:grid;gap:8px}
+  .fitem{display:flex;align-items:center;gap:12px;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line)}
+  .fitem .av{width:46px;height:46px;font-size:26px}
+  .fitem .tx{flex:1;min-width:0}
+  .fitem .tx b{display:block;font-size:15px}
+  .fitem .tx small{color:var(--sub);font-size:13px}
+  .fitem .tx small.on{color:var(--green);font-weight:700}
+  .fbtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+  .msg{min-height:20px;margin-top:8px;font-size:14px;font-weight:700}
+  .msg.ok{color:var(--green)}.msg.err{color:#e2231a}
+  .pop{position:fixed;right:16px;bottom:16px;z-index:60;display:flex;flex-direction:column;gap:8px;max-width:min(360px,calc(100vw - 32px))}
+  .pop .fitem{box-shadow:0 10px 30px rgba(0,0,0,.25);animation:pop .2s ease-out}
+  .avs{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin:10px 0}
+  .avs button{aspect-ratio:1;border-radius:12px;border:2px solid transparent;background:var(--chip);font-size:24px}
+  .avs button.on{border-color:var(--green)}
+  .sheet{padding:20px}
+  .sheet h3{margin:0 0 12px;font-size:20px}
+  .playing{color:var(--green);font-weight:700}
+
   /* =========== 휴대폰 =========== */
   .bnav{display:none}
   @media (max-width:820px){
@@ -104,6 +147,9 @@
     .grid{grid-template-columns:repeat(2,1fr);gap:14px 12px}
     .dtop{grid-template-columns:1fr}
     .stats{grid-template-columns:repeat(2,1fr)}
+    .me span:last-child{display:none}.me{padding:0 4px}
+    .pop{left:16px;right:16px;bottom:74px}
+    .avs{grid-template-columns:repeat(6,1fr)}
     .bnav{display:flex;position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--panel);border-top:1px solid var(--line);height:62px}
     .bnav button{flex:1;border:0;background:transparent;font-size:11px;font-weight:700;color:var(--sub);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px}
     .bnav button span{font-size:20px}
@@ -116,12 +162,14 @@
   <a class="logo" href="./"><i>b</i><span>blip</span></a>
   <label class="search">🔍<input id="q" type="search" placeholder="게임 검색" autocomplete="off"></label>
   <button class="tbtn" id="theme" title="밝게 / 어둡게">🌙</button>
+  <button class="me" id="meBtn" title="내 프로필"><span class="av" id="meAva">😺</span><span id="meNick">나</span></button>
 </header>
 
 <div class="layout">
   <aside class="side">
     <button class="nav on" data-v="home"><span class="ic">🏠</span>홈</button>
     <button class="nav" data-v="all"><span class="ic">🎮</span>모든 게임<span class="n" id="nAll"></span></button>
+    <button class="nav" data-v="friends"><span class="ic">👥</span>친구<span class="n" id="nFr"></span></button>
     <button class="nav" data-v="fav"><span class="ic">⭐</span>즐겨찾기<span class="n" id="nFav"></span></button>
     <button class="nav" data-v="recent"><span class="ic">🕒</span>최근 플레이<span class="n" id="nRec"></span></button>
     <div class="sideFoot">© blip company<br>모든 게임 무료 · 설치 없음</div>
@@ -133,11 +181,14 @@
 <nav class="bnav">
   <button class="on" data-v="home"><span>🏠</span>홈</button>
   <button data-v="all"><span>🎮</span>게임</button>
+  <button data-v="friends"><span>👥</span>친구</button>
   <button data-v="fav"><span>⭐</span>즐겨찾기</button>
   <button data-v="recent"><span>🕒</span>최근</button>
 </nav>
 
 <div class="ov" id="ov"><div class="det" id="det"></div></div>
+<div class="pop" id="pop"></div>
+<script src="../common/blip.js" data-game="hub" data-ui="none"></script>
 
 <script>
 /* ===================== 게임 목록 =====================
@@ -176,9 +227,8 @@ const GENRES = ['전체', ...new Set(GAMES.map(g => g.genre))];
 
 /* ===================== 내 기록 (이 브라우저에만 저장) ===================== */
 const KEY = 'blip_hub_v1';
-let ME = { fav: [], recent: [], dark: false };
-try { ME = Object.assign(ME, JSON.parse(localStorage.getItem(KEY) || '{}')); } catch (e) {}
-const saveMe = () => { try { localStorage.setItem(KEY, JSON.stringify(ME)); } catch (e) {} };
+const ME = BLIP.me;               // 프로필·즐겨찾기·최근 기록 (blip.js와 같은 저장소)
+const saveMe = () => BLIP.saveMe();
 const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const G = id => GAMES.find(g => g.id === id);
 
@@ -216,7 +266,8 @@ function localInfo(id) {
 let view = 'home', genre = '전체', query = '', openId = null, curTab = 'about';
 function tile(g) {
   const fav = ME.fav.includes(g.id), li = localInfo(g.id);
-  const online = g.id === 'catjump' && LIVE.cjOnline ? `<span class="on">● ${LIVE.cjOnline}명 접속 중</span>` : '';
+  const n = playing(g.id);
+  const online = n ? `<span class="on">● ${n}명 플레이 중</span>` : '';
   return `<button class="tile" data-open="${g.id}">
     <div class="thumb" style="background-image:url(${g.sq})">${fav ? '<span class="fav">⭐</span>' : ''}<span class="play">▶</span></div>
     <div class="tname">${g.icon} ${esc(g.name)}</div>
@@ -233,6 +284,8 @@ function render() {
   document.getElementById('nAll').textContent = GAMES.length;
   document.getElementById('nFav').textContent = fav.length || '';
   document.getElementById('nRec').textContent = rec.length || '';
+  const nr = FR.reqs.length, nOn = FR.list.filter(f => f.online).length;
+  document.getElementById('nFr').innerHTML = nr ? `<span class="badge">${nr}</span>` : (nOn ? `<span class="playing">● ${nOn}</span>` : (FR.list.length || ''));
   document.querySelectorAll('[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === view));
   const chips = `<div class="chips">${GENRES.map(x => `<button class="chip ${genre === x ? 'on' : ''}" data-g="${x}">${x}</button>`).join('')}</div>`;
   if (query.trim()) {
@@ -240,11 +293,14 @@ function render() {
   }
   if (view === 'home') {
     m.innerHTML = `<div class="hello"><div class="ava">🎮</div><div><h1>어서 오세요!</h1><small>blip에서 바로 플레이할 수 있는 게임 ${GAMES.length}개</small></div></div>
+      <div class="sec" id="homeFriends">${homeFriendsHTML()}</div>
       ${rec.length ? `<div class="sec"><div class="sech"><h2>🕒 이어서 플레이</h2></div>${grid(rec.slice(0, 6))}</div>` : ''}
       <div class="sec"><div class="sech"><h2>🔥 추천 게임</h2><span>blip이 만든 게임</span></div>${chips}${grid(filtered(GAMES), '이 장르의 게임이 아직 없어요')}</div>
       ${fav.length ? `<div class="sec"><div class="sech"><h2>⭐ 즐겨찾기</h2></div>${grid(fav)}</div>` : ''}`;
   } else if (view === 'all') {
     m.innerHTML = `<div class="sec"><div class="sech"><h2>🎮 모든 게임</h2><span>${GAMES.length}개</span></div>${chips}${grid(filtered(GAMES), '이 장르의 게임이 아직 없어요')}</div>`;
+  } else if (view === 'friends') {
+    m.innerHTML = friendsViewHTML(); bindFriendsView();
   } else if (view === 'fav') {
     m.innerHTML = `<div class="sec"><div class="sech"><h2>⭐ 즐겨찾기</h2></div>${grid(fav, '아직 즐겨찾기한 게임이 없어요.<br>게임을 열고 ☆ 즐겨찾기를 눌러 보세요.')}</div>`;
   } else {
@@ -270,6 +326,7 @@ function openDetail(id, tab) {
       <div><div class="dtitle">${g.icon} ${esc(g.name)}</div><div class="by">만든 곳 <b>@blip</b> · ${esc(g.genre)}</div>
         <button class="bigplay" data-play="${g.id}" title="플레이">▶</button>
         <div class="drow"><button class="sbtn ${fav ? 'on' : ''}" id="dfav">${fav ? '⭐ 즐겨찾기됨' : '☆ 즐겨찾기'}</button><button class="sbtn" id="dshare">🔗 링크 복사</button></div>
+        <div class="drow"><button class="sbtn" data-invpick="${g.id}">👥 친구 초대</button></div>
         ${li ? `<div style="margin-top:12px;color:var(--sub);font-size:14px">${esc(li)}</div>` : ''}
       </div></div>
     <div class="tabs"><button class="tab ${curTab === 'about' ? 'on' : ''}" data-tab="about">정보</button><button class="tab ${curTab === 'mine' ? 'on' : ''}" data-tab="mine">내 기록</button></div>
@@ -286,9 +343,132 @@ function openDetail(id, tab) {
 function closeDetail() { openId = null; document.getElementById('ov').classList.remove('show'); }
 function play(id) {
   const g = G(id); if (!g) return;
-  ME.recent = [id, ...ME.recent.filter(x => x !== id)].slice(0, 12); saveMe();
-  location.href = g.url;
+  BLIP.go(id);
 }
+
+/* ===================== 친구 · 멀티플레이 ===================== */
+const FR = { list: [], reqs: [], invs: [], users: {}, loaded: false };
+const GNAME = id => BLIP.GAMES[id] ? BLIP.GAMES[id].icon + ' ' + BLIP.GAMES[id].name : '';
+/** 실제로 지금 그 게임을 하고 있는 사람 수 (가짜 숫자 없음) */
+function playing(id) {
+  let n = 0; for (const k in FR.users) { const u = FR.users[k]; if (u && u.game === id && BLIP.isOnline(u)) n++; }
+  if (id === 'catjump' && LIVE.cjOnline) n = Math.max(n, LIVE.cjOnline);
+  return n;
+}
+function statusText(f) { return f.online ? (f.game ? GNAME(f.game) + ' 플레이 중' : '허브에 있어요') : '오프라인'; }
+function homeFriendsHTML() {
+  const list = FR.list.slice(0, 12);
+  return `<div class="sech"><h2>👥 친구 ${FR.list.length ? `(${FR.list.length})` : ''}</h2>${FR.reqs.length ? `<button class="chip" data-v="friends">친구 요청 ${FR.reqs.length}개 <span class="badge">${FR.reqs.length}</span></button>` : ''}</div>
+    <div class="frow">${list.map(f => `<button class="fr" data-friend="${f.code}"><span class="av ${f.online ? 'on' : ''}">${f.ava}</span><b>${esc(f.nick)}</b><small class="${f.online ? '' : 'off'}">${f.online ? (f.game ? BLIP.GAMES[f.game].name : '온라인') : '오프라인'}</small></button>`).join('')}
+      <button class="fr add" data-v="friends"><span class="av">＋</span><b>친구 추가</b></button></div>`;
+}
+function friendItem(f) {
+  return `<div class="fitem"><span class="av ${f.online ? 'on' : ''}">${f.ava}</span><div class="tx"><b>${esc(f.nick)}</b><small class="${f.online ? 'on' : ''}">${esc(statusText(f))} · ${f.code}</small></div>
+    <div class="fbtns">${f.online && f.game ? `<button class="gbtn sm" data-follow="${f.code}" data-game="${f.game}">따라 들어가기</button>` : ''}<button class="gbtn sm blue" data-invfriend="${f.code}">초대</button><button class="gbtn sm gray" data-unfriend="${f.code}">삭제</button></div></div>`;
+}
+function friendsListHTML() {
+  return `${FR.reqs.length ? `<div class="sech"><h2>📨 받은 친구 요청</h2></div><div class="flist">${FR.reqs.map(r => `<div class="fitem"><span class="av">${r.ava}</span><div class="tx"><b>${esc(r.nick)}</b><small>코드 ${r.code}</small></div><div class="fbtns"><button class="gbtn sm" data-accept="${r.code}">수락</button><button class="gbtn sm gray" data-decline="${r.code}">거절</button></div></div>`).join('')}</div><div style="height:22px"></div>` : ''}
+    <div class="sech"><h2>내 친구</h2><span>${FR.list.filter(f => f.online).length}명 접속 중 · 전체 ${FR.list.length}명</span></div>
+    <div class="flist">${FR.list.length ? FR.list.map(friendItem).join('') : `<div class="empty">${FR.loaded ? '아직 친구가 없어요. 위에서 친구 코드로 추가해 보세요!' : '친구 목록을 불러오는 중…'}</div>`}</div>`;
+}
+function friendsViewHTML() {
+  return `<div class="sec"><div class="sech"><h2>👥 친구</h2></div>
+    <div class="card"><b>친구 추가</b><div style="color:var(--sub);font-size:14px;margin:4px 0 10px">친구의 6자리 코드를 넣으면 친구 요청을 보내요.</div>
+      <div class="addrow"><input id="addCode" maxlength="6" placeholder="친구 코드" autocomplete="off"><button class="gbtn" id="addBtn">요청 보내기</button></div>
+      <div class="msg" id="addMsg"></div>
+      <div class="mycode">내 친구 코드 <b id="myCode">${BLIP.me.code}</b><button class="gbtn sm gray" id="copyCode">복사</button></div></div></div>
+    <div class="sec" id="frList">${friendsListHTML()}</div>`;
+}
+function bindFriendsView() {
+  const inp = document.getElementById('addCode'), msg = document.getElementById('addMsg');
+  const send = async () => {
+    const code = inp.value.trim().toUpperCase(); msg.className = 'msg'; msg.textContent = '보내는 중…';
+    try { const r = await BLIP.requestFriend(code); msg.className = 'msg ok'; msg.textContent = r === 'friends' ? '서로 요청해서 바로 친구가 됐어요!' : `${r}님에게 친구 요청을 보냈어요. 상대가 수락하면 친구가 돼요.`; inp.value = ''; pollFriends(); }
+    catch (e) { msg.className = 'msg err'; msg.textContent = typeof e === 'number' ? '서버에 연결하지 못했어요. 잠시 후 다시 해 보세요.' : (e.message || '보내지 못했어요'); }
+  };
+  document.getElementById('addBtn').onclick = send;
+  inp.onkeydown = e => { if (e.key === 'Enter') send(); };
+  document.getElementById('copyCode').onclick = async e => { try { await navigator.clipboard.writeText(BLIP.me.code); e.target.textContent = '✔ 복사됨'; } catch (x) { prompt('내 친구 코드', BLIP.me.code); } };
+}
+function renderFriendParts() {
+  const h = document.getElementById('homeFriends'); if (h) h.innerHTML = homeFriendsHTML();
+  const l = document.getElementById('frList'); if (l) l.innerHTML = friendsListHTML();
+  // 타일의 '플레이 중' 숫자와 메뉴 배지만 새로 그림 (입력 중인 칸은 건드리지 않음)
+  document.querySelectorAll('.tile').forEach(t => { const id = t.dataset.open, info = t.querySelector('.tinfo'); if (!info) return; const n = playing(id), g = G(id), li = localInfo(id); info.innerHTML = (n ? `<span class="on">● ${n}명 플레이 중</span>` : `<span>${esc(g.genre)}</span>`) + (li ? `<span>${esc(li)}</span>` : ''); });
+  const nr = FR.reqs.length, nOn = FR.list.filter(f => f.online).length;
+  document.getElementById('nFr').innerHTML = nr ? `<span class="badge">${nr}</span>` : (nOn ? `<span class="playing">● ${nOn}</span>` : (FR.list.length || ''));
+  renderPop();
+}
+/** 받은 초대 / 친구 요청 알림 (오른쪽 아래) */
+const popSeen = {};
+function renderPop() {
+  const p = document.getElementById('pop');
+  const items = [];
+  for (const v of FR.invs) items.push(`<div class="fitem"><span class="av">${v.ava}</span><div class="tx"><b>${esc(v.nick)}님의 초대</b><small>${esc(GNAME(v.game))}에서 같이 놀자!</small></div><div class="fbtns"><button class="gbtn sm" data-invgo="${v.code}" data-game="${v.game}">가기</button><button class="gbtn sm gray" data-invno="${v.code}">거절</button></div></div>`);
+  for (const r of FR.reqs) if (!popSeen['r' + r.code]) items.push(`<div class="fitem"><span class="av">${r.ava}</span><div class="tx"><b>${esc(r.nick)}님의 친구 요청</b><small>코드 ${r.code}</small></div><div class="fbtns"><button class="gbtn sm" data-accept="${r.code}">수락</button><button class="gbtn sm gray" data-later="${r.code}">나중에</button></div></div>`);
+  p.innerHTML = items.join('');
+}
+async function pollFriends() {
+  try {
+    const [list, box, users] = await Promise.all([BLIP.friendList(), BLIP.inbox(), BLIP.allUsers()]);
+    FR.list = list; FR.reqs = box.reqs; FR.invs = box.invs; FR.users = users; FR.loaded = true;
+    renderFriendParts();
+    if (openId) { const pick = document.getElementById('invPick'); if (pick) pick.innerHTML = invPickHTML(pick.dataset.game); }
+  } catch (e) { FR.loaded = true; renderFriendParts(); }
+}
+function invPickHTML(game) {
+  const on = FR.list.filter(f => f.online);
+  return FR.list.length ? FR.list.map(f => `<div class="fitem"><span class="av ${f.online ? 'on' : ''}">${f.ava}</span><div class="tx"><b>${esc(f.nick)}</b><small class="${f.online ? 'on' : ''}">${esc(statusText(f))}</small></div><div class="fbtns"><button class="gbtn sm blue" data-invsend="${f.code}" data-game="${game}">초대 보내기</button></div></div>`).join('') + (on.length ? '' : '<p style="color:var(--sub);margin-top:10px">지금 접속 중인 친구가 없어도 초대는 10분 동안 남아 있어요.</p>')
+    : '<div class="empty">아직 친구가 없어요. 👥 친구 메뉴에서 먼저 추가해 보세요.</div>';
+}
+function openInvitePicker(game) {
+  openId = openId || game;
+  document.getElementById('det').innerHTML = `<button class="x" id="dx" title="닫기">✕</button><div class="sheet"><h3>👥 ${esc(GNAME(game))}에 친구 초대</h3><div class="flist" id="invPick" data-game="${game}">${invPickHTML(game)}</div></div>`;
+  document.getElementById('ov').classList.add('show'); document.getElementById('dx').onclick = closeDetail;
+}
+function openProfile() {
+  const me = BLIP.me; let ava = me.ava;
+  document.getElementById('det').innerHTML = `<button class="x" id="dx" title="닫기">✕</button><div class="sheet"><h3>내 프로필</h3>
+    <div style="display:flex;align-items:center;gap:14px"><span class="av on" id="pAva" style="width:72px;height:72px;font-size:40px">${ava}</span><div><div style="color:var(--sub);font-size:13px">친구 코드</div><div style="font-size:24px;font-weight:900;letter-spacing:.18em">${me.code}</div></div></div>
+    <div style="margin-top:16px;font-weight:800">닉네임</div><div class="addrow" style="margin-top:6px"><input id="pNick" maxlength="12" value="${esc(me.nick)}" style="letter-spacing:0;text-transform:none"></div>
+    <div style="margin-top:14px;font-weight:800">아바타</div><div class="avs">${BLIP.AVAS.map(a => `<button data-ava="${a}" class="${a === ava ? 'on' : ''}">${a}</button>`).join('')}</div>
+    <div class="addrow" style="justify-content:flex-end"><button class="gbtn gray" id="pCopy">코드 복사</button><button class="gbtn" id="pSave">저장</button></div><div class="msg" id="pMsg"></div></div>`;
+  document.getElementById('ov').classList.add('show'); document.getElementById('dx').onclick = closeDetail;
+  document.querySelectorAll('[data-ava]').forEach(b => b.onclick = () => { ava = b.dataset.ava; document.querySelectorAll('[data-ava]').forEach(x => x.classList.toggle('on', x === b)); document.getElementById('pAva').textContent = ava; });
+  document.getElementById('pCopy').onclick = async e => { try { await navigator.clipboard.writeText(me.code); e.target.textContent = '✔ 복사됨'; } catch (x) { prompt('내 친구 코드', me.code); } };
+  document.getElementById('pSave').onclick = () => { BLIP.setProfile(document.getElementById('pNick').value, ava); showMe(); const m = document.getElementById('pMsg'); m.className = 'msg ok'; m.textContent = '저장했어요!'; render(); };
+}
+function showMe() { document.getElementById('meAva').textContent = BLIP.me.ava; document.getElementById('meNick').textContent = BLIP.me.nick; }
+async function friendAction(t) {
+  const d = t.dataset;
+  try {
+    if (d.friend) { const f = FR.list.find(x => x.code === d.friend); if (!f) return; view = 'friends'; render(); return; }
+    if (d.follow) { BLIP.go(d.game, d.follow); return; }
+    if (d.invfriend) { const f = FR.list.find(x => x.code === d.invfriend); openFriendInvite(f); return; }
+    if (d.invpick) { openInvitePicker(d.invpick); return; }
+    if (d.invsend) { t.disabled = true; t.textContent = '보내는 중…'; await BLIP.invite(d.invsend, d.game); t.textContent = '✔ 보냈어요'; return; }
+    if (d.unfriend) {
+      if (t.dataset.sure) { await BLIP.removeFriend(d.unfriend); FR.list = FR.list.filter(f => f.code !== d.unfriend); renderFriendParts(); }
+      else { t.dataset.sure = '1'; t.textContent = '정말 삭제'; setTimeout(() => { if (t.isConnected) { delete t.dataset.sure; t.textContent = '삭제'; } }, 3000); }
+      return;
+    }
+    if (d.accept) { t.disabled = true; await BLIP.accept(d.accept); FR.reqs = FR.reqs.filter(r => r.code !== d.accept); popSeen['r' + d.accept] = 1; pollFriends(); return; }
+    if (d.decline) { await BLIP.decline(d.decline); FR.reqs = FR.reqs.filter(r => r.code !== d.decline); renderFriendParts(); return; }
+    if (d.later) { popSeen['r' + d.later] = 1; renderPop(); return; }
+    if (d.invgo) { await BLIP.clearInvite(d.invgo); BLIP.go(d.game, d.invgo); return; }
+    if (d.invno) { await BLIP.clearInvite(d.invno); FR.invs = FR.invs.filter(v => v.code !== d.invno); renderPop(); return; }
+  } catch (e) { t.disabled = false; t.textContent = '다시 시도'; }
+}
+function openFriendInvite(f) {
+  if (!f) return;
+  document.getElementById('det').innerHTML = `<button class="x" id="dx" title="닫기">✕</button><div class="sheet"><h3>${f.ava} ${esc(f.nick)}님을 초대할 게임</h3><div class="flist">${GAMES.map(g => `<div class="fitem"><span class="av" style="background:#000 url(${g.sq}) center/cover"></span><div class="tx"><b>${g.icon} ${esc(g.name)}</b><small>${esc(g.genre)}</small></div><div class="fbtns"><button class="gbtn sm blue" data-invsend="${f.code}" data-game="${g.id}">초대 보내기</button></div></div>`).join('')}</div></div>`;
+  document.getElementById('ov').classList.add('show'); document.getElementById('dx').onclick = closeDetail;
+}
+document.addEventListener('click', e => {
+  const t = e.target.closest('[data-friend],[data-follow],[data-invfriend],[data-invpick],[data-invsend],[data-unfriend],[data-accept],[data-decline],[data-later],[data-invgo],[data-invno]');
+  if (t) { e.stopPropagation(); friendAction(t); }
+}, true);
+document.getElementById('meBtn').onclick = openProfile;
 
 /* ===================== 클릭 / 입력 ===================== */
 document.addEventListener('click', e => {
@@ -304,7 +484,7 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(
 function applyTheme() { document.documentElement.classList.toggle('dark', !!ME.dark); document.getElementById('theme').textContent = ME.dark ? '☀️' : '🌙'; }
 document.getElementById('theme').onclick = () => { ME.dark = !ME.dark; saveMe(); applyTheme(); };
 
-applyTheme(); render(); loadCatJump();
+applyTheme(); showMe(); render(); loadCatJump(); pollFriends(); setInterval(pollFriends, 6000);
 </script>
 </body>
 </html>

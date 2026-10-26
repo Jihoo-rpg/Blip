@@ -326,7 +326,7 @@ var FIREBASE_URL='https://cat-jump-3afbb-default-rtdb.firebaseio.com';
 <script>
 (function(){
 'use strict';
-const APP_VER='2026-10-26-0930';
+const APP_VER='2026-10-26-1000';
 const W=180;let H=320;
 const LX=16,RX=164,MX=90,FPX=24,CH=132,SEG=160,GRAV=820,CLING=10,GROUND_Y=-13;const CAT_SC=.8;
 let S=2;const sn=v=>Math.round(v*S)/S;
@@ -2398,8 +2398,12 @@ PANELS.online=function(){
  return['🌐 온라인',tabs+off+h];
 };
 const CODECH='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+/* blip 허브와 친구 코드·친구 목록 공유 */
+function hubCode(){try{const h=JSON.parse(localStorage.getItem('blip_hub_v1')||'{}');return /^[A-Z0-9]{6}$/.test(h.code||'')?h.code:'';}catch(e){return '';}}
+function mergeHubFriends(){try{const h=JSON.parse(localStorage.getItem('blip_hub_v1')||'{}');let ch=false;if(!save.nick&&h.nick){save.nick=String(h.nick).slice(0,10);ch=true;}for(const f of (h.friends||[])){if(!/^[A-Z0-9]{6}$/.test(f.code||'')||f.code===save.fcode)continue;if(!save.friends.some(x=>x.code===f.code)){save.friends.push({code:f.code,nick:String(f.nick||'친구').slice(0,10),best:0});ch=true;}}if(ch)persist();}catch(e){}}
 const mkCode=n=>Array.from({length:n},()=>CODECH[Math.random()*CODECH.length|0]).join('');
-if(!save.fcode){save.fcode=mkCode(6);persist();}
+if(!save.fcode){save.fcode=hubCode()||mkCode(6);persist();}
+mergeHubFriends();
 function addFriend(code){code=String(code||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,6);
  if(code.length!==6){toast('친구 코드는 6자리예요');return;}if(code===save.fcode){toast('내 코드예요!');return;}
  if(save.friends.some(f=>f.code===code)){toast('이미 친구예요');return;}
@@ -2434,7 +2438,7 @@ function banDevice(){BANNED_DEV=true;try{localStorage.setItem('nyangjump_ban2','
  d.innerHTML='<div style="font-size:calc(var(--u)*26)">🚫</div><b>이용이 정지된 기기예요</b><small style="opacity:.75;font-size:calc(var(--u)*6.5)">규칙 위반(핵 사용)으로 이 기기에서는 냥냥 점프를 할 수 없어요.</small>';stage.appendChild(d);}
 function applySave(s){const fresh=JSON.parse(JSON.stringify(DEF));for(const k in fresh)save[k]=fresh[k];
  for(const k in s){if(DEF[k]&&typeof DEF[k]==='object'&&!Array.isArray(DEF[k]))Object.assign(save[k],s[k]);else if(s[k]!==undefined)save[k]=s[k];}
- if(!BREED[save.breed])save.breed='cheese';if(!OUTFIT[save.outfit])save.outfit='none';if(!save.fcode)save.fcode=mkCode(6);}
+ if(!BREED[save.breed])save.breed='cheese';if(!OUTFIT[save.outfit])save.outfit='none';if(!save.fcode)save.fcode=hubCode()||mkCode(6);}
 async function hashPw(pw,salt){const d=new TextEncoder().encode(salt+'|nyang|'+pw);const h=await crypto.subtle.digest('SHA-256',d);return Array.from(new Uint8Array(h)).map(b=>b.toString(16).padStart(2,'0')).join('');}
 const normId=s=>String(s||'').trim().toLowerCase();
 onPersist=()=>{if(!FB||!session)return;clearTimeout(cloudT);cloudT=setTimeout(()=>{fbReq('users/'+session.id+'/save','PUT',save).catch(()=>{});},1500);};
@@ -2916,9 +2920,11 @@ window.addEventListener('keydown',e=>{const k=(e.key||'').toLowerCase(),mod=e.me
 /* 개발자 도구 자동 감지 제거 (오탐 많음) */
 let verShown=false;async function verCheck(){if(verShown||location.protocol==='file:')return;try{const t=await fetch(location.pathname+'?v='+Date.now(),{cache:'no-store'}).then(r=>r.text());const m=t.match(/APP_VER='([^']+)'/);if(m&&m[1]!==APP_VER){if(state==='home'&&!curPanel&&!TR&&!VS&&!EV){toast('🔄 새 버전으로 업데이트 중…');setTimeout(()=>location.replace(location.pathname+'?v='+Date.now()),1200);verShown=true;return;}verShown=true;const d=document.createElement('button');d.textContent='🔄 새 버전이 나왔어요! 눌러서 새로고침';d.style.cssText='position:absolute;left:50%;bottom:calc(var(--u)*80);transform:translateX(-50%);z-index:60;background:#ffcc22;border:var(--o) solid #2a1626;border-radius:calc(var(--u)*4);padding:calc(var(--u)*3) calc(var(--u)*5);font-family:inherit;font-size:calc(var(--u)*7);box-shadow:0 var(--o) 0 #2a1626;white-space:nowrap';d.onclick=()=>{location.replace(location.pathname+'?v='+Date.now());};stage.appendChild(d);}}catch(e){}}
 setTimeout(verCheck,6000);setInterval(()=>{if(['home','over'].includes(state)){if(verShown&&state==='home'&&!curPanel&&!TR&&!VS&&!EV){verShown=false;}verCheck();}},45000);
+(function(){const fc=(new URLSearchParams(location.search).get('follow')||'').toUpperCase();if(!/^[A-Z0-9]{6}$/.test(fc)||fc===save.fcode)return;if(!save.friends.some(x=>x.code===fc)){save.friends.push({code:fc,nick:'친구',best:0});persist();}setTimeout(()=>{if(state==='home'&&!curPanel){onlineTab='friend';openPanel('online');}},2600);})();
 initOnline().then(accInit).then(()=>seasonSync()).then(()=>{titlesSync(true);if(SEASON.n<=AUTO_END_SEASON)setTimeout(autoSeasonEnd,2000+Math.random()*3000);checkTop();setInterval(checkTop,15000);checkBanned();setInterval(checkBanned,30000);svSync().then(()=>{liveTick();setInterval(liveTick,1500);trReqTick();setInterval(trReqTick,2000);});evTick();setInterval(evTick,4000);setInterval(svSync,60000);}).catch(()=>{});
 requestAnimationFrame(frame);
 })();
 </script>
+<script src="../common/blip.js" data-game="catjump"></script>
 </body>
 </html>
