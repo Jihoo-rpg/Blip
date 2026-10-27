@@ -317,6 +317,9 @@ kbd{font-family:var(--body);font-weight:700;font-size:12px;background:var(--pane
 <div id="netTag" hidden></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="lib/GLTFLoader.js"></script>
+<script src="lib/SkeletonUtils.js"></script>
+<script src="lib/RoomEnvironment.js"></script>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
@@ -384,6 +387,11 @@ if(!save||typeof save!=='object')save={tickets:3,coins:0,owned:{},active:null};
 function persist(){try{localStorage.setItem(SKEY,JSON.stringify(save));}catch(e){}}
 const ownedList=()=>CHARS.filter(c=>save.owned[c.id]);
 
+/* 색 관리: 코드에 적힌 색(sRGB)을 정확하게 → 현실 조명에서도 원래 색 그대로 */
+{const P=THREE.Color.prototype,sh=P.setHex,ss=P.setStyle;let inner=false;
+ P.setHex=function(h){sh.call(this,h);if(!inner)this.convertSRGBToLinear();return this;};
+ P.setStyle=function(st){inner=true;try{ss.call(this,st);}finally{inner=false;}return this.convertSRGBToLinear();};
+ const CT=THREE.CanvasTexture;THREE.CanvasTexture=function(...a){const t=new CT(...a);t.encoding=THREE.sRGBEncoding;return t;};THREE.CanvasTexture.prototype=CT.prototype;}
 /* ---------------- AUDIO ---------------- */
 let AC=null,muted=false;
 function audioOn(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}if(AC&&AC.state==='suspended')AC.resume();}
@@ -414,12 +422,15 @@ const SFX={
 const renderer=new THREE.WebGLRenderer({canvas:$('#c'),antialias:true});
 renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+// 현실 같은 색·빛: sRGB 출력 + 영화 톤매핑 + 주변 반사광
+renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=.82;renderer.physicallyCorrectLights=false;
 const scene=new THREE.Scene();
+let ENVMAP=null;try{if(THREE.RoomEnvironment){const pm=new THREE.PMREMGenerator(renderer);ENVMAP=pm.fromScene(new THREE.RoomEnvironment(),.04).texture;}}catch(e){}
 scene.background=new THREE.Color('#0d0a1c');scene.fog=new THREE.Fog('#0d0a1c',30,70);
-const lobby=new THREE.Scene();let activeScene=lobby;
+const lobby=new THREE.Scene();let activeScene=lobby;if(ENVMAP){scene.environment=ENVMAP;lobby.environment=ENVMAP;}
 const camera=new THREE.PerspectiveCamera(50,1,.1,200);
 camera.position.set(0,9,22);
-function resize(){const w=window.innerWidth,h=window.innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<1?68:50;camera.updateProjectionMatrix();}
+function resize(){const w=window.innerWidth,h=window.innerHeight;renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<1?68:50;camera.userData.fov=camera.fov;camera.updateProjectionMatrix();}
 window.addEventListener('resize',resize);resize();
 
 scene.add(new THREE.HemisphereLight(0xb7a8ff,0x3a2412,.62));
@@ -461,7 +472,7 @@ function courtTexture(){
   c.save();c.translate(X(0),Z(10.8));c.fillStyle='rgba(255,250,240,.12)';c.font=`${1.1*S}px "Black Han Sans", sans-serif`;c.textAlign='center';c.textBaseline='middle';c.fillText('레전드',0,0);c.restore();
   const t=new THREE.CanvasTexture(cv);t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t;
 }
-let floorMat=new THREE.MeshStandardMaterial({map:courtTexture(),roughness:.5,metalness:.05});
+let floorMat=new THREE.MeshStandardMaterial({map:courtTexture(),roughness:.32,metalness:.0,envMapIntensity:1.3});
 const floor=new THREE.Mesh(new THREE.PlaneGeometry(20,20),floorMat);
 floor.rotation.x=-Math.PI/2;floor.position.set(0,0,7);floor.receiveShadow=true;scene.add(floor);
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{floorMat.map=courtTexture();floorMat.needsUpdate=true;});
@@ -514,9 +525,9 @@ function ballTexture(){const cv=document.createElement('canvas');cv.width=256;cv
   return new THREE.CanvasTexture(cv);}
 const ballMesh=new THREE.Mesh(new THREE.SphereGeometry(.12,24,16),new THREE.MeshStandardMaterial({map:ballTexture(),roughness:.65}));
 // 잘 보이게: 공을 크게 + 검은 테두리 + 살짝 빛나게
-ballMesh.scale.setScalar(2.3);ballMesh.material.emissive=new THREE.Color(0xff6a00);ballMesh.material.emissiveIntensity=.22;
+ballMesh.scale.setScalar(1.85);ballMesh.material.emissive=new THREE.Color(0xff6a00);ballMesh.material.emissiveIntensity=.22;
 {const ol=new THREE.Mesh(new THREE.SphereGeometry(.12,20,14),new THREE.MeshBasicMaterial({color:0x1a0a02,side:THREE.BackSide}));ol.scale.setScalar(1.13);ballMesh.add(ol);}
-const ballLift=y=>y<.36?(.36-Math.max(.12,y))/.24*.156:0;
+const ballLift=y=>y<.32?(.32-Math.max(.12,y))/.2*.102:0;
 ballMesh.castShadow=true;scene.add(ballMesh);
 const ball={pos:new THREE.Vector3(0,.12,10),vel:new THREE.Vector3(),mode:'loose',holder:null,shot:null,noPick:0,lastBounce:0,lastTeam:0};
 
@@ -560,6 +571,7 @@ function shirtTex(ch,back){
   return new THREE.CanvasTexture(cv);
 }
 function buildChar(ch,teamColor){
+  if(HUMAN.ready)return buildHuman(ch,teamColor);
   const L=ch.look,mats=[];
   const M=(c,map)=>{const m=new THREE.MeshStandardMaterial({color:map?0xffffff:c,map:map||null,roughness:.42,metalness:0});mats.push(m);return m;};
   const B=(w,h,d,m)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.castShadow=true;o.receiveShadow=true;return o;};
@@ -602,13 +614,202 @@ function buildChar(ch,teamColor){
   return {root,body,legL,legR,armL,armR,head,mats,ring,ind,aura,ice};
 }
 
+/* ---------------- 실사 사람 캐릭터 ----------------
+   진짜 사람 얼굴·손(3D 스캔 아바타) + 사람 비율 몸(유니폼·반바지·팔다리) + 뼈대 애니메이션.
+   예전 블록 캐릭터의 팔/다리/머리 움직임(armL, legL …)을 그대로 받아서 진짜 뼈대로 옮겨요. */
+const HUMAN={tpl:null,ready:false,list:[]};
+const SKIN_TONES=['#f0c8a8','#c98f6b','#8a5638','#e3b08c','#5c3a28','#d9a27c','#a86b47','#f5d3b8'];
+function humanTone(ch){const i=CHARS.indexOf(ch);return SKIN_TONES[(i<0?0:i)%SKIN_TONES.length];}
+function loadHuman(){
+  if(!THREE.GLTFLoader||!THREE.SkeletonUtils)return;
+  new THREE.GLTFLoader().load('assets/human.glb',g=>{
+    const s=g.scene;s.updateMatrixWorld(true);
+    s.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;o.frustumCulled=false;}});
+    // 머리 크기·위치(머리 뼈 기준) 재기 → 머리카락을 딱 맞게
+    let headMesh=null,hb=null;s.traverse(o=>{if(o.isBone&&o.name==='Head')hb=o;if(o.isMesh&&/Head/.test(o.name)&&!/Headwear/.test(o.name))headMesh=o;});
+    if(headMesh&&hb){headMesh.geometry.computeBoundingBox();const bb=headMesh.geometry.boundingBox.clone().applyMatrix4(headMesh.matrixWorld);
+      const inv=new THREE.Matrix4().copy(hb.matrixWorld).invert();const ctr=bb.getCenter(new THREE.Vector3()),top=new THREE.Vector3(ctr.x,bb.max.y,ctr.z);
+      // 얼굴만(목 제외): 위쪽 60% 기준
+      const hh=bb.max.y-bb.min.y,cW=new THREE.Vector3(ctr.x,bb.max.y-hh*.3,ctr.z-(bb.max.z-bb.min.z)*.06);
+      HUMAN.headC=cW.applyMatrix4(inv);HUMAN.headTop=top.applyMatrix4(inv);HUMAN.headR=(bb.max.x-bb.min.x)*.5;}
+    HUMAN.tpl=s;HUMAN.ready=true;humanRefresh();
+  },undefined,e=>console.warn('human model',e));
+}
+function jerseyTex(ch){
+  const L=ch.look,cv=document.createElement('canvas');cv.width=512;cv.height=256;const c=cv.getContext('2d');
+  c.fillStyle=L.jersey;c.fillRect(0,0,512,256);
+  // 원단 결
+  for(let i=0;i<1400;i++){c.fillStyle=`rgba(${Math.random()<.5?'255,255,255':'0,0,0'},${Math.random()*.05})`;c.fillRect(Math.random()*512,Math.random()*256,2,2);}
+  // 목·팔 라인
+  c.fillStyle=L.trim;c.fillRect(0,0,512,10);c.fillRect(0,246,512,10);
+  const num=String(ch.num||'0');c.textAlign='center';c.textBaseline='middle';
+  c.font='900 92px "Black Han Sans", Impact, sans-serif';
+  // 앞(정면)과 뒤 번호
+  [[384,num],[128,num]].forEach(([x,t],k)=>{c.lineWidth=10;c.strokeStyle=L.trim;c.strokeText(t,x,k?122:132);c.fillStyle='#fff';c.fillText(t,x,k?122:132);});
+  c.font='700 26px sans-serif';c.fillStyle='#fff';c.fillText(String(ch.name||'').slice(0,8),128,58);
+  const t=new THREE.CanvasTexture(cv);t.encoding=THREE.sRGBEncoding;t.anisotropy=4;return t;
+}
+function buildHuman(ch,teamColor){
+  const L=ch.look,mats=[],tone=humanTone(ch);
+  const root=new THREE.Group(),body=new THREE.Group();root.add(body);
+  const model=THREE.SkeletonUtils.clone(HUMAN.tpl);body.add(model);
+  // 크기: 예전 캐릭터 키(약 2.25)에 맞추기
+  const SC=1.2;model.scale.setScalar(SC);
+  const bones={};model.traverse(o=>{if(o.isBone)bones[o.name]=o;});
+  const skinC=new THREE.Color(tone),baseSkin=new THREE.Color('#e7b9a0');
+  const tint=new THREE.Color(Math.min(1.15,skinC.r/baseSkin.r),Math.min(1.15,skinC.g/baseSkin.g),Math.min(1.15,skinC.b/baseSkin.b));
+  model.traverse(o=>{
+    if(!o.isMesh)return;
+    const n=o.name,mn=o.material&&o.material.name||'';
+    if(/Outfit_Top|Outfit_Bottom|Headwear|Beard/.test(n+mn)||n==='Mesh'){o.visible=false;return;}
+    o.material=o.material.clone();mats.push(o.material);
+    if(/Skin|Body/.test(mn))o.material.color.copy(tint);
+    if(/Footwear/.test(mn)){o.material.color.set(L.shoe||'#ffffff');o.material.map=null;o.material.roughness=.45;}
+  });
+  const M=(c,o)=>{const m=new THREE.MeshStandardMaterial(Object.assign({color:c,roughness:.62,metalness:0},o||{}));mats.push(m);return m;};
+  const skinM=M(tone,{roughness:.55}),shortM=M(L.shorts,{roughness:.7}),trimM=M(L.trim,{roughness:.6});
+  const jerM=M('#ffffff',{map:jerseyTex(ch),roughness:.75,side:THREE.DoubleSide});
+  const hairM=M(L.hairColor||'#1b1410',{roughness:.85});
+  // 뼈대에 붙는 몸 부분
+  const seg=(boneName,childName,r0,r1,mat,from=0,to=1,flat=1)=>{
+    const b=bones[boneName],c=bones[childName];if(!b||!c)return null;
+    const v=c.position.clone(),len=v.length();
+    const g=new THREE.CylinderGeometry(r1,r0,len*(to-from),18,1,false);g.translate(0,len*(from+to)/2,0);
+    const mesh=new THREE.Mesh(g,mat);mesh.castShadow=true;mesh.receiveShadow=true;mesh.frustumCulled=false;
+    mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),v.normalize());if(flat!==1)mesh.scale.set(1,1,flat);
+    b.add(mesh);
+    const cap=(r,t)=>{const s=new THREE.Mesh(new THREE.SphereGeometry(r,16,12),mat);s.position.copy(c.position).multiplyScalar(t);s.castShadow=true;s.frustumCulled=false;b.add(s);};
+    if(from===0)cap(r0,0);if(to===1)cap(r1,1);
+    return mesh;
+  };
+  const sides=[['Left',1],['Right',-1]];
+  for(const [S] of sides){
+    seg(S+'Arm',S+'ForeArm',.06,.047,skinM);            // 위팔 (민소매)
+    seg(S+'ForeArm',S+'Hand',.046,.032,skinM,0,.92);    // 아래팔
+    seg(S+'UpLeg',S+'Leg',.105,.088,shortM,-.05,.8);     // 반바지
+    seg(S+'UpLeg',S+'Leg',.074,.056,skinM,.75,1);        // 무릎
+    seg(S+'Leg',S+'Foot',.058,.038,skinM,0,.93);        // 종아리
+    const fb=bones[S+'Leg'];if(fb){const sock=new THREE.Mesh(new THREE.CylinderGeometry(.04,.04,.1,14),trimM);const fv=bones[S+'Foot'].position.clone();sock.position.copy(fv).multiplyScalar(.9);sock.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),fv.normalize());fb.add(sock);}
+  }
+  // 몸통(유니폼) — 엉덩이에서 어깨까지
+  {const sp=bones.Spine,neck=bones.Neck;if(sp&&neck){
+    const prof=[[.165,-.06],[.17,.04],[.165,.16],[.175,.28],[.19,.38],[.17,.44],[.1,.48]].map(([r,y])=>new THREE.Vector2(r,y));
+    const g=new THREE.LatheGeometry(prof,28);const m=new THREE.Mesh(g,jerM);m.scale.set(1,1,.62);m.castShadow=true;m.frustumCulled=false;
+    m.rotation.y=Math.PI/2;bones.Spine.add(m);
+    // 어깨 근육
+    for(const [S] of sides){const a=bones[S+'Arm'];if(a){const d=new THREE.Mesh(new THREE.SphereGeometry(.072,16,12),skinM);d.scale.set(1,1.15,1);d.position.copy(bones[S+'ForeArm'].position).multiplyScalar(.06);a.add(d);}}
+  }}
+  // 반바지 허리
+  {const h=bones.Hips;if(h){const g=new THREE.CylinderGeometry(.158,.165,.2,24,1,true);const m=new THREE.Mesh(g,shortM);m.scale.set(1,1,.72);m.position.y=-.01;m.castShadow=true;m.frustumCulled=false;h.add(m);
+    const band=new THREE.Mesh(new THREE.CylinderGeometry(.16,.16,.035,24,1,true),trimM);band.scale.set(1,1,.72);band.position.y=.09;h.add(band);
+    const crotch=new THREE.Mesh(new THREE.SphereGeometry(.14,16,10),shortM);crotch.scale.set(1.05,.7,.72);crotch.position.y=-.07;h.add(crotch);}}
+  // 머리카락
+  {const hd=bones.Head,top=bones.HeadTop_End;if(hd&&top){
+    const cx=(HUMAN.headC||top.position.clone().multiplyScalar(.5)).clone(),R=(HUMAN.headR||.09)*1.0,H=R*2.2,hs=L.hair;
+    const shell=(rs=1.0,phi=1.15)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(R*rs,24,14,0,Math.PI*2,0,phi),hairM);m.position.copy(cx).add(new THREE.Vector3(0,-R*.12,-R*.06));m.scale.set(1.06,1.0,1.12);hd.add(m);return m;};
+    if(hs==='cap'){shell(1.06,1.3).material=trimM;const v=new THREE.Mesh(new THREE.CylinderGeometry(R*.9,R*.9,.012,20,1,false,-Math.PI/2,Math.PI),trimM);v.position.copy(cx).add(new THREE.Vector3(0,H*.12,R*.55));v.scale.set(1,1,.9);hd.add(v);}
+    else if(hs==='flat'){shell(1.03,1.25);const f=new THREE.Mesh(new THREE.CylinderGeometry(R*.95,R*1.0,H*.28,20),hairM);f.position.copy(cx).add(new THREE.Vector3(0,H*.4,-H*.02));hd.add(f);}
+    else if(hs==='long'){shell(1.04,1.4);const b=new THREE.Mesh(new THREE.BoxGeometry(R*1.8,H*.8,R*.4),hairM);b.position.copy(cx).add(new THREE.Vector3(0,-H*.15,-R*.85));hd.add(b);}
+    else if(hs==='spiky'){shell(1.02,1.2);for(let i=0;i<9;i++){const cn=new THREE.Mesh(new THREE.ConeGeometry(R*.18,H*.32,5),hairM);const a=i/9*Math.PI*2;cn.position.copy(cx).add(new THREE.Vector3(Math.sin(a)*R*.45,R*.92,Math.cos(a)*R*.4-R*.1));cn.rotation.set(Math.cos(a)*.4,0,-Math.sin(a)*.4);hd.add(cn);}}
+    else if(hs==='dreads'){shell(1.03,1.25);for(let i=0;i<16;i++){const a=Math.PI*.15+i/16*Math.PI*1.7;const d=new THREE.Mesh(new THREE.CylinderGeometry(R*.07,R*.06,H*.75,6),hairM);d.position.copy(cx).add(new THREE.Vector3(Math.sin(a)*R*.95,-H*.12,Math.cos(a)*R*.95-R*.05));if(Math.cos(a)>.5)d.position.y+=H*.25;hd.add(d);}}
+    else if(hs==='mohawk'){const m=new THREE.Mesh(new THREE.BoxGeometry(R*.32,H*.35,R*1.7),hairM);m.position.copy(cx).add(new THREE.Vector3(0,R*.95,-R*.1));hd.add(m);}
+    else if(hs==='band'){shell(1.02,1.2);const b=new THREE.Mesh(new THREE.TorusGeometry(R*1.03,R*.09,8,28),trimM);b.rotation.x=Math.PI/2;b.position.copy(cx).add(new THREE.Vector3(0,R*.32,0));hd.add(b);}
+    else if(hs!=='none'){shell(1.02,1.1);} // 짧은 머리
+  }}
+  // 예전 코드가 움직이는 '보이지 않는 관절'(팔·다리·머리)
+  const proxy=(x,y)=>{const g=new THREE.Group();g.position.set(x,y,0);body.add(g);return g;};
+  const legL=proxy(-.21,.84),legR=proxy(.21,.84),armL=proxy(-.63,1.6),armR=proxy(.63,1.6);
+  const head=new THREE.Group();head.position.y=1.95;body.add(head);
+  const ring=new THREE.Mesh(new THREE.RingGeometry(.55,.68,32),new THREE.MeshBasicMaterial({color:teamColor||ch.aura||'#fff',transparent:true,opacity:.75,side:THREE.DoubleSide}));
+  ring.rotation.x=-Math.PI/2;ring.position.y=.02;root.add(ring);
+  const ind=new THREE.Mesh(new THREE.ConeGeometry(.16,.3,4),new THREE.MeshBasicMaterial({color:teamColor||ch.aura||'#fff'}));ind.rotation.x=Math.PI;ind.position.y=2.75;root.add(ind);
+  const aura=new THREE.Mesh(new THREE.CylinderGeometry(.8,.95,2.6,20,1,true),new THREE.MeshBasicMaterial({color:ch.aura||'#fff',transparent:true,opacity:.22,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));
+  aura.position.y=1.2;aura.visible=false;root.add(aura);
+  const ice=new THREE.Mesh(new THREE.BoxGeometry(1.5,2.5,1.1),new THREE.MeshStandardMaterial({color:0xaee6ff,transparent:true,opacity:.5,roughness:.1,emissive:0x2a6a90}));
+  ice.position.y=1.2;ice.visible=false;root.add(ice);
+  // 뼈대 쉬는 자세 기억
+  model.updateMatrixWorld(true);
+  const rest={};for(const k in bones)rest[k]=bones[k].quaternion.clone();
+  // 화면 왼쪽(-x)에 있는 팔이 예전 armL
+  const side=n=>{const v=new THREE.Vector3();bones[n].getWorldPosition(v);body.worldToLocal(v);return v.x;};
+  const L_=side('LeftArm')<0?'Left':'Right',R_=L_==='Left'?'Right':'Left';
+  const H={model,bones,rest,map:{armL:L_,armR:R_,legL:L_,legR:R_},legLen:0};
+  if(bones.LeftLeg&&bones.LeftFoot)H.legLen=(bones.LeftLeg.position.length()+bones.LeftFoot.position.length())*SC;
+  const m={root,body,legL,legR,armL,armR,head,mats,ring,ind,aura,ice,human:H};
+  HUMAN.list.push(m);
+  return m;
+}
+/* 매 프레임: 보이지 않는 관절 방향 → 진짜 뼈대 */
+const _q=new THREE.Quaternion(),_q2=new THREE.Quaternion(),_qb=new THREE.Quaternion(),_v1=new THREE.Vector3(),_v2=new THREE.Vector3(),_v3=new THREE.Vector3(),_e=new THREE.Euler();
+const DOWN=new THREE.Vector3(0,-1,0),UPV=new THREE.Vector3(0,1,0),FWD=new THREE.Vector3(0,0,1);
+function aimBone(H,name,childName,dirBody,qBodyW){
+  const b=H.bones[name],c=H.bones[childName];if(!b||!c)return;
+  b.parent.getWorldQuaternion(_q);                       // 부모 회전(월드)
+  _v1.copy(dirBody).applyQuaternion(qBodyW).applyQuaternion(_q.invert()); // 목표 방향(부모 기준)
+  _v2.copy(c.position).normalize().applyQuaternion(H.rest[name]);          // 쉬는 자세 방향(부모 기준)
+  _q2.setFromUnitVectors(_v2,_v1.normalize());
+  b.quaternion.copy(_q2).multiply(H.rest[name]);
+  b.updateMatrixWorld(true);
+}
+function proxyDir(g,out){_e.copy(g.rotation);return out.copy(DOWN).applyEuler(_e);}
+function poseHuman(m){
+  const H=m.human;if(!H)return;
+  for(const k in H.rest)H.bones[k].quaternion.copy(H.rest[k]);
+  m.body.updateMatrixWorld(true);m.body.getWorldQuaternion(_qb);
+  const B=H.bones;
+  // 몸 숙이기(웅크림): 몸이 내려가면 무릎을 굽혀 발이 바닥에 붙게
+  const crouch=Math.max(0,-m.body.position.y);
+  // 머리
+  if(B.Head){B.Head.parent.getWorldQuaternion(_q);_q2.copy(_qb).multiply(_q3.setFromEuler(m.head.rotation));
+    B.Head.updateMatrixWorld(true);B.Head.getWorldQuaternion(_q4);
+    // 쉬는 자세 대비 회전만 더하기
+    _q5.copy(_q).invert().multiply(_q2).multiply(_q6.copy(_qb).invert()).multiply(_q4);B.Head.quaternion.copy(_q5);B.Head.updateMatrixWorld(true);}
+  const fwd=_v3;
+  for(const key of ['armL','armR']){
+    const S=H.map[key],g=m[key],sx=key==='armL'?-1:1;
+    const d=proxyDir(g,new THREE.Vector3());d.x+=sx*.05;d.normalize();
+    aimBone(H,S+'Arm',S+'ForeArm',d,_qb);
+    const up=Math.max(0,d.y+.15);
+    fwd.set(0,0,1);
+    const f=d.clone().multiplyScalar(1).addScaledVector(UPV,up*.9).addScaledVector(fwd,.32*(1-Math.min(1,up))).normalize();
+    aimBone(H,S+'ForeArm',S+'Hand',f,_qb);
+  }
+  const ll=H.legLen||1,a=crouch>0?Math.acos(Math.max(.2,1-crouch/ll)):0;
+  for(const key of ['legL','legR']){
+    const S=H.map[key],g=m[key];
+    const d=proxyDir(g,new THREE.Vector3());
+    if(a){d.applyAxisAngle(new THREE.Vector3(1,0,0),-a);}
+    aimBone(H,S+'UpLeg',S+'Leg',d,_qb);
+    const bend=.1+.55*Math.abs(g.rotation.x)+2*a;
+    const s=d.clone().applyAxisAngle(new THREE.Vector3(1,0,0),bend).normalize();
+    aimBone(H,S+'Leg',S+'Foot',s,_qb);
+  }
+}
+const _q3=new THREE.Quaternion(),_q4=new THREE.Quaternion(),_q5=new THREE.Quaternion(),_q6=new THREE.Quaternion();
+function poseAllHumans(){
+  const L=HUMAN.list;let w=0;
+  for(let i=0;i<L.length;i++){const m=L[i];let r=m.root,inScene=false;while(r){if(r.isScene){inScene=r===activeScene;break;}r=r.parent;}
+    if(inScene)poseHuman(m);
+    if(m.root.parent||m._keep)L[w++]=m;}
+  L.length=w;
+}
+/* 모델을 다 받으면 블록 캐릭터를 사람으로 바꾸기 */
+function humanRefresh(){
+  try{buildLobbyAvatar();}catch(e){}
+  try{PED.forEach((P,i)=>refreshPedestal(i));}catch(e){}
+  try{makePortraits();}catch(e){}
+  try{for(const code in LOB.others)buildOther(LOB.others[code]);}catch(e){}
+  try{G.players.forEach(p=>{const old=p.model;const nm=buildChar(p.char,TEAMC[p.team]);const par=old.root.parent;if(par){par.remove(old.root);par.add(nm.root);}p.model=nm;});}catch(e){}
+  try{if(typeof setupHUD==='function'&&G.phase!=='lobby')setupHUD();}catch(e){}
+}
+
 /* portraits */
 function makePortraits(){
   try{
-    const r=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});r.setPixelRatio(1);r.setSize(240,280);
+    const r=new THREE.WebGLRenderer({antialias:true,alpha:true,preserveDrawingBuffer:true});r.setPixelRatio(1);r.setSize(240,280);r.outputEncoding=THREE.sRGBEncoding;r.toneMapping=THREE.ACESFilmicToneMapping;
     const sc=new THREE.Scene();sc.add(new THREE.HemisphereLight(0xffffff,0x4a3a66,.95));const dl=new THREE.DirectionalLight(0xffffff,.8);dl.position.set(3,4,6);sc.add(dl);
     const cam=new THREE.PerspectiveCamera(27,240/280,.1,50);cam.position.set(1.3,1.9,4.7);cam.lookAt(0,1.35,0);
-    CHARS.forEach(ch=>{const m=buildChar(ch);m.ring.visible=false;m.ind.visible=false;m.root.rotation.y=.32;m.armR.rotation.set(-.45,0,.15);m.armL.rotation.set(.15,0,-.08);m.legL.rotation.x=.15;m.legR.rotation.x=-.15;sc.add(m.root);r.render(sc,cam);ch.portrait=r.domElement.toDataURL();sc.remove(m.root);});
+    CHARS.forEach(ch=>{const m=buildChar(ch);m.ring.visible=false;m.ind.visible=false;m.root.rotation.y=.32;m.armR.rotation.set(-.45,0,.15);m.armL.rotation.set(.15,0,-.08);m.legL.rotation.x=.15;m.legR.rotation.x=-.15;sc.add(m.root);if(m.human){m.root.updateMatrixWorld(true);poseHuman(m);}r.render(sc,cam);ch.portrait=r.domElement.toDataURL();sc.remove(m.root);});
     r.dispose();if(r.forceContextLoss)r.forceContextLoss();
   }catch(e){CHARS.forEach(ch=>ch.portrait='');}
 }
@@ -1043,8 +1244,8 @@ function animate(p,dt){
   m.ring.position.y=.02-p.y/p.scale;
   m.ind.position.y=2.75+Math.sin(G.t*4)*.08;
   // 공 가진 사람: 머리 위 표시가 주황색으로 커짐
-  if(m.ind.userData.c0==null)m.ind.userData.c0=m.ind.material.color.getHex();
-  if(holder!==m.ind.userData.h){m.ind.userData.h=holder;m.ind.material.color.setHex(holder?0xff7a1a:m.ind.userData.c0);m.ind.scale.setScalar(holder?1.7:1);}
+  if(m.ind.userData.c0==null)m.ind.userData.c0=m.ind.material.color.clone();
+  if(holder!==m.ind.userData.h){m.ind.userData.h=holder;if(holder)m.ind.material.color.setHex(0xff7a1a);else m.ind.material.color.copy(m.ind.userData.c0);m.ind.scale.setScalar(holder?1.7:1);}
   const anyUlt=['giant','awaken','paint','inferno','untouch','shadowstep'].some(k=>has(p,k));
   m.aura.visible=anyUlt;if(anyUlt){m.aura.rotation.y+=dt*2;m.aura.material.opacity=.16+Math.sin(G.t*8)*.06;}
   m.ice.visible=has(p,'frozen');
@@ -1372,7 +1573,7 @@ function updCamera(dt){
   const look=_v.set(b.x*.4,1.3,Math.min(b.z,9)*.6+.9);
   if(camSnap){camera.position.copy(camPos);camLook.copy(look);camSnap=false;}
   camera.position.lerp(camPos,Math.min(1,dt*3));camLook.lerp(look,Math.min(1,dt*4));
-  {G.punch=Math.max(0,(G.punch||0)-dt*2.2);const fv=50-G.punch*7;if(Math.abs(camera.fov-fv)>.01){camera.fov=fv;camera.updateProjectionMatrix();}}
+  {G.punch=Math.max(0,(G.punch||0)-dt*2.2);const fv=(camera.userData.fov||50)-G.punch*7;if(Math.abs(camera.fov-fv)>.01){camera.fov=fv;camera.updateProjectionMatrix();}}
   if(G.shake>0){camera.position.x+=rand(-1,1)*G.shake*.3;camera.position.y+=rand(-1,1)*G.shake*.3;G.shake=Math.max(0,G.shake-dt*1.6);}
   camera.lookAt(camLook);
 }
@@ -2122,6 +2323,7 @@ function frame(now){
   net.scale.y=1+Math.sin(netKick*20)*netKick*.35;rimG.rotation.x=Math.sin(rimKick*30)*rimKick*.06;
   updParts(dt);updCamera(dt);
   if(G.phase!=='lobby'&&!$('#hud').hidden)updHUD();
+  poseAllHumans();
   renderer.render(activeScene,camera);
 }
 
@@ -2130,6 +2332,7 @@ makePortraits();
 buildLabels();
 if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>{makePortraits();buildLabels();infoFor=undefined;});
 updLobbyStats();setTouchMode('lobby');camSnap=true;
+loadHuman();
 if(!ownedList().length)setTimeout(()=>toast(`환영해요! 무료 뽑기권 ${save.tickets}장 · 왼쪽 뽑기 머신으로 가 보세요`),700);
 requestAnimationFrame(frame);
 
