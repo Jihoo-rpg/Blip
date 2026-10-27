@@ -378,7 +378,7 @@ function sched(){
 setInterval(sched,25);
 
 /* ---------------- state ---------------- */
-const PERF=.06,OKW=.13,MISS=.16;
+const PERF=.075,OKW=.17,MISS=.2,OVERLOAD=4; // 판정 넓게 · 박자 전에 4번 이상 연타하면 과부하
 const SAVE='twin-orbit-v1';
 let saved={best:{},off:0,prac:false,auto:false};
 try{const s=JSON.parse(localStorage.getItem(SAVE)||'null');if(s)saved=Object.assign(saved,s)}catch(e){}
@@ -391,7 +391,7 @@ function isAuto(){return saved.auto||G.forceAuto}
 function startLevel(wi,custom,auto){
   initAudio();newBus();
   G.wi=wi;G.world=custom||W[wi];G.custom=!!custom;G.forceAuto=!!auto;
-  G.lvl=buildLevel(G.world);G.st={p:0,e:0,l:0,m:0,tooEarly:0};
+  G.lvl=buildLevel(G.world);G.st={p:0,e:0,l:0,m:0,tooEarly:0};G.ovl=0;G.overload=false;
   const tf=G.lvl.tiles[0];
   G.cur=0;G.from=0;G.introEnd=tf.t;G.fx=[];G.pops=[];G.trail=[];G.parts=[];
   G.cam={x:tf.x+.6,y:tf.y};
@@ -414,17 +414,21 @@ function toMenu(){
 function acc(){const s=G.st,tot=s.p+s.e+s.l+s.m;if(!tot)return 100;return Math.max(0,(s.p+.75*(s.e+s.l)-.02*s.tooEarly)/tot*100)}
 function updHud(){$('hudAcc').firstChild.nodeValue=acc().toFixed(2)+'%';$('progBar').style.width=(G.lvl?G.cur/G.lvl.n*100:0)+'%'}
 
-const JC={p:'#ffffff',e:'#ffd36b',l:'#ff9f6e',m:'#ff4d6a',x:'#ff4d6a'};
-const JT={p:'완벽',e:'빠름',l:'느림',m:'놓침',x:'너무 빠름'};
+const JC={p:'#ffffff',e:'#ffd36b',l:'#ff9f6e',m:'#ff4d6a',x:'#ff4d6a',o:'#ff2a3d'};
+const JT={p:'완벽',e:'빠름',l:'느림',m:'놓침',x:'너무 빠름',o:'과부하!'};
 function press(){
   if(G.state!=='play'||isAuto())return;
   const L=G.lvl;if(G.cur>=L.n)return;
   const T=songT(),d=T-L.tiles[G.cur+1].t;
-  if(d<-OKW){if(d>-.24){G.st.tooEarly++;pop(G.cur,'x')}return}
+  if(d<-OKW){
+    // 너무 일찍 계속 누르면 과부하 → 실패
+    G.ovl=(G.ovl||0)+1;if(d>-.3){G.st.tooEarly++;}pop(G.cur,G.ovl>=OVERLOAD-1?'o':'x');
+    if(G.ovl>=OVERLOAD&&!saved.prac){G.overload=true;fail(T);}
+    return}
   advance(Math.abs(d)<=PERF?'p':d<0?'e':'l');
 }
 function advance(j){
-  const L=G.lvl;G.st[j]++;G.cur++;G.trail=[];
+  const L=G.lvl;G.st[j]++;G.cur++;G.trail=[];G.ovl=0;
   const tl=L.tiles[G.cur];G.fx.push({x:tl.x,y:tl.y,i:G.cur,t:performance.now(),c:j==='m'?JC.m:G.world.c[3]});G.parts=G.parts||[];for(let k=0;k<12;k++){const an=Math.random()*6.283,v=1.5+Math.random()*2.5;G.parts.push({x:tl.x,y:tl.y,vx:Math.cos(an)*v,vy:Math.sin(an)*v,life:.5,max:.5,c:j==='m'?JC.m:(k%2?G.world.c[3]:G.world.c[2])})}
   if(j!=='p'||G.cur%8===0)pop(G.cur,j);
   if(j!=='m')hitSound();
@@ -443,13 +447,13 @@ function showResult(ok){
   const w=G.world,s=G.st,a=acc(),cleanClear=ok&&!isAuto()&&!G.custom&&(!saved.prac||s.m===0);
   $('result').hidden=false;
   $('resKicker').textContent=(G.custom?'내 맵':`WORLD ${String(G.wi+1).padStart(2,'0')}`)+' · '+w.name;
-  $('resTitle').textContent=ok?(isAuto()?'자동 재생 끝':'클리어'):'궤도 이탈';
+  $('resTitle').textContent=ok?(isAuto()?'자동 재생 끝':'클리어'):(G.overload?'과부하!':'궤도 이탈');
   $('resAcc').textContent=ok?a.toFixed(2)+'%':Math.floor(G.cur/G.lvl.n*100)+'%';
   $('resRank').textContent=ok?rankOf(a,s):'';
   $('resRank').style.color=w.c[3];
   $('sP').textContent=s.p;$('sE').textContent=s.e;$('sL').textContent=s.l;$('sM').textContent=s.m;
   let note='';
-  if(!ok)note=`${G.lvl.n}칸 중 ${G.cur}칸까지 갔어요. 박자가 계속 밀리면 메뉴의 싱크 보정을 조절해 보세요.`;
+  if(!ok)note=G.overload?`박자보다 너무 빨리 연타해서 과부하가 걸렸어요. ${G.lvl.n}칸 중 ${G.cur}칸까지 갔어요.`:`${G.lvl.n}칸 중 ${G.cur}칸까지 갔어요. 박자가 계속 밀리면 메뉴의 싱크 보정을 조절해 보세요.`;
   else if(isAuto())note='자동 재생 기록은 저장되지 않아요.';
   else if(G.custom)note=`${G.lvl.n}칸짜리 맵을 정확도 ${a.toFixed(2)}%로 깼어요.`;
   else if(saved.prac&&s.m>0)note=`연습 모드에서 ${s.m}번 놓쳤어요. 놓침 없이 끝내면 클리어로 기록돼요.`;
