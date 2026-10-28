@@ -29,6 +29,7 @@
     ball: { name: '쌍성 궤도', icon: '🪐', path: 'balldance/' },
     mudlark: { name: '머드락 섬', icon: '🐄', path: 'mudlark/' },
     hoops: { name: '하프코트 레전드', icon: '🏀', path: 'hoops/' },
+    carcrash: { name: '차를 부수세요', icon: '💥', path: 'carcrash/' },
   };
   const AVAS = ['😺', '🐶', '🦊', '🐼', '🐸', '🐵', '🦁', '🐯', '🐰', '🐻', '🐧', '🦄', '👾', '🤖', '👻', '🐲'];
 
