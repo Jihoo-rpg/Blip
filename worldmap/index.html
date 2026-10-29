@@ -53,6 +53,12 @@
 }
 
 html, body { height: 100%; }
+/* safe areas: same padding the artifact viewer applies, so the page behaves alike in Safari and in the app */
+html { box-sizing: border-box; padding-top: env(safe-area-inset-top, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+body { overscroll-behavior: none; -webkit-text-size-adjust: 100%; }
+#app { padding-left: env(safe-area-inset-left, 0px); padding-right: env(safe-area-inset-right, 0px); }
+#toolbar, #map, .tool, #optbar, .tabs { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+button, .tool, .btn, select, a { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 [hidden] { display: none !important; }
 body { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--ui); font-size: 13px; overflow: hidden; }
 * { box-sizing: border-box; }
@@ -216,10 +222,10 @@ select:focus, input:focus, textarea:focus { border-color: var(--accent); outline
 
 /* ---------- modal ---------- */
 .scrim { position: fixed; inset: 0; background: var(--scrim); z-index: 80; display: grid; place-items: center; padding: 16px; }
-.modal { background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; box-shadow: var(--shadow); width: min(520px, 100%); max-height: calc(100% - 20px); display: grid; grid-template-rows: auto 1fr auto; }
+.modal { background: var(--panel); border: 1px solid var(--line-2); border-radius: 10px; box-shadow: var(--shadow); width: min(520px, 100%); max-height: calc(100vh - 40px); max-height: calc(100dvh - 40px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); display: grid; grid-template-rows: auto 1fr auto; }
 .modal.wide { width: min(780px, 100%); }
 .modal header { padding: 14px 16px 10px; font-weight: 600; font-size: 15px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.modal .mb { padding: 2px 16px 14px; overflow: auto; line-height: 1.55; }
+.modal .mb { padding: 2px 16px 14px; overflow: auto; line-height: 1.55; min-height: 0; overscroll-behavior: contain; }
 .modal footer { padding: 10px 16px 14px; display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; border-top: 1px solid var(--line); }
 .radio { display: flex; gap: 9px; align-items: flex-start; padding: 8px 10px; border: 1px solid var(--line); border-radius: 7px; margin-bottom: 6px; cursor: pointer; }
 .radio:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
@@ -242,7 +248,8 @@ select:focus, input:focus, textarea:focus { border-color: var(--accent); outline
 kbd { font-family: var(--mono); font-size: 11px; background: var(--panel-2); border: 1px solid var(--line-2); border-bottom-width: 2px; border-radius: 4px; padding: 0 5px; }
 
 /* ---------- toast ---------- */
-#toasts { position: fixed; left: 50%; bottom: 60px; transform: translateX(-50%); z-index: 90; display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; width: max-content; max-width: calc(100% - 32px); }
+#toasts { position: fixed; left: 16px; right: 16px; bottom: 60px; z-index: 90; display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; }
+.toast { max-width: 640px; }
 .toast { background: var(--fg); color: var(--bg); padding: 8px 14px; border-radius: 7px; box-shadow: var(--shadow); font-size: 12.5px; animation: tin .18s ease-out; pointer-events: auto; display: flex; gap: 10px; align-items: center; }
 .toast.err { background: var(--danger); color: #fff; }
 .toast button { background: none; border: 1px solid currentColor; color: inherit; border-radius: 5px; padding: 2px 8px; cursor: pointer; font-size: 12px; }
@@ -260,28 +267,111 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--panel-2); bor
 @media (prefers-reduced-motion: reduce) { .toast { animation: none; } }
 
 /* ---------- narrow screens ---------- */
+/* desktop-only / mobile-only bits */
+#btnMenu, #titleChip, .grab, .tool .tl, #optHelp { display: none; }
+.mlist { display: flex; flex-direction: column; }
+.mlist .grp { font-size: 11.5px; color: var(--fg-3); letter-spacing: .05em; padding: 14px 4px 6px; }
+.mlist button { display: flex; align-items: center; gap: 10px; text-align: left; background: none; border: 0; border-bottom: 1px solid var(--line); padding: 13px 4px; font-size: 15px; cursor: pointer; }
+.mlist button:disabled { opacity: .4; }
+.mlist button .chk { width: 16px; color: var(--accent); font-weight: 700; }
+.mlist button .k { margin-left: auto; color: var(--fg-3); font-size: 12px; }
+.warbox { border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--line)); background: var(--danger-soft); border-radius: 8px; padding: 9px 10px; margin-bottom: 8px; }
+.warbox b { color: var(--danger); }
+
+/* ================= phone layout (iPhone first) ================= */
 @media (max-width: 860px) {
-  #main { grid-template-columns: 46px 1fr 0; }
-  #main.panelopen #panel { display: grid; position: fixed; right: 0; top: 44px; bottom: 0; width: min(360px, 92vw); z-index: 40; box-shadow: var(--shadow); }
-  #panel { display: none; }
-  .tool { width: 36px; height: 34px; }
-  .menus { overflow-x: auto; scrollbar-width: none; flex: 1 1 auto; }
-  .menus .menubtn { padding: 6px 6px; }
+  body { font-size: 14px; }
+  #app { grid-template-rows: 50px 1fr; }
+  #topbar { padding: 0 4px; gap: 0; }
+  .brand, #projName, .menus, #panelToggle, #saveState span { display: none; }
+  #btnMenu { display: grid; }
+  #titleChip { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; min-width: 0; flex: 1 1 auto; background: none; border: 0; padding: 2px 6px; border-radius: 8px; text-align: left; cursor: pointer; }
+  #titleChip b { font-size: 14.5px; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  #titleChip span { font-family: var(--mono); font-size: 11px; color: var(--fg-3); }
   .spacer { display: none; }
-  #panelToggle { display: none; }
-  #projName, .brand b { display: none; }
-  .brand { border: 0; padding-right: 0; }
-  #saveState span { display: none; }
-  #coords { display: none; }
-  #optbar input[type=range] { width: 80px; }
+  .iconbtn { width: 40px; height: 40px; }
+  .iconbtn svg { width: 21px; height: 21px; }
+  #saveState { padding: 0 6px; }
+
+  #main, #main.nopanel { display: grid; grid-template-columns: 1fr; grid-template-rows: 1fr auto; }
+  #toolbar { order: 2; flex-direction: row; overflow-x: auto; overflow-y: hidden; border-right: 0; border-top: 1px solid var(--line); padding: 4px 4px 3px; gap: 1px; align-items: stretch; scroll-snap-type: x proximity; }
+  #toolbar .sep { width: 0; height: auto; border-top: 0; border-left: 1px solid var(--line); margin: 8px 3px; flex: none; }
+  .tool { width: 60px; height: 54px; display: flex; flex-direction: column; gap: 4px; align-items: center; justify-content: center; border-radius: 10px; scroll-snap-align: start; }
+  .tool svg { width: 22px; height: 22px; }
+  .tool .tk { display: none; }
+  .tool .tl { display: block; font-size: 10.5px; line-height: 1; white-space: nowrap; }
+
+  #stage { display: block; position: relative; }
+  #mapwrap { position: absolute; inset: 0; }
+  #optbar { position: absolute; left: 8px; right: 8px; bottom: 8px; z-index: 6; border: 1px solid var(--line-2); border-radius: 14px; box-shadow: var(--shadow);
+    flex-wrap: nowrap; overflow-x: auto; gap: 10px; padding: 8px 10px; min-height: 0; background: color-mix(in srgb, var(--panel) 95%, transparent); backdrop-filter: blur(8px); scrollbar-width: none; }
+  #optbar.empty { display: none; }
+  #optbar .hint, #optbar .tname { display: none; }
+  #optHelp { display: grid; flex: none; width: 30px; height: 30px; border-radius: 50%; border: 1px solid var(--line-2); background: none; place-items: center; font-weight: 700; color: var(--fg-2); }
+  #optbar label { font-size: 13px; }
+  #optbar input[type=range] { width: 110px; }
+  #optbar select { max-width: 150px; }
+  #optbar .btn { flex: none; }
+
+  #statusbar { top: 8px; bottom: auto; left: 8px; right: 8px; align-items: flex-start; }
+  #statusbar > .chip:first-child { order: 3; margin-left: auto; flex-direction: column; }
+  #statusbar .spacer { display: none; }
+  #zoomPct { min-width: 0; font-size: 10.5px; padding: 2px 0; }
+  .chip .iconbtn { width: 38px; height: 38px; }
+  #coords, #yearChip { display: none; }
+  #hoverInfo { max-width: calc(100% - 70px); font-size: 13px; }
+  #compareBanner { top: auto; bottom: 74px; font-size: 12.5px; }
+
+  /* right panel becomes a bottom sheet */
+  #panel, #main.nopanel #panel {
+    display: grid; position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 40; height: var(--sheet-h, 52%);
+    grid-template-rows: auto auto 1fr; border: 0; border-top: 1px solid var(--line-2); border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 34px rgba(0, 0, 0, .28); padding-bottom: env(safe-area-inset-bottom, 0px);
+    transition: transform .26s cubic-bezier(.2, .8, .2, 1), height .26s cubic-bezier(.2, .8, .2, 1);
+  }
+  #panel.closed { transform: translateY(calc(100% + 30px)); }
+  #panel.dragging { transition: none; }
+  .grab { display: block; height: 24px; touch-action: none; cursor: grab; }
+  .grab::before { content: ""; display: block; width: 42px; height: 5px; border-radius: 3px; background: var(--line-2); margin: 9px auto 0; }
+  .tabs { touch-action: none; }
+  .tabs button { padding: 10px 4px 11px; font-size: 14px; }
+  #panelBody { padding: 12px 16px 30px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; }
+  .ph h2 { font-size: 21px; }
+  .form { grid-template-columns: 80px 1fr; gap: 9px 10px; }
+  .btn { padding: 9px 12px; font-size: 14px; min-height: 40px; }
+  .btn.sm { padding: 7px 11px; font-size: 13px; min-height: 36px; }
+  .crow { padding: 12px 8px; font-size: 15px; }
+  .tag { padding: 4px 4px 4px 9px; font-size: 13px; }
+  .tag button { font-size: 18px; padding: 0 6px; }
+
+  /* iOS zooms into inputs under 16px — keep them at 16px */
+  input[type=text], input[type=number], select, textarea { font-size: 16px; padding: 7px 9px; }
+  #optbar select { font-size: 16px; padding: 5px 7px; }
+
+  /* dialogs slide up from the bottom */
+  .scrim { place-items: end stretch; padding: 0; }
+  .modal, .modal.wide { width: 100%; max-height: calc(100vh - 30px); max-height: calc(100dvh - 20px - env(safe-area-inset-top, 0px)); border-radius: 18px 18px 0 0; border-bottom: 0; padding-bottom: env(safe-area-inset-bottom, 0px); animation: sheetin .24s cubic-bezier(.2, .8, .2, 1); }
+  .modal header { padding: 16px 16px 8px; font-size: 16px; }
+  .modal footer { gap: 8px; }
+  .modal footer .btn { flex: 1 1 0; justify-content: center; min-height: 46px; font-size: 15px; }
+  .radio { padding: 11px 12px; font-size: 15px; }
+  .plist { grid-template-columns: 1fr 1fr; gap: 8px; }
+  #toasts { top: calc(60px + env(safe-area-inset-top, 0px)); bottom: auto; left: 10px; right: 56px; }
+  #optbar > * { flex: none; }
+  #optbar .note { white-space: nowrap; font-size: 12.5px; }
+  .toast { font-size: 13.5px; padding: 10px 14px; }
 }
+@keyframes sheetin { from { transform: translateY(40px); opacity: .4; } }
 @media (min-width: 861px) { #panelToggleMobile { display: none; } }
+@media (prefers-reduced-motion: reduce) { #panel, .modal { transition: none; animation: none; } }
 </style>
 </head>
 <body>
 <div id="loading">세계 지도를 불러오는 중…</div>
 <div id="app">
   <header id="topbar">
+    <button class="iconbtn" id="btnMenu" title="메뉴" aria-label="메뉴"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <button id="titleChip" aria-label="연표 열기"><b id="titleName">새 세계</b><span id="titleYear">—</span></button>
     <div class="brand">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6c3.6 2.6 9.2 2.6 12.8 0M5.6 18.4c3.6-2.6 9.2-2.6 12.8 0"/></svg>
       <b>월드 아틀라스</b>
@@ -351,6 +441,7 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--panel-2); bor
       </div>
     </section>
     <aside id="panel">
+      <div class="grab" id="sheetGrab" aria-label="정보창 크기 조절"></div>
       <div class="tabs" id="tabs">
         <button data-tab="info" class="on">정보</button>
         <button data-tab="list">국가 목록</button>
@@ -506,7 +597,8 @@ function autoColor(i) { return i < PALETTE.length ? PALETTE[i] : hsl2hex((i * 13
 
 /* ---------- toast ---------- */
 function toast(msg, opts = {}) {
-  const t = el('div', { class: 'toast' + (opts.err ? ' err' : '') }, msg);
+  if (opts.tool) $$('#toasts .toast.ttool').forEach((x) => x.remove());
+  const t = el('div', { class: 'toast' + (opts.err ? ' err' : '') + (opts.tool ? ' ttool' : '') }, msg);
   if (opts.action) t.append(el('button', { onclick: () => { opts.action.fn(); t.remove(); } }, opts.action.label));
   const box = $('#toasts'); box.append(t);
   while (box.children.length > 3) box.firstChild.remove();
@@ -536,7 +628,8 @@ const Modal = {
     document.body.append(scrim);
     const rec = { close, scrim };
     this.stack.push(rec);
-    setTimeout(() => { const f = box.querySelector('input:not([type=hidden]):not([type=radio]):not([type=checkbox]), select, textarea'); f && f.focus(); f && f.select && f.select(); }, 30);
+    // on phones, don't pop the keyboard up the moment a dialog opens
+    if (!matchMedia('(max-width: 860px)').matches) setTimeout(() => { const f = box.querySelector('input:not([type=hidden]):not([type=radio]):not([type=checkbox]), select, textarea'); f && f.focus(); f && f.select && f.select(); }, 30);
     box.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && e.target.tagName === 'INPUT' && buttons.length) { const p = buttons.findIndex((b) => b.primary); if (p >= 0) foot.children[p].click(); }
     });
@@ -1591,6 +1684,7 @@ const View = { tx: 0, ty: 0, s: 1, w: 800, h: 600 };
 const Render = {
   dirty: { theme: true, ter: true, pol: true, occ: true, feat: true, cities: true, screen: true, cmp: true },
   topoPol: null, stats: null, countryEls: new Map(), cityEls: new Map(), labelEls: new Map(), raf: 0,
+  lastT: {},
   compare: null, // { label, owner, land, stats }
   preview: null, // function(g) drawing tool previews in world group
   handles: null, // function(g) drawing screen-space handles
@@ -1605,9 +1699,13 @@ const Render = {
     const d = this.dirty;
     try {
       if (d.theme) { this.applyTheme(); d.theme = false; }
-      if (d.ter) { this.renderTerrain(); d.ter = false; }
-      if (d.pol) { this.renderPolitical(); d.pol = false; d.labels = true; }
-      if (d.occ) { this.renderOcc(); d.occ = false; }
+      // while a finger/mouse is painting, rebuild heavy layers at most every ~80 ms (keeps phones responsive)
+      const now = performance.now(), busy = Input.toolActive; let later = false;
+      const due = (k) => { if (!d[k]) return false; if (busy && now - (this.lastT[k] || 0) < 80) { later = true; return false; } this.lastT[k] = now; return true; };
+      if (due('ter')) { this.renderTerrain(); d.ter = false; }
+      if (due('pol')) { this.renderPolitical(); d.pol = false; }
+      if (due('occ')) { this.renderOcc(); d.occ = false; }
+      if (later) this.schedule();
       if (d.cmp) { this.renderCompare(); d.cmp = false; }
       if (d.feat) { this.renderFeatures(); d.feat = false; }
       if (d.cities) { this.renderCities(); d.cities = false; }
@@ -1796,7 +1894,7 @@ const Render = {
     const { tx, ty, s } = View; const vs = this.vs(); const t = this.theme();
     $('#world').setAttribute('transform', `translate(${f1(tx)} ${f1(ty)}) scale(${s})`);
     // country labels
-    const gl = $('#gLabels'); const used = new Set();
+    const gl = $('#gLabels'); const used = new Set(); const rects = [];
     if (vs.showCountryNames && this.stats) {
       for (const c of activeCountries()) {
         const st = this.stats.get(c.id + 1); if (!st) continue;
@@ -1814,6 +1912,7 @@ const Render = {
         el2.setAttribute('font-size', f1(fs)); el2.setAttribute('letter-spacing', f1(fs * 0.08));
         el2.setAttribute('fill', vs.mode === 'physical' ? t.label : mixHex(c.color, t.label, 0.72));
         el2.setAttribute('stroke', t.halo); el2.setAttribute('stroke-width', Math.max(2, fs * 0.16)); el2.setAttribute('stroke-opacity', 0.85);
+        { const lx = tx + (st.lx + off[0]) * s, ly = ty + (st.ly + off[1]) * s + px * 0.35, wdt = fs * len * 1.08; rects.push([lx - wdt / 2, ly - fs * 0.92, lx + wdt / 2, ly + fs * 0.2]); }
         used.add(c.id);
       }
     }
@@ -1824,7 +1923,14 @@ const Render = {
       if (!show) { g.setAttribute('display', 'none'); continue; }
       g.removeAttribute('display');
       g.setAttribute('transform', `translate(${f1(tx + c.x * s)} ${f1(ty + c.y * s)})`);
-      txt.setAttribute('display', vs.showCityNames && ((cap && s > 0.55) || s > 1.5 || (c.pop > 400000 && s > 0.8)) ? '' : 'none');
+      const isSel = !!(App.sel && App.sel.type === 'city' && App.sel.id === c.id);
+      let nameOn = vs.showCityNames && ((cap && s > 0.55) || s > 1.5 || (c.pop > 400000 && s > 0.8));
+      if (nameOn && !isSel) {
+        // hide a city name that would sit on top of a country name
+        const X = tx + c.x * s, Y = ty + c.y * s, fsz = cap ? 12.5 : 11, x0 = X - 4, x1 = X + 9 + [...c.name].length * fsz, y0 = Y - 9, y1 = Y + 6;
+        for (const r of rects) if (x0 < r[2] && x1 > r[0] && y0 < r[3] && y1 > r[1]) { nameOn = false; break; }
+      }
+      txt.setAttribute('display', nameOn || isSel ? '' : 'none');
       g.classList.toggle('sel', !!(App.sel && App.sel.type === 'city' && App.sel.id === c.id));
     }
     const sc = App.sel && App.sel.type === 'city' ? this.cityEls.get(App.sel.id) : null;
@@ -2159,7 +2265,9 @@ const App = {
     const a = cById(this.activeCid);
     if (!a || a.status === 'fallen') this.activeCid = activeCountries()[0]?.id || 0;
   },
+  featEdit: null,  // feature whose points are being edited
   select(sel, opts = {}) {
+    if (!sel || sel.type !== 'feature' || sel.id !== this.featEdit) this.featEdit = null;
     this.sel = sel;
     if (sel && sel.type === 'country') { const c = cById(sel.id); if (c && c.status !== 'fallen') this.activeCid = sel.id; }
     Render.renderSelection(); Render.invalidate('feat', 'screen');
@@ -2209,9 +2317,13 @@ const IC = {
 };
 const icon = (k) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">${IC[k]}</svg>`;
 
+const TOOL_SHORT = { select: '선택', create: '국가 생성', remove: '국가 삭제', border: '국경', brush: '브러시', eraser: '지우개', lasso: '올가미', fill: '편입', split: '분할', move: '이동', occupy: '점령', city: '도시', capital: '수도', river: '강', mountain: '산맥', continent: '대륙·지형', info: '정보' };
+const isPhone = () => matchMedia('(max-width: 860px)').matches;
+/* touch targets are larger than mouse targets */
+const HR = (px) => (Input.lastType === 'touch' ? Math.round(px * 2.2) : px);
 const Tools = {
   cur: 'select',
-  opt: { brush: 12, terrMode: 'all', eraseOnly: false, landMode: 'land', landClaim: false, lassoAction: 'assign', lassoFilter: 'all', occErase: false, swapWith: 0, growN: 3 },
+  opt: { brush: 12, terrMode: 'all', eraseOnly: false, landMode: 'land', landClaim: false, lassoAction: 'assign', lassoFilter: 'all', occErase: false, swapWith: 0, growN: 3, borderMode: 'move' },
   defs: {},
   order: [
     ['select', '선택', 'V'], ['create', '국가 생성', 'N'], ['remove', '국가 삭제', 'X'], '|',
@@ -2226,6 +2338,11 @@ const Tools = {
     Render.preview = null; Render.handles = this.defs[id].handles ? () => this.defs[id].handles($('#gHandles')) : null;
     $$('.tool').forEach((b) => b.classList.toggle('on', b.dataset.tool === id));
     UI.renderOptbar(); Input.updateCursor(); Render.schedule();
+    if (isPhone() && UI.ready) {
+      if (!['select', 'info'].includes(id)) UI.sheet('closed');
+      const def = this.order.find((t) => t !== '|' && t[0] === id);
+      if (def && this.defs[id].hint && id !== 'select') toast(def[1] + ' — ' + this.defs[id].hint, { ms: 3600, tool: true });
+    }
   },
   get t() { return this.defs[this.cur]; },
   needActive() {
@@ -2239,7 +2356,7 @@ const px2w = (px) => px / View.s;
 
 /* ---- hit tests ---- */
 function hitCity(sx, sy, r = 10) {
-  let best = null, bd = r * r;
+  r = HR(r); let best = null, bd = r * r;
   for (const { c, g } of Render.cityEls.values()) {
     if (g.getAttribute('display') === 'none') continue;
     const [x, y] = Cam.toScreen(c.x, c.y); const d = (x - sx) ** 2 + (y - sy) ** 2;
@@ -2249,7 +2366,7 @@ function hitCity(sx, sy, r = 10) {
 }
 function hitFeature(w, rpx = 7) {
   if (!Render.vs().showFeatures) return null;
-  const r = px2w(rpx); let best = null, bd = Infinity;
+  const r = px2w(Input.lastType === 'touch' ? rpx + 2 : rpx); let best = null, bd = Infinity;
   for (const f of D().features) {
     const [d] = polyDist2(w[0], w[1], f.pts); const lim = (f.type === 'mountain' ? r + 4 : r) ** 2;
     if (d < lim && d < bd) { bd = d; best = f; }
@@ -2258,7 +2375,7 @@ function hitFeature(w, rpx = 7) {
 }
 function hitArc(w, rpx = 9) {
   const topo = Render.topoPol; if (!topo) return null;
-  const r = px2w(rpx); let best = null, bd = r * r;
+  const r = px2w(HR(rpx)); let best = null, bd = r * r;
   for (const a of topo.arcs) {
     const b = a.bb; if (w[0] < b[0] - r || w[0] > b[2] + r || w[1] < b[1] - r || w[1] > b[3] + r) continue;
     const [d] = polyDist2(w[0], w[1], a.s); if (d < bd) { bd = d; best = a; }
@@ -2266,6 +2383,7 @@ function hitArc(w, rpx = 9) {
   return best;
 }
 function hitHandle(pts, sx, sy, r = 8) {
+  r = HR(r);
   for (let k = pts.length / 2 - 1; k >= 0; k--) {
     const [x, y] = Cam.toScreen(pts[2 * k], pts[2 * k + 1]);
     if ((x - sx) ** 2 + (y - sy) ** 2 <= r * r) return k;
@@ -2283,8 +2401,9 @@ function drawHandles(g, pts, { fixedEnds = false, selK = -1, closed = false } = 
   for (let k = 0; k < n; k++) {
     const [x, y] = Cam.toScreen(pts[2 * k], pts[2 * k + 1]);
     const fixed = fixedEnds && (k === 0 || k === n - 1);
-    if (fixed) g.append(sv('rect', { x: f1(x - 4.5), y: f1(y - 4.5), width: 9, height: 9, fill: '#fff', stroke: '#111', 'stroke-width': 1.5, class: 'handle fixed' }));
-    else g.append(sv('circle', { cx: f1(x), cy: f1(y), r: k === selK ? 6 : 4.5, fill: k === selK ? accent : '#fff', stroke: '#111', 'stroke-width': 1.5, class: 'handle' }));
+    const big = isPhone() ? 1.6 : 1;
+    if (fixed) g.append(sv('rect', { x: f1(x - 4.5 * big), y: f1(y - 4.5 * big), width: 9 * big, height: 9 * big, fill: '#fff', stroke: '#111', 'stroke-width': 1.5, class: 'handle fixed' }));
+    else g.append(sv('circle', { cx: f1(x), cy: f1(y), r: (k === selK ? 6 : 4.5) * big, fill: k === selK ? accent : '#fff', stroke: '#111', 'stroke-width': 1.5, class: 'handle' }));
   }
 }
 function previewPath(g, pts, { closed = false, color, fill } = {}) {
@@ -2303,7 +2422,7 @@ T.select = {
   hint: '클릭: 국가·도시·강/산맥 선택 · 드래그: 지도 이동 · 도시 드래그: 위치 이동 · 선택한 강/산맥은 점을 끌어 수정',
   down(w, e, sx, sy) {
     const s = App.sel;
-    if (s && s.type === 'feature') {
+    if (s && s.type === 'feature' && App.featEdit === s.id) {
       const f = featById(s.id); const k = f ? hitHandle(f.pts, sx, sy) : -1;
       if (k >= 0) { Hist.begin('지형선 수정', false); Input.drag = { kind: 'fv', f, k }; return true; }
     }
@@ -2316,14 +2435,14 @@ T.select = {
     if (d.kind === 'city') { d.city.x = f1(clamp(w[0] - d.ox, 0, P.W)); d.city.y = f1(clamp(w[1] - d.oy, 0, P.H)); d.moved = true; Render.schedule(); }
     if (d.kind === 'fv') { d.f.pts[2 * d.k] = f1(w[0]); d.f.pts[2 * d.k + 1] = f1(w[1]); Render.invalidate('feat'); }
   },
-  up() { Hist.end(); UI.refresh(); },
+  up() { const d = Input.drag; Hist.end(); UI.refresh(); if (d && d.kind === 'city' && !d.moved) UI.openPanelMobile(true); },
   click(w, e, sx, sy) {
     const f = hitFeature(w);
     if (f) { App.select({ type: 'feature', id: f.id }); return; }
     const cid = App.ownerAt(w);
     App.select(cid ? { type: 'country', id: cid } : null);
   },
-  handles(g) { const s = App.sel; if (s && s.type === 'feature') { const f = featById(s.id); if (f) drawHandles(g, f.pts); } },
+  handles(g) { const s = App.sel; if (s && s.type === 'feature' && App.featEdit === s.id) { const f = featById(s.id); if (f) drawHandles(g, f.pts); } },
 };
 
 /* ---- create country ---- */
@@ -2392,45 +2511,64 @@ const Border = {
 };
 T.border = {
   cursor: 'pointer',
-  hint: '국경선(해안선 포함)을 클릭해 선택 → 점을 드래그 · 선 위 더블클릭: 점 추가 · 점 클릭 후 Delete 또는 Alt+클릭: 점 삭제. 맞닿은 국가의 국경도 함께 바뀝니다.',
+  hint: '국경선(해안선 포함)을 눌러 선택 → 흰 점을 끌어 이동 · 선 위를 누른 채 끌면 새 점이 생겨요 · 삭제 모드에서 점을 누르면 지워져요. 맞닿은 국가의 국경도 함께 바뀝니다.',
   down(w, e, sx, sy) {
     const s = Border.ses;
     if (s) {
+      const n = s.pts.length / 2;
       const k = hitHandle(s.pts, sx, sy);
       if (k >= 0) {
-        const n = s.pts.length / 2;
-        if (e.altKey) { s.selK = k; Border.deleteSel(); return true; }
-        s.selK = k; Render.schedule();
+        if (e.altKey || Tools.opt.borderMode === 'del') { s.selK = k; Border.deleteSel(); return true; }
+        s.selK = k; Render.schedule(); UI.renderOptbar();
         if (k === 0 || k === n - 1) { toast('끝점은 세 영역이 만나는 교차점이라 고정됩니다'); return true; }
         Input.drag = { kind: 'vertex', k, moved: false }; return true;
+      }
+      if (Tools.opt.borderMode !== 'del') {
+        const [d, si] = polyDist2(w[0], w[1], s.pts);
+        if (d < px2w(HR(9)) ** 2) {
+          // the new point is only created once the press starts dragging
+          Input.drag = { kind: 'vertex', k: -1, si, sx, sy, moved: false }; return true;
+        }
       }
     }
     return 'pan-click';
   },
-  move(w) { const d = Input.drag; const s = Border.ses; if (!d || !s) return; s.pts[2 * d.k] = w[0]; s.pts[2 * d.k + 1] = w[1]; d.moved = true; Render.schedule(); },
-  up() { const d = Input.drag; if (d && d.moved) Border.commit(); },
+  move(w, e, sx, sy) {
+    const d = Input.drag; const s = Border.ses; if (!d || !s) return;
+    if (d.k < 0) {
+      if (Math.hypot(sx - d.sx, sy - d.sy) < 6) return;
+      s.pts.splice(2 * d.si + 2, 0, w[0], w[1]); d.k = d.si + 1; s.selK = d.k;
+    }
+    s.pts[2 * d.k] = w[0]; s.pts[2 * d.k + 1] = w[1]; d.moved = true; Render.schedule();
+  },
+  up(w) {
+    const d = Input.drag;
+    if (d && d.moved) Border.commit();
+    else if (d && d.k < 0) T.border.click(w); // a plain tap on the line: keep / change selection
+    UI.renderOptbar();
+  },
   click(w) {
     const s = Border.ses;
-    if (s && polyDist2(w[0], w[1], s.pts)[0] < px2w(10) ** 2) return; // clicking the selected line keeps the session (double-click adds points)
+    if (s && polyDist2(w[0], w[1], s.pts)[0] < px2w(HR(10)) ** 2) return; // tapping the selected line keeps the selection
     const a = hitArc(w);
     if (a) Border.start(a); else { Border.ses = null; UI.renderOptbar(); Render.schedule(); }
   },
-  dblclick(w, e, sx, sy) {
+  dblclick(w) {
     const s = Border.ses; if (!s) return;
     const [d, si] = polyDist2(w[0], w[1], s.pts);
-    if (d > px2w(10) ** 2) return;
-    s.pts.splice(2 * si + 2, 0, w[0], w[1]); s.selK = si + 1; Render.schedule(); toast('점을 추가했습니다. 끌어서 국경을 바꾸세요');
+    if (d > px2w(HR(10)) ** 2) return;
+    s.pts.splice(2 * si + 2, 0, w[0], w[1]); s.selK = si + 1; Render.schedule(); UI.renderOptbar(); toast('점을 추가했습니다. 끌어서 국경을 바꾸세요');
   },
   handles(g) { if (Border.ses) drawHandles(g, Border.ses.pts, { fixedEnds: true, selK: Border.ses.selK }); },
   leave() { Border.ses = null; },
 };
 
 /* ---- generic brush ---- */
-function brushTool(label, hint, makeFn) {
+function brushTool(label, hint, makeFn, layers = ['pol', 'occ']) {
   return {
     cursor: 'none', brush: true, hint,
-    down(w) { const fn = makeFn(); if (!fn) return false; Hist.begin(label); this.fn = fn; this.last = w; Ops.stamp(w[0], w[1], Tools.opt.brush, fn); Input.drag = { kind: 'brush' }; Render.invalidate('pol', 'ter', 'occ'); return true; },
-    move(w) { if (!this.fn) return; Ops.strokeSeg(this.last[0], this.last[1], w[0], w[1], Tools.opt.brush, this.fn); this.last = w; Render.invalidate('pol', 'ter', 'occ'); },
+    down(w) { const fn = makeFn(); if (!fn) return false; Hist.begin(label); this.fn = fn; this.last = w; Ops.stamp(w[0], w[1], Tools.opt.brush, fn); Input.drag = { kind: 'brush' }; Render.invalidate(...layers); return true; },
+    move(w) { if (!this.fn) return; Ops.strokeSeg(this.last[0], this.last[1], w[0], w[1], Tools.opt.brush, this.fn); this.last = w; Render.invalidate(...layers); },
     up() { this.fn = null; Hist.end(); },
   };
 }
@@ -2445,11 +2583,11 @@ T.eraser = brushTool('영토 지우개', '칠한 곳을 무주지로 되돌립�
 T.occupy = brushTool('점령 지역 표시', '대상 국가(점령국)가 다른 나라 영토를 점령한 지역을 빗금으로 표시합니다. 해제 모드로 점령을 지웁니다. 실제 소유권은 바뀌지 않습니다.', () => {
   if (Tools.opt.occErase) return Ops.occFn(0, true);
   const c = Tools.needActive(); if (!c) return null; return Ops.occFn(c.id, false);
-});
+}, ['occ']);
 T.continent = brushTool('대륙·지형 편집', '땅을 추가해 섬·반도·해안선을 만들거나, 바다·호수로 깎고, 사막·숲·평야 등 지형을 칠합니다.', () => {
   const claim = Tools.opt.landClaim ? (Tools.needActive()?.id || 0) : 0;
   return Ops.landFn(Tools.opt.landMode, claim);
-});
+}, ['pol', 'ter', 'occ']);
 
 /* ---- fill / annex region ---- */
 T.fill = {
@@ -2539,7 +2677,7 @@ T.move = {
    Pointer input
 ---------------------------------------------------------------- */
 const Input = {
-  pointers: new Map(), pan: null, pinch: null, drag: null, space: false, hover: null, toolActive: false,
+  pointers: new Map(), lastType: 'mouse', lastTap: null, pan: null, pinch: null, drag: null, space: false, hover: null, toolActive: false,
   init() {
     const svg = $('#map');
     svg.addEventListener('pointerdown', (e) => this.down(e));
@@ -2548,7 +2686,8 @@ const Input = {
     svg.addEventListener('pointercancel', (e) => this.up(e, true));
     svg.addEventListener('pointerleave', () => { $('#cursor').setAttribute('display', 'none'); $('#cursor2')?.setAttribute('display', 'none'); });
     svg.addEventListener('contextmenu', (e) => e.preventDefault());
-    svg.addEventListener('dblclick', (e) => { const [sx, sy] = this.local(e); const t = Tools.t; if (t.dblclick) t.dblclick(Cam.toWorld(sx, sy), e, sx, sy); });
+    for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
+    svg.addEventListener('dblclick', (e) => { if (this.lastType === 'touch') return; const [sx, sy] = this.local(e); const t = Tools.t; if (t.dblclick) t.dblclick(Cam.toWorld(sx, sy), e, sx, sy); });
     svg.addEventListener('wheel', (e) => {
       e.preventDefault(); const [sx, sy] = this.local(e);
       if (e.ctrlKey || Math.abs(e.deltaY) >= Math.abs(e.deltaX) || e.deltaMode) {
@@ -2561,6 +2700,7 @@ const Input = {
   local(e) { const r = $('#map').getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; },
   down(e) {
     const svg = $('#map');
+    this.lastType = e.pointerType || 'mouse';
     try { svg.setPointerCapture(e.pointerId); } catch (_) {}
     const [sx, sy] = this.local(e);
     this.pointers.set(e.pointerId, { sx, sy });
@@ -2608,13 +2748,23 @@ const Input = {
     const [sx, sy] = this.local(e); const w = Cam.toWorld(sx, sy);
     if (this.pan) {
       const pan = this.pan; this.pan = null; $('#map').classList.remove('c-panning');
-      if (!pan.moved && pan.click && !cancelled) pan.click(w, e);
+      if (!pan.moved && pan.click && !cancelled) {
+        pan.click(w, e);
+        // touch double-tap (iOS does not send dblclick here)
+        if (this.lastType === 'touch') {
+          const now = performance.now(), lt = this.lastTap;
+          if (lt && now - lt.t < 330 && Math.hypot(lt.sx - sx, lt.sy - sy) < 28) { const t = Tools.t; if (t.dblclick) t.dblclick(w, e, sx, sy); this.lastTap = null; }
+          else this.lastTap = { t: now, sx, sy };
+        }
+      }
+      if (this.lastType === 'touch') UI.hoverFade();
       return;
     }
     if (this.toolActive) {
       this.toolActive = false; const t = Tools.t;
       if (cancelled) { if (Hist.cur) Hist.cancel(); t.cancel && t.cancel(); } else t.up && t.up(w, e, sx, sy);
       this.drag = null; Render.schedule();
+      if (this.lastType === 'touch') { $('#cursor').setAttribute('display', 'none'); $('#cursor2')?.setAttribute('display', 'none'); UI.hoverFade(); }
     }
   },
   updateCursor() {
@@ -2625,7 +2775,7 @@ const Input = {
   },
   updateBrushCursor(sx, sy) {
     const c = $('#cursor'); const t = Tools.t;
-    if (!t.brush || this.space) { c.setAttribute('display', 'none'); $('#cursor2')?.setAttribute('display', 'none'); return; }
+    if (!t.brush || this.space || (this.lastType === 'touch' && !this.toolActive)) { c.setAttribute('display', 'none'); $('#cursor2')?.setAttribute('display', 'none'); return; }
     c.removeAttribute('display'); c.setAttribute('cx', sx); c.setAttribute('cy', sy);
     c.setAttribute('r', Math.max(2, Tools.opt.brush * View.s));
     const col = Tools.cur === 'eraser' || (Tools.cur === 'occupy' && Tools.opt.occErase) ? '#e05a4a' : cById(App.activeCid)?.color || '#ffffff';
@@ -2648,7 +2798,7 @@ const UI = {
     for (const t of Tools.order) {
       if (t === '|') { tb.append(el('div', { class: 'sep' })); continue; }
       const [id, name, key] = t;
-      tb.append(el('button', { class: 'tool', 'data-tool': id, title: `${name} (${key})`, 'aria-label': name, html: icon(id) + `<span class="tk">${key}</span>`, onclick: () => Tools.set(id) }));
+      tb.append(el('button', { class: 'tool', 'data-tool': id, title: `${name} (${key})`, 'aria-label': name, html: icon(id) + `<span class="tk">${key}</span><span class="tl">${TOOL_SHORT[id] || name}</span>`, onclick: () => Tools.set(id) }));
     }
     $$('#tabs button').forEach((b) => b.addEventListener('click', () => this.tab(b.dataset.tab)));
     $$('#menus .menubtn').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); this.openMenu(b); }));
@@ -2658,7 +2808,10 @@ const UI = {
     $('#btnSave').onclick = () => Store.save(true);
     $('#btnTheme').onclick = () => this.toggleDark();
     $('#panelToggle').onclick = () => { $('#main').classList.toggle('nopanel'); setTimeout(() => Cam.resize(), 0); };
-    $('#panelToggleMobile').onclick = () => $('#main').classList.toggle('panelopen');
+    $('#panelToggleMobile').onclick = () => this.sheet($('#panel').classList.contains('closed') ? 'half' : 'closed');
+    $('#btnMenu').onclick = () => this.mobileMenu();
+    $('#titleChip').onclick = () => this.tab('year');
+    this.initSheet();
     $('#projName').onclick = () => this.renameProject();
     $('#zIn').onclick = () => Cam.zoomCenter(1.4);
     $('#zOut').onclick = () => Cam.zoomCenter(1 / 1.4);
@@ -2688,8 +2841,58 @@ const UI = {
     $('#btnRedo').title = Hist.redoStack.length ? `다시 실행: ${Hist.redoStack[Hist.redoStack.length - 1].label} (Ctrl+Y)` : '다시 실행 (Ctrl+Y)';
   },
   updateZoom() { $('#zoomPct').textContent = Math.round(View.s * 100) + '%'; },
-  updateHeader() { $('#projName').textContent = P.name; $('#yearLabel').textContent = yearText(D().year) + (D().activeYearId ? '' : ''); },
-  openPanelMobile(open) { if (matchMedia('(max-width: 860px)').matches) $('#main').classList.toggle('panelopen', open); },
+  updateHeader() { $('#projName').textContent = P.name; $('#yearLabel').textContent = yearText(D().year); $('#titleName').textContent = P.name; $('#titleYear').textContent = yearText(D().year); },
+  openPanelMobile(open) { if (!isPhone()) return; if (open) { if (this.sheetState === 'closed') this.sheet('half'); } else this.sheet('closed'); },
+  /* ---- phone bottom sheet: closed / half / full, drag the handle or tabs to resize ---- */
+  sheetState: 'closed',
+  sheetH(state) { const H = $('#app').clientHeight; return state === 'full' ? H - 56 : Math.round(H * 0.5); },
+  sheet(state) {
+    const p = $('#panel'); this.sheetState = state;
+    p.classList.toggle('closed', state === 'closed');
+    if (state !== 'closed') p.style.setProperty('--sheet-h', this.sheetH(state) + 'px');
+  },
+  initSheet() {
+    const p = $('#panel');
+    if (isPhone()) p.classList.add('closed');
+    let drag = null;
+    const start = (e) => {
+      if (!isPhone()) return;
+      drag = { y: e.clientY, h: p.getBoundingClientRect().height, moved: false, id: e.pointerId, target: e.target };
+      p.classList.add('dragging');
+    };
+    const move = (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dy = e.clientY - drag.y; if (Math.abs(dy) > 6 && !drag.moved) { drag.moved = true; try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {} }
+      if (drag.moved) p.style.setProperty('--sheet-h', clamp(drag.h - dy, 60, $('#app').clientHeight - 40) + 'px');
+    };
+    const end = (e) => {
+      if (!drag || e.pointerId !== drag.id) return;
+      p.classList.remove('dragging');
+      if (drag.moved) {
+        const h = p.getBoundingClientRect().height, H = $('#app').clientHeight;
+        this.sheet(h < H * 0.25 ? 'closed' : h < H * 0.72 ? 'half' : 'full');
+      } else if (drag.target.id === 'sheetGrab') this.sheet(this.sheetState === 'full' ? 'half' : 'full');
+      drag = null;
+    };
+    for (const elx of [$('#sheetGrab'), $('#tabs')]) { elx.addEventListener('pointerdown', start); elx.addEventListener('pointermove', move); elx.addEventListener('pointerup', end); elx.addEventListener('pointercancel', end); }
+    matchMedia('(max-width: 860px)').addEventListener('change', (m) => { if (m.matches) this.sheet('closed'); else p.classList.remove('closed'); setTimeout(() => { Cam.resize(); this.renderOptbar(); }, 50); });
+  },
+  hoverFade() { clearTimeout(this.hoverT); this.hoverT = setTimeout(() => { if (Input.lastType === 'touch' && !Input.toolActive) $('#hoverInfo').textContent = ''; }, 2200); },
+  mobileMenu() {
+    const box = el('div', { class: 'mlist' });
+    const groups = [['file', '파일'], ['edit', '편집'], ['view', '보기'], ['country', '국가'], ['war', '전쟁'], ['year', '연표']];
+    let rec;
+    for (const [id, name] of groups) {
+      box.append(el('div', { class: 'grp' }, name));
+      for (const it of this.menuItems(id)) {
+        if (it === '|') continue;
+        if (it.group) { box.append(el('div', { class: 'grp', style: { paddingTop: '6px' } }, it.group)); continue; }
+        box.append(el('button', { disabled: it.disabled, onclick: () => { rec.close(); setTimeout(() => it.fn(), 0); } }, el('span', { class: 'chk' }, it.checked ? '✓' : ''), el('span', {}, it.label)));
+      }
+    }
+    box.append(el('div', { class: 'grp' }, '프로젝트'), el('button', { onclick: () => { rec.close(); this.renameProject(); } }, el('span', { class: 'chk' }), el('span', {}, '이름 변경: ' + P.name)));
+    rec = Modal.open({ title: '메뉴', body: box });
+  },
   hover(w) {
     const x = w[0], y = w[1];
     $('#coords').textContent = `x ${Math.floor(x)} · y ${Math.floor(y)}  (${fmt(x * P.kmPerCell)} km, ${fmt(y * P.kmPerCell)} km)`;
@@ -2761,11 +2964,14 @@ const UI = {
         break;
       case 'border': {
         const s = Border.ses;
+        add(sel([['move', '점 이동 · 추가'], ['del', '점 삭제 모드']], o.borderMode, (v) => { o.borderMode = v; }));
+        if (!s) add(el('span', { class: 'note', style: { margin: 0 } }, '고칠 국경선을 누르세요'));
         if (s) {
           add(el('span', { class: 'note', style: { margin: 0 } }, `선택한 경계: ${Border.label(s.L)} ↔ ${Border.label(s.R)} · 점 ${s.pts.length / 2}개`),
             el('button', { class: 'btn sm', onclick: () => Border.smooth() }, '부드럽게'),
             el('button', { class: 'btn sm', onclick: () => Border.simplify() }, '단순화'),
             el('button', { class: 'btn sm', disabled: s.selK < 0, onclick: () => Border.deleteSel() }, '선택 점 삭제'),
+            el('button', { class: 'btn sm', onclick: () => Hist.undo() }, '되돌리기'),
             el('button', { class: 'btn sm', onclick: () => { Border.ses = null; this.renderOptbar(); Render.schedule(); } }, '선택 해제'));
         }
         break;
@@ -2775,6 +2981,9 @@ const UI = {
     }
     const t = Tools.t;
     if (t && t.hint) ob.append(el('span', { class: 'hint' }, t.hint));
+    const hasOpts = ob.querySelectorAll('label, button, select, .note').length > 0;
+    if (t && t.hint) ob.append(el('button', { id: 'optHelp', title: '도움말', onclick: () => toast(t.hint, { ms: 5000, tool: true }) }, '?'));
+    ob.classList.toggle('empty', !hasOpts);
   },
 
   /* ---------------- menus ---------------- */
@@ -2833,7 +3042,7 @@ const UI = {
       { label: '멸망한 국가 복구…', fn: () => this.tab('list') },
     ];
     if (id === 'war') return [
-      { label: '새 전쟁 기록…', fn: () => this.warDialog() }, { label: '점령 지역 표시 도구', fn: () => Tools.set('occupy') },
+      { label: '⚔️ 전쟁 시작…', fn: () => this.warDialog() }, { label: '점령 지역 표시 도구', fn: () => Tools.set('occupy') },
       { label: '전쟁 · 점령 현황', fn: () => this.tab('war') },
     ];
     if (id === 'year') return [
@@ -2963,6 +3172,19 @@ const UI = {
       el('button', { class: 'btn sm', onclick: () => { App.activeCid = c.id; Tools.opt.lassoAction = 'new'; Tools.set('lasso'); } }, '일부 독립'),
       el('button', { class: 'btn sm', onclick: () => this.mergeDialog(c.id) }, '합병…'),
       el('button', { class: 'btn sm', onclick: () => Cam.fitCountry(c.id) }, '영토로 확대')));
+    b.append(el('div', { class: 'eyebrow' }, '전쟁'));
+    const myWars = D().wars.filter((w) => w.status === '진행 중' && (w.sideA.includes(c.id) || w.sideB.includes(c.id)));
+    for (const w of myWars) {
+      const foes = (w.sideA.includes(c.id) ? w.sideB : w.sideA).map((id) => cById(id)?.name).filter(Boolean).join(', ');
+      b.append(el('div', { class: 'warbox' }, el('div', {}, el('b', {}, '⚔️ ' + w.name), ` · 상대: ${foes}`),
+        el('div', { class: 'btns', style: { marginTop: '8px' } },
+          el('button', { class: 'btn sm', onclick: () => this.startOccupy(c.id) }, '점령지 칠하기'),
+          w.beforeSnap ? el('button', { class: 'btn sm', onclick: () => this.compareWithSnapshot(w.beforeSnap) }, '전후 비교') : null,
+          el('button', { class: 'btn sm primary', onclick: () => this.peaceDialog(w) }, '평화협정'))));
+    }
+    const foeSel = this.countrySelect(0, () => {}, { allowNone: true, noneLabel: '상대 국가 고르기…', exclude: c.id });
+    b.append(el('div', { class: 'btns', style: { alignItems: 'center' } }, foeSel,
+      el('button', { class: 'btn sm danger', onclick: () => this.warDialog(null, { sideA: [c.id], sideB: Number(foeSel.value) ? [Number(foeSel.value)] : [] }) }, '⚔️ 전쟁 시작')));
     b.append(el('div', { class: 'eyebrow' }, '국가 상태'));
     b.append(el('div', { class: 'btns' },
       el('button', { class: 'btn sm danger', onclick: () => this.deleteCountryDialog(c.id) }, '삭제 · 멸망 처리…')));
@@ -3008,7 +3230,9 @@ const UI = {
       form.append(...this.field('굵기', w));
     }
     b.append(form);
-    b.append(el('p', { class: 'note' }, '선택 도구에서 흰 점을 끌어 모양을 고칠 수 있습니다.'));
+    const editing = App.featEdit === f.id;
+    b.append(el('p', { class: 'note' }, editing ? '지도에서 흰 점을 끌어 모양을 고치세요. 다 고치면 "점 편집 끝"을 누르세요.' : '"점 편집"을 누르면 흰 점이 나타나 모양을 고칠 수 있습니다.'));
+    b.append(el('div', { class: 'btns', style: { marginBottom: '8px' } }, el('button', { class: 'btn sm' + (editing ? ' primary' : ''), onclick: () => { App.featEdit = editing ? null : f.id; Tools.set('select'); App.select({ type: 'feature', id: f.id }); if (!editing) this.openPanelMobile(false); } }, editing ? '점 편집 끝' : '점 편집')));
     b.append(el('div', { class: 'btns' },
       el('button', { class: 'btn sm', onclick: () => commit(kind + ' 부드럽게', () => { const a = f.pts.slice(0, 2), z = f.pts.slice(-2); f.pts = chaikin(f.pts, 1).map(f1); f.pts.splice(0, 2, ...a); f.pts.splice(-2, 2, ...z); }, false) }, '부드럽게'),
       el('button', { class: 'btn sm', onclick: () => commit(kind + ' 단순화', () => { f.pts = dpSimplify(f.pts, 2.5); }, false) }, '점 줄이기'),
@@ -3040,10 +3264,10 @@ const UI = {
     draw();
   },
   warPanel(b) {
-    b.append(el('div', { class: 'btns', style: { marginBottom: '12px' } }, el('button', { class: 'btn primary sm', onclick: () => this.warDialog() }, '+ 새 전쟁 기록'), el('button', { class: 'btn sm', onclick: () => Tools.set('occupy') }, '점령 지역 칠하기')));
+    b.append(el('div', { class: 'btns', style: { marginBottom: '12px' } }, el('button', { class: 'btn primary', onclick: () => this.warDialog() }, '⚔️ 전쟁 시작'), el('button', { class: 'btn', onclick: () => Tools.set('occupy') }, '점령 지역 칠하기')));
     b.append(el('p', { class: 'note' }, '전쟁은 자동으로 진행되지 않습니다. 점령 지역을 칠하고, 종전 때 반환·합병을 정하고, 국경은 직접 고친 뒤 연표에 저장하세요. 전쟁을 기록하면 전쟁 전 지도가 함께 저장되어 언제든 전후 국경을 비교할 수 있습니다.'));
     const wars = D().wars.slice().sort((a, z) => (z.status === '진행 중') - (a.status === '진행 중'));
-    if (!wars.length) b.append(el('div', { class: 'empty' }, '기록된 전쟁이 없습니다'));
+    if (!wars.length) b.append(el('div', { class: 'empty' }, '아직 전쟁이 없습니다. "전쟁 시작"을 눌러 교전국을 고르세요.'));
     const chipsOf = (ids) => el('span', { class: 'chips' }, ids.map((id) => cById(id)).filter(Boolean).map((c) => el('span', { class: 'tag', style: { paddingRight: '7px' } }, el('i', { class: 'sw', style: { background: c.color } }), c.name)));
     for (const w of wars) {
       const active = w.status === '진행 중';
@@ -3054,6 +3278,8 @@ const UI = {
         w.notes ? el('p', { class: 'note' }, w.notes) : null,
         el('div', { class: 'btns' },
           w.beforeSnap ? el('button', { class: 'btn sm', onclick: () => this.compareWithSnapshot(w.beforeSnap) }, '전쟁 전 국경과 비교') : null,
+          active ? el('button', { class: 'btn sm', onclick: () => this.startOccupy(w.sideA[0]) }, '점령 칠하기 (' + (cById(w.sideA[0])?.name || 'A') + ')') : null,
+          active ? el('button', { class: 'btn sm', onclick: () => this.startOccupy(w.sideB[0]) }, '점령 칠하기 (' + (cById(w.sideB[0])?.name || 'B') + ')') : null,
           active ? el('button', { class: 'btn sm primary', onclick: () => this.peaceDialog(w) }, '평화협정 · 종전') : null,
           el('button', { class: 'btn sm', onclick: () => this.warDialog(w) }, '편집'),
           el('button', { class: 'btn sm danger', onclick: async () => { if (await Modal.confirm('전쟁 기록 삭제', `"${w.name}" 기록을 삭제할까요? 지도는 바뀌지 않습니다.`, { ok: '삭제', danger: true })) commit('전쟁 기록 삭제', () => { D().wars = D().wars.filter((x) => x.id !== w.id); }, false); } }, '삭제'))));
@@ -3246,21 +3472,34 @@ const UI = {
       } }] });
   },
   autoColors() { commit('색상 자동 지정', () => Ops.autoColors(), false); toast('이웃 국가끼리 겹치지 않게 색을 다시 지정했습니다'); },
-  warDialog(w) {
-    const isNew = !w; w = w || { id: uid(), name: '', sideA: [], sideB: [], start: yearText(D().year), end: '', status: '진행 중', notes: '', treaty: '' };
+  startOccupy(cid) {
+    const c = cById(cid); if (!c) { toast('점령국을 찾을 수 없습니다', { err: true }); return; }
+    App.activeCid = cid; Tools.opt.occErase = false; Tools.set('occupy');
+    toast(`${c.name}의 점령지를 칠하세요 (상대 국가 영토 위에)`, { tool: true });
+  },
+  warDialog(w, preset = {}) {
+    const isNew = !w; w = w || { id: uid(), name: '', sideA: preset.sideA || [], sideB: preset.sideB || [], start: yearText(D().year), end: '', status: '진행 중', notes: '', treaty: '' };
     const name = el('input', { type: 'text', value: w.name, placeholder: '예: 제1차 북방 전쟁' });
     const start = el('input', { type: 'text', value: w.start });
     const pick = (sel) => { const box = el('div', { class: 'chips', style: { maxHeight: '150px', overflow: 'auto' } }); for (const c of activeCountries()) box.append(el('label', { class: 'tag', style: { paddingRight: '8px', cursor: 'pointer' } }, el('input', { type: 'checkbox', value: c.id, checked: sel.includes(c.id) }), el('i', { class: 'sw', style: { background: c.color } }), c.name)); return box; };
     const A = pick(w.sideA), B = pick(w.sideB);
     const notes = el('textarea', {}, w.notes || '');
     const markEnemies = el('label', { class: 'radio' }, el('input', { type: 'checkbox', checked: isNew }), el('div', {}, '양측을 적대국 · "전쟁 중"으로 설정'));
-    Modal.open({ title: isNew ? '새 전쟁 기록' : '전쟁 기록 편집', wide: true,
-      body: el('div', { class: 'form' }, this.field('전쟁 이름', name), this.field('시작 연도', start), el('label', { class: 'full' }, '진영 A'), el('div', { class: 'full' }, A), el('label', { class: 'full' }, '진영 B'), el('div', { class: 'full' }, B), el('label', { class: 'full' }, '메모'), el('div', { class: 'full' }, notes), el('div', { class: 'full' }, markEnemies),
+    const withAllies = el('label', { class: 'radio' }, el('input', { type: 'checkbox', checked: false }), el('div', {}, '동맹국도 함께 참전', el('small', {}, '각 진영 국가의 동맹국을 같은 편에 넣습니다')));
+    // a country can only be on one side
+    const sync = (from, to) => from.addEventListener('change', (e) => { if (e.target.checked) { const o = $(`input[value="${e.target.value}"]`, to); if (o) o.checked = false; } });
+    sync(A, B); sync(B, A);
+    Modal.open({ title: isNew ? '⚔️ 전쟁 시작' : '전쟁 기록 편집', wide: true,
+      body: el('div', { class: 'form' }, this.field('전쟁 이름', name), this.field('시작 연도', start), el('label', { class: 'full' }, '진영 A'), el('div', { class: 'full' }, A), el('label', { class: 'full' }, '진영 B'), el('div', { class: 'full' }, B), el('label', { class: 'full' }, '메모'), el('div', { class: 'full' }, notes), el('div', { class: 'full' }, markEnemies), isNew ? el('div', { class: 'full' }, withAllies) : null,
         isNew ? el('p', { class: 'note full' }, '저장하면 현재 지도가 "전쟁 전 지도"로 함께 보관되어, 나중에 전후 국경을 비교할 수 있습니다.') : null),
-      buttons: [{ label: '취소' }, { label: isNew ? '전쟁 기록' : '저장', primary: true, onClick: async () => {
-        const sa = $$('input:checked', A).map((i) => Number(i.value)), sb = $$('input:checked', B).map((i) => Number(i.value)).filter((x) => !sa.includes(x));
-        if (!name.value.trim()) { toast('전쟁 이름을 입력하세요', { err: true }); return false; }
+      buttons: [{ label: '취소' }, { label: isNew ? '전쟁 시작' : '저장', primary: true, onClick: async () => {
+        let sa = $$('input:checked', A).map((i) => Number(i.value)), sb = $$('input:checked', B).map((i) => Number(i.value)).filter((x) => !sa.includes(x));
         if (!sa.length || !sb.length) { toast('양쪽 진영에 국가를 한 곳 이상 넣으세요', { err: true }); return false; }
+        if (isNew && $('input', withAllies).checked) {
+          const addAllies = (side, other) => { for (const id of [...side]) for (const al of cById(id)?.allies || []) if (!side.includes(al) && !other.includes(al) && cById(al)?.status !== 'fallen') side.push(al); };
+          addAllies(sa, sb); addAllies(sb, sa);
+        }
+        if (!name.value.trim()) name.value = `${cById(sa[0])?.name || ''}–${cById(sb[0])?.name || ''} 전쟁`;
         let snapId = w.beforeSnap;
         if (isNew) { snapId = uid(); await Store.putSnapshot({ id: snapId, projectId: P.id, kind: 'war', year: D().year, label: name.value.trim() + ' 직전', ts: Date.now(), rec: encodeProject(P) }); }
         commit(isNew ? '전쟁 기록' : '전쟁 기록 수정', () => {
@@ -3269,6 +3508,7 @@ const UI = {
           if ($('input', markEnemies).checked) for (const a of sa) for (const b2 of sb) { const x = cById(a), y = cById(b2); if (!x || !y) continue; if (!x.enemies.includes(b2)) x.enemies.push(b2); if (!y.enemies.includes(a)) y.enemies.push(a); x.allies = x.allies.filter((q) => q !== b2); y.allies = y.allies.filter((q) => q !== a); x.warStatus = y.warStatus = '전쟁 중'; }
         }, false);
         this.tab('war');
+        if (isNew) toast(`${w.name} 시작! 점령지를 칠하려면 전쟁 카드의 "점령 칠하기"를 누르세요`, { ms: 4500, action: { label: '점령 칠하기', fn: () => this.startOccupy(sa[0]) } });
       } }] });
   },
   peaceDialog(w) {
@@ -3453,6 +3693,13 @@ function deleteSelection() {
 /* ---------------------------------------------------------------
    Boot, project switching, keyboard shortcuts
 ---------------------------------------------------------------- */
+/* start view: the land, not the empty ocean frame */
+function fitLand() {
+  let x0 = P.W, y0 = P.H, x1 = 0, y1 = 0; const W = P.W;
+  for (let i = 0; i < P.land.length; i++) if (P.land[i] === 1) { const x = i % W, y = (i / W) | 0; if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y; }
+  if (x1 <= x0) { Cam.fit(); return; }
+  Cam.fit(x0, y0, x1 + 1, y1 + 1, isPhone() ? 6 : 24);
+}
 async function openProject(p) {
   P = p; P.settings = P.settings || {}; normalizeData(P.data);
   Hist.clear(); App.sel = null; Border.ses = null; Render.compare = null; Render.preview = null; Render.moveOffset = null;
@@ -3460,7 +3707,7 @@ async function openProject(p) {
   for (const e of Render.countryEls.values()) e.remove(); Render.countryEls.clear();
   for (const e of Render.labelEls.values()) e.remove(); Render.labelEls.clear();
   $$('#defs pattern').forEach((e) => e.remove());
-  Cam.resize(); Render.all(); Render.now(); Cam.fit();
+  Cam.resize(); Render.all(); Render.now(); fitLand();
   Tools.set(Tools.cur || 'select'); UI.refresh(); UI.setSaveState(Store.ok ? 'saved' : 'memory');
   if (Store.ok) Store.meta('lastProject', P.id).catch(() => {});
 }
@@ -3482,6 +3729,7 @@ async function boot() {
   await openProject(p);
   if (fresh) await Store.save();
   $('#loading').hidden = true;
+  UI.ready = true;
   new ResizeObserver(() => { const cx = (View.w / 2 - View.tx) / View.s, cy = (View.h / 2 - View.ty) / View.s; Cam.resize(); if (P) Cam.center(cx, cy); }).observe($('#mapwrap'));
 }
 
