@@ -35,11 +35,12 @@ button{font:inherit;color:inherit}
 .hb kbd{font-family:inherit;font-size:11px;opacity:.65;border:1px solid currentColor;border-radius:4px;padding:0 4px}
 #speed{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));text-align:right;font-family:var(--display);font-size:44px;line-height:.9;text-shadow:0 2px 0 #000}
 #speed small{display:block;font-family:var(--body);font-size:12px;color:var(--muted);font-weight:700}
+#mis{font-size:12px;display:grid;gap:6px;max-width:260px}#mis>b{color:#ffd35a;font-family:var(--display);font-weight:400;font-size:15px}#mis div{display:grid;gap:2px}#mis span{font-weight:700}#mis i{display:block;height:4px;border-radius:3px;background:#ffd35a;min-width:2px}#mis small{color:var(--muted)}
 #zone{font-weight:700;font-size:13px;color:#fff;justify-self:start;padding:5px 10px}
 #prompt{position:absolute;left:50%;bottom:22%;transform:translateX(-50%);font-family:var(--display);font-size:22px;text-align:center;text-shadow:0 2px 0 #000;pointer-events:auto;cursor:pointer}
 #prompt span{display:block;font-family:var(--body);font-size:13px;color:#ffd35a;font-weight:700}
 #prompt b{display:inline-block;background:var(--accent);color:#1d1300;border-radius:8px;padding:0 8px;margin-right:6px}
-#big{position:absolute;left:50%;top:32%;transform:translate(-50%,-50%);font-family:var(--display);font-size:clamp(34px,7vw,74px);text-align:center;text-shadow:0 4px 0 #000,0 0 30px rgba(255,80,40,.5);white-space:nowrap}
+#big{position:absolute;left:50%;top:32%;transform:translate(-50%,-50%);font-family:var(--display);font-size:clamp(30px,6.5vw,70px);text-align:center;text-shadow:0 4px 0 #000,0 0 30px rgba(255,80,40,.5);width:max-content;max-width:94vw;line-height:1.1}
 #earns{position:absolute;left:50%;top:44%;width:0;height:0}
 .earn{position:absolute;left:0;top:0;transform:translate(-50%,0);font-family:var(--display);font-size:26px;color:#ffd35a;text-shadow:0 2px 0 #000;white-space:nowrap;animation:earn 1.4s ease-out forwards}
 .earn small{font-size:15px;color:#fff;margin-left:6px}
@@ -101,8 +102,9 @@ button{font:inherit;color:inherit}
 #tR{left:calc(max(14px,env(safe-area-inset-left)) + 86px);bottom:max(22px,env(safe-area-inset-bottom));width:74px;height:74px}
 #tG{right:max(14px,env(safe-area-inset-right));bottom:max(96px,calc(env(safe-area-inset-bottom) + 96px));width:84px;height:96px}
 #tB{right:calc(max(14px,env(safe-area-inset-right)) + 96px);bottom:max(96px,calc(env(safe-area-inset-bottom) + 96px));width:74px;height:74px}
+#tN{right:max(14px,env(safe-area-inset-right));bottom:max(206px,calc(env(safe-area-inset-bottom) + 206px));width:84px;height:56px}
 #tH{right:calc(max(14px,env(safe-area-inset-right)) + 96px);bottom:max(178px,calc(env(safe-area-inset-bottom) + 178px));width:74px;height:50px;font-size:14px!important}
-@media (max-width:700px){#help{display:none}#money{font-size:24px}#speed{font-size:32px;bottom:200px}}
+@media (max-width:700px){#help{display:none}#mis div{display:none}#money{font-size:24px}#speed{font-size:32px;bottom:200px}}
 </style>
 </head>
 <body>
@@ -116,7 +118,9 @@ button{font:inherit;color:inherit}
       <div class="bar"><i id="dmgBar"></i></div>
       <div id="dmgT"><span>파손 <b id="dmgP">0%</b></span><span id="engT">엔진 정상</span></div>
     </div>
+    <div class="pill" style="display:grid;gap:4px;padding:6px 10px"><div style="font-size:11px;font-weight:700;color:#9fd8ff;display:flex;justify-content:space-between"><span>🚀 부스터 <kbd style="font-family:inherit;font-size:10px;border:1px solid;border-radius:3px;padding:0 3px">Shift</kbd></span></div><div class="bar" style="height:7px"><i id="nitroBar" style="background:linear-gradient(90deg,#5fb8ff,#b8f0ff);width:100%"></i></div></div>
     <div id="zone" class="pill">차고</div>
+    <div id="mis" class="pill"></div>
   </div>
   <div id="tr">
     <a class="hb" href="../hub/" aria-label="허브로 돌아가기">🏠 허브</a>
@@ -136,7 +140,7 @@ button{font:inherit;color:inherit}
   <div id="words"></div>
   <div id="help" class="pill">
     <kbd>W A S D</kbd> 운전 · <kbd>Space</kbd> 핸드브레이크<br>
-    <kbd>E</kbd> 기계 작동 · <kbd>T</kbd> 슬로모션 · <kbd>C</kbd> 카메라<br>
+    <kbd>E</kbd> 기계 작동 · <kbd>T</kbd> 슬로모션 · <kbd>C</kbd> 카메라 · <kbd>Shift</kbd> 부스터<br>
     <kbd>R</kbd> 새 차로 · <kbd>F</kbd> 똑바로 세우기 · 드래그: 시점<br>
     많이 부술수록 돈 · 비싼 차일수록 더 많이 벌어요
   </div>
@@ -145,7 +149,7 @@ button{font:inherit;color:inherit}
 
 <div id="touch" hidden>
   <button id="tL">◀</button><button id="tR">▶</button>
-  <button id="tG">가속</button><button id="tB">후진</button><button id="tH">브레이크</button>
+  <button id="tG">가속</button><button id="tB">후진</button><button id="tH">브레이크</button><button id="tN">🚀</button>
 </div>
 
 <div id="toast" hidden></div>
@@ -238,6 +242,12 @@ const SND={
  horn:()=>{tone(400,.35,'square',.08);tone(500,.35,'square',.06);},
  clank:(m)=>{const v=clamp(m/60,.15,1);noiseBurst(.18+v*.3,.3+v*.4,900+Math.random()*900);tone(180+Math.random()*300,.25,'triangle',.08*v,.5);},
  wreck:()=>{noiseBurst(1.4,1.2,500);noiseBurst(.5,.8,2600);tone(55,1,'sine',.7,.4);for(let i=0;i<8;i++)tone(300+Math.random()*1800,.2,'square',.04,.6,i*.05);},
+ freeze:()=>{noiseBurst(1,.5,7000,'highpass');for(let i=0;i<10;i++)tone(2000+Math.random()*3000,.2,'sine',.04,.7,i*.06);},
+ crackle:()=>noiseBurst(.15,.2,3000,'bandpass'),
+ whoosh:()=>{noiseBurst(1.2,.6,800);tone(90,1,'sawtooth',.06,.5);},
+ boost:()=>{noiseBurst(.6,.5,1500,'bandpass');tone(200,.6,'sawtooth',.08,3);},
+ zap:()=>{noiseBurst(.18,.6,5000,'highpass');tone(1200,.15,'sawtooth',.1,.2);tone(80,.2,'square',.12);},
+ mission:()=>{[523,659,784,1046,1318].forEach((f,i)=>tone(f,.25,'triangle',.14,0,i*.08));},
  train:()=>{tone(320,1.2,'sawtooth',.12);tone(400,1.2,'sawtooth',.1);},
 };
 
@@ -358,7 +368,7 @@ function writeBrk(o){const b=o.b;_o3.position.copy(b.position);_o3.quaternion.co
 function updBrk(){for(const o of BRK){const b=o.b;const sl=b.sleepState===CANNON.Body.SLEEPING;if(sl&&!o.mv)continue;o.mv=!sl;writeBrk(o);
   if(!o.hit&&b.velocity.lengthSquared()>9){o.hit=true;onBrkHit(o);}}}
 function onBrkHit(o){const K=o.K,p=o.b.position;
-  const v=K.value*(car?Math.sqrt(car.def.value):1);earn(v,{name:K.name,mult:1});comboHit(K.name);
+  const v=K.value*(car?Math.sqrt(car.def.value):1);earn(v,{name:K.name,mult:1});comboHit(K.name);if(K.id==='pcar')M_add('pcar');if(K.id==='lamp')M_add('lamp');if(K.id==='hydrant')M_add('hydrant');
   spark(p.x,p.y+.5,p.z,K.sparks||14,K.spk||'#ffcf6a',6,.7);chunks(p.x,p.y+.5,p.z,K.chunks||8,K.chunkCols||['#888','#444'],6);
   if(K.glass){SND.glass();spark(p.x,p.y+1,p.z,40,'#cfe8ff',5,1.2);}
   if(K.water){WATER.push({x:p.x,z:p.z,t:4});}
@@ -472,7 +482,7 @@ for(let x=-40;x<560;x+=30){addBrk('lamp',x,3.5,49.5,Math.PI/2);}
   for(let k=0;k<6;k++)addBrk('pcar',22+k*3.4,.65,28,0,pick(CAR_COLS));for(let k=0;k<8;k++)addBrk('cone',12+k*1.6,.36,8,0);}
 // 나무 (시내 · 연구소 · 실험장 밖)
 for(let i=0;i<220;i++){const x=rand(-WORLD+20,WORLD-20),z=rand(-WORLD+20,WORLD-20);
-  if(x>-360&&x<-40&&Math.abs(z)<312)continue;if(x>-48&&x<368&&z>-312&&z<-82)continue;if(x>50&&x<310&&z>-90&&z<90)continue;if(Math.abs(x)<14||Math.abs(z-40)<14||Math.abs(z+90)<12)continue;if(x>-10&&x<55&&z>0&&z<40)continue;
+  if(x>-360&&x<-40&&Math.abs(z)<312)continue;if(x>-48&&x<368&&z>-312&&z<-82)continue;if(x>368)continue;if(x>50&&x<310&&z>-90&&z<90)continue;if(Math.abs(x)<14||Math.abs(z-40)<14||Math.abs(z+90)<12)continue;if(x>-10&&x<55&&z>0&&z<40)continue;
   tree(x,z,rand(.8,1.6));}
 
 /* ---------- 충돌 실험장 채우기 ---------- */
@@ -534,7 +544,7 @@ flushMerge();
 /* ================= 쾌감 이펙트 ================= */
 // 날아가는 파편 조각 (금속 · 플라스틱 · 유리)
 const CH_MAX=900;const chIM=new THREE.InstancedMesh(new THREE.BoxGeometry(.16,.06,.22),new THREE.MeshStandardMaterial({color:0xffffff,roughness:.5,metalness:.4}),CH_MAX);
-chIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);chIM.castShadow=true;chIM.frustumCulled=false;chIM.count=0;scene.add(chIM);
+chIM.instanceMatrix.setUsage(THREE.DynamicDrawUsage);chIM.castShadow=true;chIM.frustumCulled=false;for(let i=0;i<CH_MAX;i++)chIM.setColorAt(i,new THREE.Color(1,1,1));chIM.count=0;scene.add(chIM);
 const CHS=[];const _cc=new THREE.Color();
 function chunks(x,y,z,n,cols,spd=7){for(let i=0;i<n;i++){if(CHS.length>=CH_MAX)CHS.shift();CHS.push({x,y,z,vx:rand(-1,1)*spd,vy:rand(.4,1.4)*spd,vz:rand(-1,1)*spd,rx:rand(0,6),ry:rand(0,6),wx:rand(-14,14),wy:rand(-14,14),s:rand(.6,2.2),t:0,life:rand(3,6),col:cols[(Math.random()*cols.length)|0]});}}
 function updChunks(dt){let n=0;for(let i=CHS.length-1;i>=0;i--){const c=CHS[i];c.t+=dt;if(c.t>c.life){CHS.splice(i,1);continue;}
@@ -550,7 +560,7 @@ function updRings(dt){for(let i=RINGS.length-1;i>=0;i--){const r=RINGS[i];r.t+=d
   r.m.scale.setScalar((r.ball?1+k*3:1+k*10)*r.size);r.m.material.opacity=(1-k)*(r.ball?.85:.9);}}
 // 화면 번쩍 · 큰 글자 · 콤보
 let combo=0,comboT=0,hitStop=0,fovKick=0;
-function comboHit(){combo++;comboT=1.8;const c=$('#combo');c.hidden=combo<2;if(combo>=2){c.innerHTML=`🔥 COMBO <b>×${combo}</b><small>돈 ×${comboMult().toFixed(1)}</small>`;c.classList.remove('pop');void c.offsetWidth;c.classList.add('pop');}}
+function comboHit(){combo++;comboT=1.8;M_val('combo10',combo);const c=$('#combo');c.hidden=combo<2;if(combo>=2){c.innerHTML=`🔥 COMBO <b>×${combo}</b><small>돈 ×${comboMult().toFixed(1)}</small>`;c.classList.remove('pop');void c.offsetWidth;c.classList.add('pop');}}
 const comboMult=()=>1+Math.min(2,Math.max(0,combo-1)*.12);
 function flashScreen(a=.6,col='#fff'){const f=$('#flash');f.style.background=col;f.style.transition='none';f.style.opacity=a;requestAnimationFrame?0:0;setTimeout(()=>{f.style.transition='opacity .35s';f.style.opacity=0;},30);}
 const WORDS=[[6,['쿵!','퍽!'],'#ffffff',38],[13,['쾅!','콰앙!'],'#ffd35a',52],[22,['콰직!!','우지끈!!'],'#ff9a3a',66],[999,['박살!!!','산산조각!!!','대파괴!!!'],'#ff3b30',84]];
@@ -601,7 +611,7 @@ function cabinTex(col,kind,cracked){return tex(256,128,(c,w,h)=>{c.fillStyle=col
 function buildCar(def){
   const up=S.up[def.id]||{};const eL=up.eng|0,tL=up.tire|0,sL=up.susp|0;
   const car={def,group:new THREE.Group(),defs:[],parts:[],damage:0,engine:1,glass:0,wheelsGone:0};
-  const paint=new THREE.MeshStandardMaterial({color:def.color,metalness:.55,roughness:.32});
+  const paint=new THREE.MeshStandardMaterial({color:def.color,metalness:.55,roughness:.32});car.paint=paint;
   const dark=stdM('#1c1f24',{roughness:.6}),chrome=stdM('#d8dce2',{metalness:.5,roughness:.3});
   const w=def.w,h=def.h,l=def.l;
   // 차체(찌그러짐)
@@ -671,6 +681,7 @@ function recompute(d){const a=d.mesh.geometry.attributes.position.array,o=d.orig
 function carDamage(car){let s=0,m=0;for(const d of car.defs){s+=d.sum;m+=d.n*d.maxD*(d.cabin?.5:.42);}return clamp(s/m,0,1);}
 /** pL: 차 기준 위치, dir: 찌그러지는 방향(차 기준, 단위벡터), S: 세기 */
 function deform(car,pL,dir,Sg,src){
+  if(car.frozen>0)Sg*=2.3;
   const R=Math.min(2.4,.5+Sg*.06);const R2=R*R;let any=false;
   for(const d of car.defs){const m=d.mesh,a=m.geometry.attributes.position.array,o=d.orig;
     const px=pL.x-m.position.x,py=pL.y-m.position.y,pz=pL.z-m.position.z;let ch=false;
@@ -682,7 +693,7 @@ function deform(car,pL,dir,Sg,src){
       a[k]=nx;a[k+1]=ny;a[k+2]=nz;ch=true;}
     if(ch){m.geometry.attributes.position.needsUpdate=true;m.geometry.computeVertexNormals();recompute(d);any=true;}}
   // 부품 떨어지기
-  for(const p of car.parts){if(p.gone)continue;const dd=p.anchor.distanceTo(pL);if(dd<R+.6){p.hp-=Sg*(1-dd/(R+.6))*1.2;if(p.hp<=0)detach(car,p);}}
+  for(const p of car.parts){if(p.gone)continue;const dd=p.anchor.distanceTo(pL);if(dd<R+.6){p.hp-=Sg*(1-dd/(R+.6))*1.2*(car.frozen>0?3:1);if(p.hp<=0)detach(car,p);}}
   // 바퀴
   car.wheels.forEach((wl,i)=>{if(wl.gone)return;const dx=wl.x-pL.x,dz=wl.z-pL.z;if(Math.hypot(dx,dz)<1.1+R*.3&&pL.y<.2){wl.hp=(wl.hp??55)-Sg;if(wl.hp<=0)loseWheel(car,i);}});
   if(any)afterDamage(car,src);
@@ -700,7 +711,8 @@ function crushWorld(car,fn,src,extra=2.2){
 function afterDamage(car,src){
   const nd=carDamage(car),dlt=nd-car.damage;car.damage=nd;
   if(dlt>0){const mult=src&&src.mult||1;earn(dlt*100*12*car.def.value*mult*comboMult(),src);}
-  if(nd>.9&&!car.wrecked){car.wrecked=true;const p=car.ch.position;SND.wreck();shock(p.x,p.y,p.z,3,0xff8040);shock(p.x,p.y+1,p.z,2);flashScreen(.85,'#ffe0b0');hitStop=.12;fovKick=1;shake=1.6;
+  if(src&&src.name&&MACH.some(M=>M.name===src.name)&&!S.mUsed[src.name]){S.mUsed[src.name]=1;M_val('machines',Object.keys(S.mUsed).length);}
+  if(nd>.9&&!car.wrecked){car.wrecked=true;const p=car.ch.position;M_add('wreck');if(car.frozen>0){M_add('frozenWreck');chunks(p.x,p.y+1,p.z,160,['#ffffff','#cdeeff','#9fd8ff','#e8f8ff'],14);bigText('❄️💥 얼음처럼 산산조각!!',1800);}SND.wreck();shock(p.x,p.y,p.z,3,0xff8040);shock(p.x,p.y+1,p.z,2);flashScreen(.85,'#ffe0b0');hitStop=.12;fovKick=1;shake=1.6;
     for(let k=0;k<4;k++){spark(p.x,p.y+1,p.z,80,k%2?'#ffb020':'#ff4a1a',14,1.3,.5);smoke(p.x,p.y+1,p.z,'#3a3a3a',10,2.4,4);}chunks(p.x,p.y+1,p.z,90,[car.def.color,'#222','#999','#cfe8ff'],13);
     const d=document.createElement('div');d.className='word mega';d.textContent='완전 박살!!!';d.style.left='50%';d.style.top='38%';$('#words').appendChild(d);setTimeout(()=>d.remove(),1600);
     earn(400*car.def.value*comboMult(),{name:'완전 박살 보너스',mult:1});car.fire=10;comboHit();}
@@ -736,7 +748,7 @@ function loseWheel(car,i){
 
 /* ================= 돈 ================= */
 let pend=0,pendSrc=null,pendT=0;
-function earn(a,src){if(!(a>0))return;S.money+=a;S.earned+=a;pend+=a;if(src&&src.name)pendSrc=src;updMoney();}
+function earn(a,src){if(!(a>0))return;S.money+=a;S.earned+=a;pend+=a;if(src&&src.name)pendSrc=src;updMoney();if(typeof M_val==='function'&&(S._rt=(S._rt||0)+1)%20===0)M_val('rich',S.earned);}
 function flushEarn(dt){pendT+=dt;if(pendT<.35||pend<1)return;pendT=0;const d=document.createElement('div');d.className='earn';d.innerHTML=`+${fmt(pend)}`+(pendSrc&&pendSrc.name?`<small>${pendSrc.name}${pendSrc.mult&&pendSrc.mult!==1?' ×'+pendSrc.mult:''}</small>`:'');
   d.style.left=rand(-60,60)+'px';$('#earns').appendChild(d);setTimeout(()=>d.remove(),1500);if(pend>200)SND.cash();pend=0;pendSrc=null;persist();}
 function updMoney(){$('#money').textContent=fmt(S.money);}
@@ -770,9 +782,10 @@ const qi=new CANNON.Quaternion();
 function processHits(){
   if(!HITS.length||!car)return;const best={};
   for(const h of HITS){const k=Math.round(h.r.x*2)+','+Math.round(h.r.y*2)+','+Math.round(h.r.z*2);if(!best[k]||best[k].v<h.v)best[k]=h;}
-  HITS.length=0;car.ch.quaternion.conjugate(qi);let maxS=0;
+  HITS.length=0;car.ch.quaternion.conjugate(qi);let maxS=0,maxV=0,hitTarget=false;
   for(const k in best){const h=best[k],o=h.o,ud=(o&&o.userData)||{};
     let mf=1;if(o){if(o.type===CANNON.Body.KINEMATIC)mf=ud.force||1.8;else if(o.mass>0)mf=clamp(o.mass/car.ch.mass,.12,2)*1.2;}
+    if(ud.target)hitTarget=true;maxV=Math.max(maxV,h.v);
     const Sg=(h.v-2.4)*mf*(car.locked?0:1);if(Sg<=.3)continue;
     const lp=qi.vmult(h.r),ld=qi.vmult(h.n);
     const zone=zoneAt(car.ch.position.x,car.ch.position.z);
@@ -781,7 +794,9 @@ function processHits(){
     maxS=Math.max(maxS,Sg);
     const wp=car.ch.position;if(Sg>=maxS-1e-6){car._bx=wp.x+h.r.x;car._by=wp.y+h.r.y;car._bz=wp.z+h.r.z;}spark(wp.x+h.r.x,wp.y+h.r.y,wp.z+h.r.z,Math.min(30,4+Sg),'#ffcf6a',3+Sg*.15,.5);
   }
-  if(maxS>0){bigImpact(car._bx,car._by,car._bz,maxS,car.def.color);if(maxS>6)comboHit();}
+  if(maxS>0){bigImpact(car._bx,car._by,car._bz,maxS,car.frozen>0?'#cdeeff':car.def.color);if(car.frozen>0)chunks(car._bx,car._by,car._bz,Math.min(80,maxS*3),['#ffffff','#cdeeff','#9fd8ff'],8);if(maxS>6)comboHit();
+    const kmh=maxV*3.6;if(kmh>=150)M_add('spd150');if(kmh>=250)M_add('spd250');if(kmh>60){S.bestHit=Math.max(S.bestHit||0,kmh);}
+    if(hitTarget&&car.cannonShot){car.cannonShot=false;M_add('target');bigText('🎯 과녁 명중!!',1800);earn(1500*Math.sqrt(car.def.value),{name:'과녁 명중',mult:1});}}
   if(maxS>0){SND.crash(maxS);shake=Math.max(shake,Math.min(1,maxS/25));if(maxS>16&&S.autoSlow&&slowT<=0&&!slowOn){slowT=1.3;}
     if(maxS>10)smoke(car.ch.position.x,car.ch.position.y,car.ch.position.z,'#8a8a8a',6,1.2,1.5);}
 }
@@ -961,6 +976,168 @@ function explode(x,y,z,src){
   for(const pr of PROPS){const p=pr.b.position,d=Math.hypot(p.x-x,p.z-z);if(d<14){pr.b.wakeUp();pr.b.applyImpulse(new CANNON.Vec3((p.x-x)*4,30,(p.z-z)*4),new CANNON.Vec3(0,0,0));}}
 }
 
+/* ================= 극한 실험장: 죽음의 내리막 · 냉동실 · 화염 지옥 · 자동차 대포 · 번개 코일 ================= */
+ZONES.unshift({name:'극한 실험장',mult:1.5,x1:372,x2:600,z1:-600,z2:520});
+const EXP={};
+const padPlane=(x,z,w,l,col,y=.05)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,l),stdM(col,{roughness:.8}));m.rotation.x=-Math.PI/2;m.position.set(x,y,z);m.receiveShadow=true;scene.add(m);return m;};
+const glowM=c=>new THREE.MeshBasicMaterial({color:c,transparent:true,opacity:.85});
+// ---------- 1. 죽음의 내리막 (높이 130m) ----------
+{
+  const X=480,Z1=-560,Z2=-140,H=130,L=Z2-Z1,a=Math.atan2(H,L),len=Math.hypot(L,H),cz=(Z1+Z2)/2;
+  const rt=tex(128,128,(c)=>{c.fillStyle='#3a3d42';c.fillRect(0,0,128,128);for(let i=0;i<2500;i++){c.fillStyle=`rgba(255,255,255,${Math.random()*.06})`;c.fillRect(Math.random()*128,Math.random()*128,2,2);}c.fillStyle='#f2d24b';c.fillRect(61,0,6,64);c.fillStyle='#fff';c.fillRect(2,0,4,128);c.fillRect(122,0,4,128);});
+  rt.wrapS=rt.wrapT=THREE.RepeatWrapping;rt.repeat.set(1,len/16);
+  const q=new CANNON.Quaternion().setFromAxisAngle(V3(1,0,0),a);
+  const mk=(w,h,x,yOff,mat,ud)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,len),mat);m.position.set(x,H/2+yOff,cz);m.quaternion.copy(q);m.castShadow=true;m.receiveShadow=true;scene.add(m);
+    const b=new CANNON.Body({mass:0});b.addShape(new CANNON.Box(V3(w/2,h/2,len/2)));b.position.set(x,H/2+yOff,cz);b.quaternion.copy(q);if(ud)b.userData=ud;world.addBody(b);return m;};
+  mk(24,1,X,-.5,new THREE.MeshStandardMaterial({map:rt,roughness:.8}));
+  const railM=new THREE.MeshStandardMaterial({map:stripeTex.clone(),roughness:.6});railM.map.needsUpdate=true;railM.map.wrapS=THREE.RepeatWrapping;railM.map.repeat.set(len/6,1);
+  mk(1,2.4,X-12.5,1,railM);mk(1,2.4,X+12.5,1,railM);
+  for(let z=Z1+20;z<Z2-10;z+=36){const y=H*(Z2-z)/L;const p=new THREE.Mesh(new THREE.BoxGeometry(2,y,2),conM(1,y/4));p.position.set(X-8,y/2-1,z);p.castShadow=true;scene.add(p);const p2=p.clone();p2.position.x=X+8;scene.add(p2);}
+  // 꼭대기 출발대
+  solidBox(30,1,30,conM(4,4),X,H-.5,Z1-15);[[-15,0],[15,0]].forEach(([dx])=>solidBox(1,2,30,railM,X+dx,H+1,Z1-15));solidBox(30,2,1,railM,X,H+1,Z1-30);
+  for(const [dx,dz] of [[-13,-28],[13,-28],[-13,-2],[13,-2]]){const p=new THREE.Mesh(new THREE.BoxGeometry(1.4,H,1.4),stdM('#666'));p.position.set(X+dx,H/2-1,Z1-15+dz-(-15));scene.add(p);}
+  sign([{t:'☠️ 죽음의 내리막',s:72,b:1,c:'#ff4a3d',y:100},{t:'높이 130m · 부스터 5개',s:30,y:195}],X,H+9,Z1-29,0,14);
+  // 부스터 패드
+  EXP.boost=[];const chev=tex(64,64,(c)=>{c.fillStyle='#ff8a00';c.fillRect(0,0,64,64);c.fillStyle='#fff3c0';for(let k=0;k<3;k++){c.beginPath();c.moveTo(8,8+k*18);c.lineTo(32,22+k*18);c.lineTo(56,8+k*18);c.lineTo(56,16+k*18);c.lineTo(32,30+k*18);c.lineTo(8,16+k*18);c.fill();}});
+  for(const z of [-500,-420,-340,-260,-190]){const y=H*(Z2-z)/L+.06;const m=new THREE.Mesh(new THREE.PlaneGeometry(10,8),new THREE.MeshBasicMaterial({map:chev,transparent:true}));m.position.set(X,y,z);m.rotation.set(-Math.PI/2+a,0,0);m.rotateZ(Math.PI);scene.add(m);EXP.boost.push({x:X,y,z,m,cd:0});}
+  // 바닥: 달리는 길 + 끝 벽 + 폐차 더미
+  padPlane(X,-80,28,124,'#45484e');
+  solidBox(34,7,2,conM(8,2),X,3.5,-14,0,0,{mult:1.6,name:'내리막 끝 벽'});
+  for(let k=0;k<6;k++)for(let l=0;l<2;l++)addBrk('junk',X-7+k*2.6,.6+l*1.25,-20,Math.PI/2,pick(['#7a8a5a','#8a5a3a','#5a6a7a','#9a8a6a']));
+  for(let k=0;k<8;k++)addBrk('drum',X-10+k*2.8,.6,-28,0,pick(['#c43b2a','#2a6ac4']));
+  EXP.down={X,Z1,Z2,H,L,a};
+}
+// ---------- 2. 냉동실 ----------
+{
+  const X=420,Z=102;padPlane(X,Z,14,30,'#9fb6c8');
+  const iceM=new THREE.MeshStandardMaterial({color:0xbfe8ff,transparent:true,opacity:.55,roughness:.1,metalness:.1});
+  solidBox(1,8,26,stdM('#d8f1ff',{roughness:.2}),X-6,4,Z);solidBox(1,8,26,stdM('#d8f1ff',{roughness:.2}),X+6,4,Z);
+  const roof=new THREE.Mesh(new THREE.BoxGeometry(13,1,26),iceM);roof.position.set(X,8.5,Z);scene.add(roof);
+  for(let k=0;k<8;k++){const ic=new THREE.Mesh(new THREE.ConeGeometry(.25,rand(.8,1.6),6),iceM);ic.rotation.x=Math.PI;ic.position.set(X+rand(-5,5),7.6,Z+rand(-12,12));scene.add(ic);}
+  sign([{t:'❄️ 냉동실',s:84,b:1,c:'#7fd3ff',y:100},{t:'통과하면 꽁꽁 · 박으면 산산조각',s:28,y:195}],X,12,Z+14,0,10);
+  EXP.freeze={X,Z,w:5.5,l:13};
+}
+// ---------- 3. 화염 지옥 ----------
+{
+  const X=500,Z=110;padPlane(X,Z,22,22,'#3a2a22');
+  const gr=tex(64,64,(c)=>{c.fillStyle='#1d1612';c.fillRect(0,0,64,64);c.strokeStyle='#ff5a1a';c.lineWidth=3;for(let i=0;i<64;i+=10){c.beginPath();c.moveTo(i,0);c.lineTo(i,64);c.stroke();}});gr.wrapS=gr.wrapT=THREE.RepeatWrapping;gr.repeat.set(4,4);
+  const g=new THREE.Mesh(new THREE.PlaneGeometry(16,16),new THREE.MeshStandardMaterial({map:gr,emissive:0x661800,emissiveIntensity:.8}));g.rotation.x=-Math.PI/2;g.position.set(X,.07,Z);scene.add(g);
+  EXP.jets=[];for(let k=0;k<10;k++){const a=k/10*Math.PI*2,x=X+Math.cos(a)*9.5,z=Z+Math.sin(a)*9.5;const j=new THREE.Mesh(new THREE.CylinderGeometry(.5,.7,1.2,10),stdM('#333',{metalness:.5}));j.position.set(x,.6,z);scene.add(j);EXP.jets.push({x,z});}
+  sign([{t:'🔥 화염 지옥',s:84,b:1,c:'#ff6a1a',y:100},{t:'들어가면 활활 · 타이어 터지고 폭발',s:28,y:195}],X,10,Z-13,0,10);
+  EXP.fire={X,Z,r:8};
+}
+// ---------- 4. 자동차 대포 ----------
+{
+  const X=430,PZ=205,A=28*Math.PI/180;padPlane(X,(PZ+470)/2,40,290,'#5a5d63',.04);
+  const base=solidBox(8,3,8,stdM('#4a5a3a',{metalness:.3}),X,1.5,PZ);
+  const bar=new THREE.Group();const tube=new THREE.Mesh(new THREE.CylinderGeometry(2.4,2.8,16,24,1,true),stdM('#3d4a32',{metalness:.5,roughness:.5,side:THREE.DoubleSide}));tube.rotation.x=Math.PI/2;tube.position.z=6;
+  const ring=new THREE.Mesh(new THREE.TorusGeometry(2.6,.35,10,24),stdM('#c9a227',{metalness:.7}));ring.position.z=14;bar.add(tube,ring);bar.position.set(X,4,PZ);bar.rotation.x=-A;bar.traverse(o=>{if(o.isMesh)o.castShadow=true;});scene.add(bar);
+  padPlane(X,PZ-9,8,8,'#ffb020',.06).material=new THREE.MeshBasicMaterial({color:0xffb020,transparent:true,opacity:.35});
+  // 과녁 벽
+  const tg=tex(256,256,(c)=>{const cols=['#e53935','#ffffff','#e53935','#ffffff','#e53935'];cols.forEach((col,i)=>{c.fillStyle=col;c.beginPath();c.arc(128,128,124-i*24,0,7);c.fill();});c.fillStyle='#111';c.font='bold 30px sans-serif';c.textAlign='center';c.fillText('×2.4',128,140);});
+  solidBox(44,26,3,conM(10,6),X,13,472,0,0,{mult:2.4,name:'대포 과녁',target:1});
+  const bm=new THREE.Mesh(new THREE.PlaneGeometry(22,22),new THREE.MeshBasicMaterial({map:tg}));bm.position.set(X,13,470.4);bm.rotation.y=Math.PI;scene.add(bm);
+  for(let k=0;k<8;k++)addBrk('junk',X-9+k*2.6,.6,460,Math.PI/2,pick(['#7a8a5a','#8a5a3a','#5a6a7a']));
+  sign([{t:'💥 자동차 대포',s:80,b:1,c:'#ffb020',y:100},{t:'패드 위에서 E · 과녁을 맞혀요',s:28,y:195}],X+12,10,PZ-6,0,10);
+  EXP.cannon={X,PZ,A,pad:{x:X,z:PZ-9,w:8,l:8},state:'idle',t:0};
+}
+// ---------- 5. 번개 코일 ----------
+{
+  const X=540,Z=160;padPlane(X,Z,26,26,'#2f3540');
+  const rg=new THREE.Mesh(new THREE.RingGeometry(9.4,10,48),new THREE.MeshBasicMaterial({color:0x7fd3ff,transparent:true,opacity:.6}));rg.rotation.x=-Math.PI/2;rg.position.set(X,.08,Z);scene.add(rg);
+  EXP.coils=[];for(const [dx,dz] of [[-10,0],[10,0],[0,-10]]){const x=X+dx,z=Z+dz;const p=new THREE.Mesh(new THREE.CylinderGeometry(.7,1.2,12,12),stdM('#b87333',{metalness:.6,roughness:.35}));p.position.set(x,6,z);p.castShadow=true;scene.add(p);addStatic(new CANNON.Cylinder(.9,1.2,12,8),V3(x,6,z));
+    const t=new THREE.Mesh(new THREE.TorusGeometry(1.6,.6,12,24),stdM('#d9dde3',{metalness:.8,roughness:.2,emissive:0x2a6aff,emissiveIntensity:.3}));t.rotation.x=Math.PI/2;t.position.set(x,12.3,z);scene.add(t);EXP.coils.push({x,y:12.3,z,t});}
+  sign([{t:'⚡ 번개 코일',s:84,b:1,c:'#7fd3ff',y:100},{t:'원 안에 들어가면 지지직',s:28,y:195}],X,10,Z+13,0,10);
+  EXP.tesla={X,Z,r:9.5,t:0};
+  EXP.bolts=[];
+}
+sign([{t:'⚠️ 극한 실험장',s:80,b:1,c:'#ff4a3d',y:100},{t:'내리막 · 냉동 · 화염 · 대포 · 번개',s:28,y:195}],386,9,60,-Math.PI/2,12);
+
+/* ---------- 상태 효과: 얼림 · 불탐 ---------- */
+function freezeCar(){if(!car||car.frozen>0){if(car)car.frozen=25;return;}car.frozen=25;car.paint0=car.paint0||car.paint.color.clone();
+  car.paint.color.set('#cdeeff');car.paint.emissive=new THREE.Color('#2a4a66');car.paint.roughness=.08;car.paint.needsUpdate=true;
+  car.veh.wheelInfos.forEach(w=>{w._fs=w._fs??w.frictionSlip;w.frictionSlip=w._fs*.35;});
+  bigText('❄️ 꽁꽁 얼었다!',1600);toast('얼어 있는 동안 박으면 산산조각 · 돈 ×2.3',2600);SND.freeze();const p=car.ch.position;chunks(p.x,p.y+1,p.z,40,['#ffffff','#cdeeff','#9fd8ff'],5);M_ev('freeze');}
+function unfreeze(){if(!car)return;car.frozen=0;if(car.paint0&&!car.burnT)car.paint.color.copy(car.paint0);car.paint.emissive=new THREE.Color(0);car.paint.roughness=.32;car.paint.needsUpdate=true;car.veh.wheelInfos.forEach(w=>{if(w._fs!=null&&w.radius>.1)w.frictionSlip=w._fs;});}
+const CHAR=new THREE.Color('#17120f');
+function updStatus(dt){if(!car)return;const p=car.ch.position;
+  if(car.frozen>0){car.frozen-=dt;if(Math.random()<.5)spark(p.x+rand(-1,1),p.y+rand(0,1.2),p.z+rand(-1.5,1.5),1,'#e8f8ff',.6,1,-.2);if(car.frozen<=0)unfreeze();}
+  if(car.burnT>0){car.burnT-=dt;car.burnTot=(car.burnTot||0)+dt;const k=Math.min(1,car.burnTot/11);car.paint.color.copy(car.paint0||car.paint.color).lerp(CHAR,k);car.paint.roughness=.32+.6*k;
+    for(let n=0;n<3;n++)P.length<PMAX&&P.push({x:p.x+rand(-1,1),y:p.y+rand(0,1),z:p.z+rand(-1.6,1.6),vx:rand(-.6,.6),vy:rand(3,6),vz:rand(-.6,.6),life:rand(.4,.8),t:0,r:1,g:rand(.35,.7),b:.1,grav:-.4});
+    if(Math.random()<.35)smoke(p.x,p.y+1.2,p.z,'#2a2a2a',1,1.4,3);
+    car._bt=(car._bt||0)+dt;if(car._bt>.3){car._bt=0;const d=car.def;deform(car,new THREE.Vector3(rand(-d.w/2,d.w/2),d.h/2+rand(0,d.cab.h),rand(-d.l/2,d.l/2)),new THREE.Vector3(rand(-.3,.3),-1,rand(-.3,.3)).normalize(),rand(3,6),{mult:1.7,name:'불태우기'});if(Math.random()<.3)SND.crackle();}
+    if(car.burnTot>7){const wi=car.wheels.findIndex(w=>!w.gone);if(wi>=0&&Math.random()<dt*.9){loseWheel(car,wi);bigText('💥 타이어 펑!',900);}}
+    if(car.burnTot>12&&!car.burnBoom){car.burnBoom=true;explode(p.x,p.y-.5,p.z,{mult:2,name:'불태우기 폭발'});M_ev('burnBoom');bigText('🔥 활활 타서 폭발!!',1800);}
+    if(car.burnT<=0)car.burnT=0;}
+}
+
+/* ---------- 매 프레임: 실험장 ---------- */
+function updExperiments(dt,sdt){
+  if(!car)return;const p=car.ch.position,v=car.ch.velocity;
+  // 내리막: 부스터 · 최고 속도 기록
+  const D=EXP.down;
+  for(const b of EXP.boost){b.cd-=dt;b.m.material.opacity=.7+.3*Math.sin(performance.now()/120);if(b.cd<=0&&Math.abs(p.x-b.x)<8&&Math.abs(p.z-b.z)<5&&Math.abs(p.y-b.y)<3){b.cd=1.5;
+    const dir=new CANNON.Vec3(0,-Math.sin(D.a),Math.cos(D.a));v.vadd(dir.scale(14),v);SND.boost();fovKick=Math.max(fovKick,.8);shake=Math.max(shake,.3);
+    for(let k=0;k<30;k++)P.length<PMAX&&P.push({x:p.x+rand(-1,1),y:p.y,z:p.z+2,vx:rand(-2,2),vy:rand(1,3),vz:rand(4,10),life:.5,t:0,r:1,g:.6,b:.1,grav:.2});toast('🚀 부스터!',700);}}
+  if(Math.abs(p.x-D.X)<14&&p.z>D.Z1-30&&p.z<0){const kmh=v.length()*3.6;M_val('downSpd',kmh);}
+  // 냉동실
+  const F=EXP.freeze;if(Math.abs(p.x-F.X)<F.w&&Math.abs(p.z-F.Z)<F.l&&p.y<5){if(!(car.frozen>20))freezeCar();}
+  if(Math.random()<.3&&Math.hypot(camera.position.x-F.X,camera.position.z-F.Z)<120)spark(F.X+rand(-5,5),rand(.5,7),F.Z+rand(-12,12),1,'#ffffff',.5,1.5,-.05);
+  // 화염 지옥
+  const R=EXP.fire;const near=Math.hypot(camera.position.x-R.X,camera.position.z-R.Z)<150;
+  if(near)for(const j of EXP.jets){if(Math.random()<.7)P.length<PMAX&&P.push({x:j.x+rand(-.3,.3),y:1.2,z:j.z+rand(-.3,.3),vx:(R.X-j.x)*rand(.1,.25),vy:rand(5,9),vz:(R.Z-j.z)*rand(.1,.25),life:rand(.5,.9),t:0,r:1,g:rand(.3,.65),b:.05,grav:-.2});}
+  if(near&&Math.random()<.2)smoke(R.X+rand(-6,6),3,R.Z+rand(-6,6),'#333',1,1.5,3);
+  if(Math.hypot(p.x-R.X,p.z-R.Z)<R.r&&p.y<4){if(!(car.burnT>0)){car.paint0=car.paint0||car.paint.color.clone();bigText('🔥 불붙었어요!',1200);SND.whoosh();}if(car.frozen>0){unfreeze();toast('불에 얼음이 녹았어요');}car.burnT=Math.max(car.burnT||0,10);}
+  updStatus(sdt);
+  // 대포
+  const C=EXP.cannon;
+  if(C.state==='load'){C.t+=sdt;const k=Math.min(1,C.t/1.2);const dir=new CANNON.Vec3(0,Math.sin(C.A),Math.cos(C.A));
+    car.lockP.set(C.X+0,4+dir.y*(2+k*2),C.PZ+dir.z*(2+k*2));const qy=new CANNON.Quaternion().setFromAxisAngle(V3(0,1,0),Math.PI),qx=new CANNON.Quaternion().setFromAxisAngle(V3(1,0,0),-C.A);car.lockQ.copy(qx.mult(qy));
+    const n=3-Math.floor(C.t-1.2);if(C.t>1.2&&n!==C.n&&n>0){C.n=n;bigText('💥 '+n);SND.beep(0);}
+    if(C.t>=4.2){C.state='fly';C.t=0;lockCar(false);car.ch.velocity.set(0,dir.y*64,dir.z*64);car.ch.angularVelocity.set(rand(-.5,.5),0,rand(-.5,.5));car.cannonShot=true;
+      const mx=C.X,my=4+dir.y*15,mz=C.PZ+dir.z*15;SND.boom();shock(mx,my,mz,2.5,0xffa040);flashScreen(.5);shake=1.2;fovKick=1;for(let k=0;k<4;k++)smoke(mx,my,mz,'#555',8,3,3);spark(mx,my,mz,120,'#ffb020',16,.8);slowT=1.6;bigText('발사!!',900);}}
+  else if(C.state==='fly'){C.t+=dt;if(C.t>8){C.state='idle';car.cannonShot=false;}}
+  // 번개 코일
+  const T=EXP.tesla;T.t-=sdt;for(const c of EXP.coils)c.t.material.emissiveIntensity=.3+.5*Math.random()*(T.near?1:.2);
+  T.near=Math.hypot(p.x-T.X,p.z-T.Z)<T.r;
+  if(T.near&&T.t<=0){T.t=rand(.45,.8);const c=pick(EXP.coils);bolt(c.x,c.y,c.z,p.x,p.y+.5,p.z);SND.zap();flashScreen(.35,'#9fd8ff');shake=Math.max(shake,.5);
+    const d=car.def,pl=new THREE.Vector3(rand(-d.w/2,d.w/2),d.h/2+rand(0,d.cab.h),rand(-d.l/2,d.l/2));deform(car,pl,pl.clone().multiplyScalar(-1).normalize(),rand(9,15),{mult:1.6,name:'번개'});
+    spark(p.x,p.y+1,p.z,60,'#9fd8ff',9,.6);chunks(p.x,p.y+1,p.z,10,[car.def.color,'#222'],6);
+    car.ch.velocity.y+=rand(3,6);car.ch.angularVelocity.set(rand(-3,3),rand(-2,2),rand(-3,3));
+    const pp=car.parts.filter(x=>!x.gone);if(pp.length&&Math.random()<.3)detach(car,pick(pp));
+    comboHit();M_ev('zap');}
+  for(let i=EXP.bolts.length-1;i>=0;i--){const b=EXP.bolts[i];b.t-=dt;if(b.t<=0){scene.remove(b.l);b.l.geometry.dispose();EXP.bolts.splice(i,1);}}
+}
+function bolt(x1,y1,z1,x2,y2,z2){const pts=[];const n=12;for(let i=0;i<=n;i++){const t=i/n,j=i&&i<n?1.2:0;pts.push(new THREE.Vector3(x1+(x2-x1)*t+rand(-j,j),y1+(y2-y1)*t+rand(-j,j),z1+(z2-z1)*t+rand(-j,j)));}
+  const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),new THREE.LineBasicMaterial({color:0xcff0ff}));scene.add(l);EXP.bolts.push({l,t:.12});
+  const l2=new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts.map(p=>p.clone().add(new THREE.Vector3(rand(-.3,.3),rand(-.3,.3),rand(-.3,.3))))),new THREE.LineBasicMaterial({color:0x5fa8ff}));scene.add(l2);EXP.bolts.push({l:l2,t:.1});}
+function nearCannon(){const C=EXP.cannon;if(!car)return false;const p=car.ch.position;return C.state==='idle'&&Math.abs(p.x-C.pad.x)<C.pad.w/2&&Math.abs(p.z-C.pad.z)<C.pad.l/2;}
+function fireCannon(){const C=EXP.cannon;if(C.state!=='idle'||!car)return;lockCar(true);C.state='load';C.t=0;C.n=4;bigText('💥 대포에 장전!',1200);SND.beep(1);M_ev('cannon');}
+
+/* ================= 미션 ================= */
+const MISSIONS=[
+ {id:'spd150',t:'시속 150km 이상으로 들이받기',goal:1,r:2000},
+ {id:'pcar',t:'주차된 차 10대 날려버리기',goal:10,r:1500},
+ {id:'lamp',t:'가로등 20개 쓰러뜨리기',goal:20,r:1500},
+ {id:'combo10',t:'콤보 ×10 만들기',goal:10,r:3000,max:1},
+ {id:'frozenWreck',t:'얼린 차 완전 박살내기',goal:1,r:3000},
+ {id:'burnBoom',t:'차를 불태워서 폭발시키기',goal:1,r:3000},
+ {id:'target',t:'대포로 과녁 맞히기',goal:1,r:3500},
+ {id:'downSpd',t:'죽음의 내리막에서 시속 250km 넘기',goal:250,r:4000,max:1},
+ {id:'zap',t:'번개 15번 맞기',goal:15,r:2500},
+ {id:'machines',t:'파괴 기계 5종류 써보기',goal:5,r:4000},
+ {id:'wreck',t:'완전 박살 5번',goal:5,r:5000},
+ {id:'hydrant',t:'소화전 10개 터뜨리기',goal:10,r:2000},
+ {id:'spd250',t:'시속 250km 이상으로 들이받기',goal:1,r:8000},
+ {id:'rich',t:'총 $100,000 벌기',goal:100000,r:15000,max:1},
+];
+S.mis=S.mis||{};S.mUsed=S.mUsed||{};
+function M_add(id,n=1){const m=MISSIONS.find(x=>x.id===id);if(!m)return;const st=S.mis[id]||(S.mis[id]={p:0,d:0});if(st.d)return;st.p=m.max?Math.max(st.p,n):st.p+n;if(st.p>=m.goal){st.p=m.goal;st.d=1;S.money+=m.r;updMoney();SND.mission();bigText('🏆 미션 완료! +'+fmt(m.r),2400);flashScreen(.25,'#ffd35a');}persist();renderMis();}
+const M_val=(id,v)=>{const m=MISSIONS.find(x=>x.id===id);const st=S.mis[id]||{p:0};if(!m||st.d||v<=st.p)return;M_add(id,v);};
+function M_ev(e,x){if(e==='freeze'||e==='cannon')return;if(e==='burnBoom')M_add('burnBoom');if(e==='zap')M_add('zap');}
+function renderMis(){const box=$('#mis');if(!box)return;const list=MISSIONS.filter(m=>!(S.mis[m.id]||{}).d).slice(0,2);const done=MISSIONS.filter(m=>(S.mis[m.id]||{}).d).length;
+  box.innerHTML=`<b>🏆 미션 ${done}/${MISSIONS.length}</b>`+list.map(m=>{const p=(S.mis[m.id]||{}).p||0;return `<div><span>${m.t}</span><i style="width:${Math.min(100,p/m.goal*100)}%"></i><small>${m.goal>1?Math.floor(p).toLocaleString('ko-KR')+'/'+m.goal.toLocaleString('ko-KR'):''} · +${fmt(m.r)}</small></div>`;}).join('');}
+
 /* ================= 입력 ================= */
 const K={};
 addEventListener('keydown',e=>{if(document.activeElement&&document.activeElement.tagName==='INPUT')return;
@@ -972,7 +1149,7 @@ addEventListener('keydown',e=>{if(document.activeElement&&document.activeElement
 addEventListener('keyup',e=>{K[e.code]=false;});
 addEventListener('blur',()=>{for(const k in K)K[k]=false;});
 const TB={};
-for(const id of ['tL','tR','tG','tB','tH']){const b=$('#'+id);b.addEventListener('pointerdown',e=>{e.preventDefault();TB[id]=true;b.classList.add('on');audio();});
+for(const id of ['tL','tR','tG','tB','tH','tN']){const b=$('#'+id);b.addEventListener('pointerdown',e=>{e.preventDefault();TB[id]=true;b.classList.add('on');audio();});
   const up=()=>{TB[id]=false;b.classList.remove('on');};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('pointerleave',up);}
 const isTouch=matchMedia('(pointer:coarse)').matches;
 // 카메라 드래그
@@ -996,11 +1173,17 @@ function updCamera(dt){if(!car)return;const p=car.ch.position;const [fx,fz]=yawO
   sun.position.set(p.x+60,p.y+110,p.z+40);sun.target.position.set(p.x,p.y,p.z);}
 
 /* ================= 운전 ================= */
+let nitro=1;
 function drive(dt){if(!car)return;const v=car.veh,ch=car.ch;
   const gas=K.KeyW||K.ArrowUp||TB.tG,rev=K.KeyS||K.ArrowDown||TB.tB,left=K.KeyA||K.ArrowLeft||TB.tL,right=K.KeyD||K.ArrowRight||TB.tR,hb=K.Space||TB.tH;
   const fwdV=new CANNON.Vec3(0,0,-1);ch.quaternion.vmult(fwdV,fwdV);const speed=ch.velocity.dot(fwdV);
-  const F=car.power*ch.mass*car.engine*(car.locked?0:1);let ef=0;
-  if(gas){ef=F*Math.max(0,1-Math.max(0,speed)/car.vmax);if(speed<-1)ef=0;}
+  const boosting=(K.ShiftLeft||K.ShiftRight||TB.tN)&&gas&&nitro>.02&&car.engine>0&&!car.locked;
+  if(boosting){nitro=Math.max(0,nitro-dt*.32);fovKick=Math.max(fovKick,.35);const bk=new CANNON.Vec3(0,0,1);ch.quaternion.vmult(bk,bk);const p=ch.position;
+    for(let k=0;k<4;k++)P.length<PMAX&&P.push({x:p.x+bk.x*car.def.l/2+rand(-.3,.3),y:p.y-car.def.h*.15,z:p.z+bk.z*car.def.l/2+rand(-.3,.3),vx:bk.x*rand(6,12)+rand(-1,1),vy:rand(0,1),vz:bk.z*rand(6,12)+rand(-1,1),life:.25,t:0,r:.5,g:.75,b:1,grav:0});
+    if(!car._nb){car._nb=1;SND.boost();}}else{car._nb=0;nitro=Math.min(1,nitro+dt*.11);}
+  $('#nitroBar').style.width=(nitro*100)+'%';
+  const F=car.power*ch.mass*car.engine*(car.locked?0:1)*(boosting?2:1);let ef=0;
+  if(gas){ef=F*Math.max(0,1-Math.max(0,speed)/(car.vmax*(boosting?1.5:1)));if(speed<-1)ef=0;}
   let brake=0;if(gas&&speed<-1)brake=car.mk*14;
   if(rev){if(speed>1.5)brake=car.mk*16;else ef=-F*.6*Math.max(0,1-Math.max(0,-speed)/14);}
   const st=(left?1:0)-(right?1:0);const maxSt=.55*(1-clamp(Math.abs(speed)/80,0,.6));car.steer=(car.steer||0)+(st*maxSt-(car.steer||0))*Math.min(1,dt*7);
@@ -1013,12 +1196,17 @@ function drive(dt){if(!car)return;const v=car.veh,ch=car.ch;
 
 /* ================= 기계 사용 ================= */
 let nearM=null;
-function useMachine(){if(!car||car.locked)return;if(nearM&&!nearM.auto&&nearM.start&&nearM.state==='idle'){const sp=car.ch.velocity.length();if(sp>9){toast('조금 멈춘 다음 E를 누르세요');return;}car.ch.velocity.scale(.2,car.ch.velocity);car.ch.angularVelocity.setZero();nearM.start(nearM);}}
+function useMachine(){if(!car||car.locked)return;if(nearCannon()){fireCannon();return;}if(nearM&&!nearM.auto&&nearM.start&&nearM.state==='idle'){const sp=car.ch.velocity.length();if(sp>9){toast('조금 멈춘 다음 E를 누르세요');return;}car.ch.velocity.scale(.2,car.ch.velocity);car.ch.angularVelocity.setZero();nearM.start(nearM);}}
 $('#prompt').addEventListener('click',useMachine);
 
 /* ================= 새 차 · 위치 ================= */
 function respawn(){if(!car)return;const p=car.ch.position;const [a,b]=yawOf(car);if(car.locked)return;spawnCar(S.cur,p.x,Math.max(1,p.y),p.z,Math.atan2(a,b));toast('새 차가 나왔어요 (공짜)');}
 const PLACES=[
+ {n:'☠️ 죽음의 내리막 꼭대기',s:'높이 130m · 부스터 5개',x:480,y:131,z:-578,ry:Math.PI},
+ {n:'❄️ 냉동실',s:'통과하면 꽁꽁 얼어요',x:420,z:70,ry:Math.PI},
+ {n:'🔥 화염 지옥',s:'불타고 폭발해요',x:500,z:84,ry:Math.PI},
+ {n:'💥 자동차 대포',s:'날아가서 과녁 맞히기',x:430,z:185,ry:Math.PI},
+ {n:'⚡ 번개 코일',s:'지지직 감전',x:540,z:190,ry:0},
  {n:'🔧 차고',s:'차 사기 · 업그레이드',x:0,z:20,ry:0},
  {n:'💥 충돌 실험장',s:'경사로 · 벽 · 기둥 · 상자',x:80,z:0,ry:-Math.PI/2},
  {n:'🛝 메가 램프 꼭대기',s:'높이 40m에서 출발',x:104,y:40.5,z:62,ry:-Math.PI/2},
@@ -1080,7 +1268,7 @@ function frame(now){
     world.step(1/60,sdt,6);
     if(car.locked){car.ch.position.copy(car.lockP);car.ch.quaternion.copy(car.lockQ);car.ch.velocity.setZero();car.ch.angularVelocity.setZero();}
     {const v=car.ch.velocity,L=v.length();if(L>110){v.scale(110/L,v);}const w=car.ch.angularVelocity,A=w.length();if(A>14)w.scale(14/A,w);}
-    processHits();syncCar();
+    processHits();syncCar();updExperiments(dt,sdt);
     // 연기 · 불
     const p=car.ch.position;if(car.engine<.75&&Math.random()<(1-car.engine)*.5*timeScale+.02)smoke(p.x,p.y+car.def.h*.6,p.z,'#444',1,.7,2.5);
     if(car.engine<.25||car.fire>0){car.fire=Math.max(0,(car.fire||0)-dt);if(Math.random()<.6*timeScale)spark(p.x+rand(-.5,.5),p.y+car.def.h*.6,p.z+rand(-.5,.5),3,Math.random()<.5?'#ffb020':'#ff4a1a',1.5,.6,-.3);}
@@ -1088,7 +1276,7 @@ function frame(now){
     if(p.y<-20)respawn();
     // 기계 근처
     nearM=null;for(const M of MACH){if(!M.auto&&onPad(M)){nearM=M;break;}}
-    const pr=$('#prompt');if(nearM&&!car.locked){pr.hidden=false;pr.innerHTML=nearM.state==='idle'?`<b>${isTouch?'탭':'E'}</b>${nearM.icon} ${nearM.name} 작동<span>돈 ×${nearM.mult}</span>`:`${nearM.icon} 작동 중…`;}else pr.hidden=true;
+    const pr=$('#prompt');if(nearCannon()&&!car.locked){pr.hidden=false;pr.innerHTML=`<b>${isTouch?'탭':'E'}</b>💥 자동차 대포 발사<span>과녁 ×2.4</span>`;}else if(nearM&&!car.locked){pr.hidden=false;pr.innerHTML=nearM.state==='idle'?`<b>${isTouch?'탭':'E'}</b>${nearM.icon} ${nearM.name} 작동<span>돈 ×${nearM.mult}</span>`:`${nearM.icon} 작동 중…`;}else pr.hidden=true;
     const z=zoneAt(p.x,p.z);$('#zone').textContent=(z?z.name:'자유 운전')+(z&&z.mult>1?` · 돈 ×${z.mult}`:'');
     $('#speed').firstChild.nodeValue=Math.round(Math.abs(car.speed||0)*3.6);
     updDmg();
@@ -1100,10 +1288,11 @@ function frame(now){
   fovKick=Math.max(0,fovKick-dt*2.5);{const fv=60+fovKick*12;if(Math.abs(camera.fov-fv)>.01){camera.fov=fv;camera.updateProjectionMatrix();}}
   shake=Math.max(0,shake-dt*1.8);
   updCamera(dt);
-  renderer.render(scene,camera);
+  if(!window.__noRender)renderer.render(scene,camera);
 }
 spawnCar(S.cur,GARAGE.x,1,GARAGE.z,0);updMoney();
 requestAnimationFrame(frame);
+renderMis();
 $('#bStart').onclick=()=>{audio();started=true;$('#start').hidden=true;$('#hud').hidden=false;if(isTouch)$('#touch').hidden=false;};
 // 상자 다시 쌓기 (멀리 갔으면)
 setInterval(()=>{if(!started)return;let far=0;for(const pr of PROPS){if(Math.hypot(pr.b.position.x-pr.home[0],pr.b.position.z-pr.home[2])>40)far++;}
