@@ -357,6 +357,7 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--panel-2); bor
   .radio { padding: 11px 12px; font-size: 15px; }
   .plist { grid-template-columns: 1fr 1fr; gap: 8px; }
   #toasts { top: calc(60px + env(safe-area-inset-top, 0px)); bottom: auto; left: 10px; right: 56px; }
+  body:has(.scrim) #toasts { top: auto; bottom: calc(96px + env(safe-area-inset-bottom, 0px)); }
   #optbar > * { flex: none; }
   #optbar .note { white-space: nowrap; font-size: 12.5px; }
   .toast { font-size: 13.5px; padding: 10px 14px; }
@@ -1360,6 +1361,53 @@ const Ops = {
       for (let t = 0; t < PALETTE.length; t++) { const cand = (base + t) % PALETTE.length; if (!taken.has(cand)) { pick = cand; break; } }
       used.set(c.id, pick); c.color = autoColor(pick);
     }
+  },
+};
+
+/* ---------- capitals: fall detection & relocation after a war ---------- */
+const Capitals = {
+  /* where the capital stands now: lostTo = another owner, occupiedBy = enemy occupation */
+  status(c) {
+    const city = cityById(c.capitalId);
+    if (!city) return { city: null, lostTo: 0, occupiedBy: 0, none: true };
+    const x = Math.floor(city.x), y = Math.floor(city.y);
+    if (x < 0 || y < 0 || x >= P.W || y >= P.H) return { city, lostTo: 0, occupiedBy: 0 };
+    const i = y * P.W + x; const own = P.land[i] === 1 ? P.owner[i] : 0; const oc = P.occ[i];
+    return { city, lostTo: own !== c.id ? own || -1 : 0, occupiedBy: own === c.id && oc && oc !== c.id ? oc : 0 };
+  },
+  fallen(c) { const s = this.status(c); return !!(s.city && (s.lostTo || s.occupiedBy)); },
+  /* safe interior point of the country's free (unoccupied) land */
+  heartland(cid) {
+    const n = P.W * P.H, K = new Int32Array(n), own = P.owner, land = P.land, occ = P.occ;
+    let any = false;
+    for (let i = 0; i < n; i++) if (own[i] === cid && land[i] === 1 && !(occ[i] && occ[i] !== cid)) { K[i] = 1; any = true; }
+    if (!any) return null;
+    const st = Topo.regionStats(K, P.W, P.H).get(1);
+    const inside = (x, y) => { const i = Math.floor(y) * P.W + Math.floor(x); return i >= 0 && i < n && K[i] === 1; };
+    // step off the exact centre so the city does not sit on the country's name
+    const dy = Math.min(st.ld * 0.5, 12);
+    if (inside(st.lx, st.ly + dy)) return [st.lx, st.ly + dy];
+    if (inside(st.lx, st.ly - dy)) return [st.lx, st.ly - dy];
+    return [st.lx, st.ly];
+  },
+  /* give a country a new capital when its capital fell. mode: 'build' (found a new city) | 'promote' (largest free city) */
+  relocate(c, mode = 'build') {
+    const st = this.status(c);
+    if (st.city && !st.lostTo && !st.occupiedBy) return null;
+    const old = st.city;
+    const free = D().cities.filter((x) => x !== old && cityCountry(x) === c.id && !(() => { const i = Math.floor(x.y) * P.W + Math.floor(x.x); return P.occ[i] && P.occ[i] !== c.id; })());
+    let nc = null, created = false;
+    if (mode === 'promote' && free.length) nc = free.reduce((a, b) => (b.pop > a.pop ? b : a));
+    else {
+      const pt = this.heartland(c.id);
+      if (!pt) return { country: c, from: old, to: null };
+      nc = { id: uid(), name: genName(Math.random), x: f1(pt[0]), y: f1(pt[1]), pop: Math.round(Math.max(30000, (old?.pop || 300000) * 0.35) / 1000) * 1000, icon: 'star', note: old ? `${old.name} 함락 후 새로 세운 수도` : '새로 세운 수도' };
+      D().cities.push(nc); created = true;
+    }
+    if (old && old.icon === 'star') old.icon = 'castle'; // the former capital keeps a fortress mark
+    if (nc.icon === 'dot' || nc.icon === 'port') nc.icon = 'star';
+    c.capitalId = nc.id;
+    return { country: c, from: old, to: nc, created };
   },
 };
 
@@ -3176,9 +3224,13 @@ const UI = {
     const myWars = D().wars.filter((w) => w.status === '진행 중' && (w.sideA.includes(c.id) || w.sideB.includes(c.id)));
     for (const w of myWars) {
       const foes = (w.sideA.includes(c.id) ? w.sideB : w.sideA).map((id) => cById(id)?.name).filter(Boolean).join(', ');
+      const cs = Capitals.status(c);
       b.append(el('div', { class: 'warbox' }, el('div', {}, el('b', {}, '⚔️ ' + w.name), ` · 상대: ${foes}`),
+        Capitals.fallen(c) ? el('div', { style: { marginTop: '4px' } }, el('b', {}, '🏴 수도 함락'), ` · ${cs.city.name}${cById(cs.occupiedBy || cs.lostTo) ? ' (' + cById(cs.occupiedBy || cs.lostTo).name + ')' : ''}`) : null,
         el('div', { class: 'btns', style: { marginTop: '8px' } },
           el('button', { class: 'btn sm', onclick: () => this.startOccupy(c.id) }, '점령지 칠하기'),
+          el('button', { class: 'btn sm', onclick: () => this.joinWarDialog(w) }, '+ 참전국'),
+          el('button', { class: 'btn sm', onclick: () => this.renameWar(w) }, '이름 수정'),
           w.beforeSnap ? el('button', { class: 'btn sm', onclick: () => this.compareWithSnapshot(w.beforeSnap) }, '전후 비교') : null,
           el('button', { class: 'btn sm primary', onclick: () => this.peaceDialog(w) }, '평화협정'))));
     }
@@ -3276,12 +3328,17 @@ const UI = {
         el('div', { class: 'note', style: { marginTop: 0 } }, `${w.start || '?'} ~ ${w.end || (active ? '현재' : '?')}${w.treaty ? ' · ' + w.treaty : ''}`),
         el('div', { style: { display: 'grid', gap: '6px', margin: '6px 0 8px' } }, chipsOf(w.sideA), el('span', { class: 'note', style: { margin: 0 } }, '대'), chipsOf(w.sideB)),
         w.notes ? el('p', { class: 'note' }, w.notes) : null,
+        active ? this.capitalBadges(w) : null,
+        !active && w.capitalMoves && w.capitalMoves.length ? el('div', { class: 'note', style: { marginTop: 0 } }, '수도 이전: ' + w.capitalMoves.map((m) => `${cById(m.country)?.name || ''} ${m.from} → ${m.to}${m.created ? ' (신설)' : ''}`).join(', ')) : null,
         el('div', { class: 'btns' },
+          active ? el('button', { class: 'btn sm', onclick: () => this.joinWarDialog(w) }, '+ 참전국 추가') : null,
+          active && this.allyCandidates(w).length ? el('button', { class: 'btn sm', onclick: () => this.joinAllies(w) }, `동맹국 참전 (${this.allyCandidates(w).length})`) : null,
+          el('button', { class: 'btn sm', onclick: () => this.renameWar(w) }, '이름 수정'),
           w.beforeSnap ? el('button', { class: 'btn sm', onclick: () => this.compareWithSnapshot(w.beforeSnap) }, '전쟁 전 국경과 비교') : null,
           active ? el('button', { class: 'btn sm', onclick: () => this.startOccupy(w.sideA[0]) }, '점령 칠하기 (' + (cById(w.sideA[0])?.name || 'A') + ')') : null,
           active ? el('button', { class: 'btn sm', onclick: () => this.startOccupy(w.sideB[0]) }, '점령 칠하기 (' + (cById(w.sideB[0])?.name || 'B') + ')') : null,
           active ? el('button', { class: 'btn sm primary', onclick: () => this.peaceDialog(w) }, '평화협정 · 종전') : null,
-          el('button', { class: 'btn sm', onclick: () => this.warDialog(w) }, '편집'),
+          el('button', { class: 'btn sm', onclick: () => this.warDialog(w) }, '전쟁 정보 수정'),
           el('button', { class: 'btn sm danger', onclick: async () => { if (await Modal.confirm('전쟁 기록 삭제', `"${w.name}" 기록을 삭제할까요? 지도는 바뀌지 않습니다.`, { ok: '삭제', danger: true })) commit('전쟁 기록 삭제', () => { D().wars = D().wars.filter((x) => x.id !== w.id); }, false); } }, '삭제'))));
     }
     const occ = Ops.occupationPairs();
@@ -3472,6 +3529,53 @@ const UI = {
       } }] });
   },
   autoColors() { commit('색상 자동 지정', () => Ops.autoColors(), false); toast('이웃 국가끼리 겹치지 않게 색을 다시 지정했습니다'); },
+  capitalBadges(w) {
+    const fallen = [...w.sideA, ...w.sideB].map((id) => cById(id)).filter((c) => c && c.status !== 'fallen' && Capitals.fallen(c));
+    if (!fallen.length) return null;
+    return el('div', { class: 'warbox', style: { margin: '0 0 8px' } }, fallen.map((c) => { const st = Capitals.status(c); const by = cById(st.occupiedBy || st.lostTo); return el('div', {}, el('b', {}, '🏴 ' + c.name + ' 수도 함락'), ` · ${st.city.name}${by ? ' (' + by.name + ')' : ''}`); }),
+      el('div', { class: 'note', style: { margin: '4px 0 0' } }, '종전 때 수도를 되찾지 못하면 새 수도를 세웁니다.'));
+  },
+  allyCandidates(w) {
+    const inWar = new Set([...w.sideA, ...w.sideB]); const out = [];
+    for (const [side, ids] of [['A', w.sideA], ['B', w.sideB]]) for (const id of ids) for (const al of cById(id)?.allies || []) {
+      const c = cById(al); if (!c || c.status === 'fallen' || inWar.has(al) || out.some((o) => o.id === al)) continue;
+      const other = side === 'A' ? w.sideB : w.sideA; if (other.some((o) => c.allies.includes(o))) continue; // allied with both sides: let the user decide
+      out.push({ id: al, side });
+    }
+    return out;
+  },
+  joinCountry(w, id, side, hostile = true) {
+    const mine = side === 'A' ? w.sideA : w.sideB, foes = side === 'A' ? w.sideB : w.sideA;
+    if (w.sideA.includes(id) || w.sideB.includes(id)) return;
+    mine.push(id);
+    const c = cById(id); if (!c || !hostile) return;
+    c.warStatus = '전쟁 중';
+    for (const f of foes) { const o = cById(f); if (!o) continue; if (!c.enemies.includes(f)) c.enemies.push(f); if (!o.enemies.includes(id)) o.enemies.push(id); c.allies = c.allies.filter((q) => q !== f); o.allies = o.allies.filter((q) => q !== id); }
+  },
+  joinAllies(w) {
+    const cand = this.allyCandidates(w); if (!cand.length) return;
+    commit('동맹국 참전', () => { for (const x of cand) this.joinCountry(w, x.id, x.side); }, false);
+    toast(cand.map((x) => cById(x.id)?.name).join(', ') + ' 참전');
+  },
+  joinWarDialog(w) {
+    const inWar = new Set([...w.sideA, ...w.sideB]);
+    const sel = el('select', {}, el('option', { value: 0 }, '— 참전할 국가 —'));
+    for (const c of activeCountries().filter((c) => !inWar.has(c.id)).sort((a, b) => a.name.localeCompare(b.name, 'ko'))) sel.append(el('option', { value: c.id }, c.name + (w.sideA.some((a) => c.allies.includes(a)) ? ' (A측 동맹)' : w.sideB.some((b2) => c.allies.includes(b2)) ? ' (B측 동맹)' : '')));
+    const nameOf = (ids) => ids.map((id) => cById(id)?.name).filter(Boolean).join(', ') || '—';
+    const side = el('div', {},
+      el('label', { class: 'radio' }, el('input', { type: 'radio', name: 'js', value: 'A', checked: true }), el('div', {}, '진영 A 편으로', el('small', {}, nameOf(w.sideA)))),
+      el('label', { class: 'radio' }, el('input', { type: 'radio', name: 'js', value: 'B' }), el('div', {}, '진영 B 편으로', el('small', {}, nameOf(w.sideB)))));
+    sel.addEventListener('change', () => { const c = cById(Number(sel.value)); if (!c) return; const v = w.sideB.some((b2) => c.allies.includes(b2)) && !w.sideA.some((a) => c.allies.includes(a)) ? 'B' : 'A'; $(`input[name=js][value=${v}]`, side).checked = true; });
+    const hostile = el('label', { class: 'radio' }, el('input', { type: 'checkbox', checked: true }), el('div', {}, '상대 진영과 적대 관계 · "전쟁 중"으로 설정'));
+    Modal.open({ title: `참전국 추가 · ${w.name}`, body: el('div', {}, el('div', { class: 'form' }, this.field('국가', sel)), el('div', { class: 'eyebrow' }, '어느 편으로?'), side, hostile),
+      buttons: [{ label: '취소' }, { label: '참전', primary: true, onClick: () => {
+        const id = Number(sel.value); if (!id) { toast('참전할 국가를 고르세요', { err: true }); return false; }
+        const sd = $('input[name=js]:checked', side).value;
+        commit('참전국 추가', () => this.joinCountry(w, id, sd, $('input', hostile).checked), false);
+        toast(`${cById(id)?.name}이(가) ${sd === 'A' ? nameOf(w.sideA.slice(0, 1)) : nameOf(w.sideB.slice(0, 1))} 편으로 참전했습니다`);
+      } }] });
+  },
+  renameWar(w) { Modal.prompt('전쟁 이름 수정', '전쟁 이름', w.name).then((v) => { if (v && v !== w.name) commit('전쟁 이름 수정', () => { w.name = v; }, false); }); },
   startOccupy(cid) {
     const c = cById(cid); if (!c) { toast('점령국을 찾을 수 없습니다', { err: true }); return; }
     App.activeCid = cid; Tools.opt.occErase = false; Tools.set('occupy');
@@ -3521,17 +3625,28 @@ const UI = {
       el('label', { class: 'radio' }, el('input', { type: 'radio', name: 'po', value: 'keep' }), el('div', {}, '점령 상태 그대로 두기')));
     const save = el('label', { class: 'radio' }, el('input', { type: 'checkbox', checked: true }), el('div', {}, '종전 후 지도를 연표에 저장'));
     const peace = el('label', { class: 'radio' }, el('input', { type: 'checkbox', checked: true }), el('div', {}, '참전국의 전쟁 상태를 "평화"로'));
+    const fallenNow = [...w.sideA, ...w.sideB].map((id) => cById(id)).filter((c) => c && c.status !== 'fallen' && Capitals.fallen(c));
+    const capMode = el('div', {},
+      el('label', { class: 'radio' }, el('input', { type: 'radio', name: 'cm', value: 'build', checked: true }), el('div', {}, '새 수도 도시를 세우기', el('small', {}, '남은 영토 한가운데에 수도를 하나 새로 만듭니다'))),
+      el('label', { class: 'radio' }, el('input', { type: 'radio', name: 'cm', value: 'promote' }), el('div', {}, '남은 도시 중 가장 큰 도시를 수도로', el('small', {}, '남은 도시가 없으면 새로 세웁니다'))),
+      el('label', { class: 'radio' }, el('input', { type: 'radio', name: 'cm', value: 'none' }), el('div', {}, '수도를 그대로 두기')));
+    const capBox = el('div', {}, el('div', { class: 'eyebrow' }, '수도 함락'),
+      fallenNow.length ? el('div', { class: 'warbox' }, fallenNow.map((c) => { const s2 = Capitals.status(c); return el('div', {}, el('b', {}, '🏴 ' + c.name), ' · ' + s2.city.name); })) : el('p', { class: 'note' }, '지금 함락된 수도는 없습니다. 아래 처리 후 수도가 남의 땅이 되면 새 수도를 정합니다.'),
+      el('p', { class: 'note' }, '점령지를 반환하면 수도도 되찾습니다. 합병되거나 점령이 남은 수도는:'), capMode);
     Modal.open({ title: `평화협정 · ${w.name}`, body: el('div', {}, el('div', { class: 'form' }, this.field('종전 연도', end), this.field('조약 이름', treaty)),
-      el('div', { class: 'eyebrow' }, `이 전쟁의 점령지 ${pairs.length}건`), pairs.length ? occ : el('p', { class: 'note' }, '점령지가 없습니다. 국경 변경은 브러시·올가미 등으로 직접 수정하세요.'), peace, save),
+      el('div', { class: 'eyebrow' }, `이 전쟁의 점령지 ${pairs.length}건`), pairs.length ? occ : el('p', { class: 'note' }, '점령지가 없습니다. 국경 변경은 브러시·올가미 등으로 직접 수정하세요.'), capBox, peace, save),
       buttons: [{ label: '취소' }, { label: '종전 처리', primary: true, onClick: async () => {
         const how = pairs.length ? $('input[name=po]:checked').value : 'keep';
+        const cm = $('input[name=cm]:checked').value; const moves = [];
         commit('평화협정', () => {
           for (const p of pairs) { if (how === 'return') Ops.returnOccupation(p.occupier, p.victim); else if (how === 'annex') Ops.annexOccupation(p.occupier, p.victim); }
+          if (cm !== 'none') for (const id of [...w.sideA, ...w.sideB]) { const c = cById(id); if (c && c.status !== 'fallen') { const m = Capitals.relocate(c, cm); if (m) moves.push(m); } }
+          w.capitalMoves = moves.map((m) => ({ country: m.country.id, from: m.from?.name || '', to: m.to?.name || '', created: !!m.created }));
           w.status = '종전'; w.end = end.value.trim(); w.treaty = treaty.value.trim();
           if ($('input', peace).checked) for (const id of [...w.sideA, ...w.sideB]) { const c = cById(id); if (!c) continue; const still = D().wars.some((x) => x !== w && x.status === '진행 중' && (x.sideA.includes(id) || x.sideB.includes(id))); if (!still) c.warStatus = '평화'; }
         });
         if ($('input', save).checked) { const yy = parseYear(w.end) || D().year; await this.writeSnapshot(yy, `${w.name} 종전${w.treaty ? ' · ' + w.treaty : ''}`); }
-        toast('종전 처리했습니다'); this.renderPanel();
+        toast('종전 처리했습니다' + (moves.length ? ' · ' + moves.map((m) => m.to ? `${m.country.name} 새 수도 ${m.to.name}${m.created ? '(신설)' : ''}` : `${m.country.name}: 남은 영토가 없어 수도를 정하지 못함`).join(', ') : ''), { ms: 6000 }); this.renderPanel();
       } }] });
   },
   yearSetDialog() {
