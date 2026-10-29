@@ -12,6 +12,7 @@ This is blip company.
 | 🐄 머드락 섬 | /Blip/mudlark/ | `mudlark/index.html` (3D 생존 로그라이크) |
 | 🏀 하프코트 레전드 | /Blip/hoops/ | `hoops/index.html` (3D 1대1 농구 · 로비 · 뽑기) |
 | 💥 차를 부수세요 | /Blip/carcrash/ | `carcrash/index.html` (3D 자동차 파괴 · cannon-es 물리 · 파괴 기계 10개) |
+| 🗺️ 월드 아틀라스 | /Blip/worldmap/ | `worldmap/index.html` (가상 세계 지도 편집기 · 국경 편집 · 연도별 지도 · IndexedDB 저장) |
 
 - 모든 게임 화면에 「🏠 허브」 버튼이 있어요.
 - 예전 냥냥 점프 주소(`/CatJump/CatJump.html`)는 새 주소로 자동 이동해요.
