@@ -114,7 +114,7 @@ button{font:inherit;color:inherit}
 .mi b{font-size:14px}.mi small{color:var(--muted);font-size:12px}.mi .bar{height:6px}.mi .bar i{background:#ffd35a}
 /* ---------- 휴대폰 ---------- */
 html.touch #start .keys{display:none}
-#start{display:flex!important;align-items:flex-start;justify-content:center}#start .in{margin:auto}
+#start:not([hidden]){display:flex;align-items:flex-start;justify-content:center}#start .in{margin:auto}
 html.touch .tkeys{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;text-align:left;font-size:13px;color:#c7cfdb;background:rgba(255,255,255,.06);border-radius:14px;padding:12px 14px;font-weight:600}
 html.touch #help,html.touch #mis{display:none}
 html.touch #tl{width:min(190px,44vw);gap:5px;left:max(8px,env(safe-area-inset-left));top:max(8px,env(safe-area-inset-top))}
