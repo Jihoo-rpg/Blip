@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>차를 부수세요</title>
 <meta name="description" content="충돌하면 차체가 찌그러지는 3D 자동차 파괴 시뮬레이터. 부술수록 돈을 벌고 더 좋은 차를 사서 10개의 파괴 기계로 부숴요.">
+<script>if(matchMedia("(pointer:coarse)").matches||"ontouchstart" in window)document.documentElement.classList.add("touch");</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;600;700&display=swap">
 <style>
@@ -32,6 +33,7 @@ button{font:inherit;color:inherit}
 #tr{position:absolute;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:min(560px,70vw);pointer-events:auto}
 .hb{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:7px 11px;font-weight:700;font-size:13px;cursor:pointer;color:#fff;text-decoration:none;display:inline-flex;gap:5px;align-items:center}
 .hb:hover{background:#252c3a}.hb.on{background:var(--accent);color:#1d1300;border-color:var(--accent)}
+.hb i{font-style:normal}
 .hb kbd{font-family:inherit;font-size:11px;opacity:.65;border:1px solid currentColor;border-radius:4px;padding:0 4px}
 #speed{position:absolute;right:max(16px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));text-align:right;font-family:var(--display);font-size:44px;line-height:.9;text-shadow:0 2px 0 #000}
 #speed small{display:block;font-family:var(--body);font-size:12px;color:var(--muted);font-weight:700}
@@ -105,6 +107,52 @@ button{font:inherit;color:inherit}
 #tN{right:max(14px,env(safe-area-inset-right));bottom:max(206px,calc(env(safe-area-inset-bottom) + 206px));width:84px;height:56px}
 #tH{right:calc(max(14px,env(safe-area-inset-right)) + 96px);bottom:max(178px,calc(env(safe-area-inset-bottom) + 178px));width:74px;height:50px;font-size:14px!important}
 @media (max-width:700px){#help{display:none}#mis div{display:none}#money{font-size:24px}#speed{font-size:32px;bottom:200px}}
+.tkeys{display:none}
+#tE{display:none}
+#touch button small{display:block;font-family:var(--body);font-size:11px;font-weight:700;opacity:.85;margin-top:2px}
+.mlist{display:grid;gap:8px}.mi{background:#1b212c;border:1px solid var(--line);border-radius:12px;padding:10px 12px;display:grid;gap:5px}.mi.done{opacity:.55}
+.mi b{font-size:14px}.mi small{color:var(--muted);font-size:12px}.mi .bar{height:6px}.mi .bar i{background:#ffd35a}
+/* ---------- 휴대폰 ---------- */
+html.touch #start .keys{display:none}
+#start{display:flex!important;align-items:flex-start;justify-content:center}#start .in{margin:auto}
+html.touch .tkeys{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;text-align:left;font-size:13px;color:#c7cfdb;background:rgba(255,255,255,.06);border-radius:14px;padding:12px 14px;font-weight:600}
+html.touch #help,html.touch #mis{display:none}
+html.touch #tl{width:min(190px,44vw);gap:5px;left:max(8px,env(safe-area-inset-left));top:max(8px,env(safe-area-inset-top))}
+html.touch #tl .pill{padding:6px 9px;border-radius:10px}
+html.touch #money{font-size:22px}
+html.touch #carName{font-size:12px}html.touch #dmgT{font-size:11px}
+html.touch #zone{font-size:11px;padding:3px 8px}
+html.touch #tr{right:max(8px,env(safe-area-inset-right));top:max(8px,env(safe-area-inset-top));gap:5px;max-width:calc(100vw - 210px)}
+html.touch .hb{width:42px;height:42px;padding:0;justify-content:center;font-size:20px;border-radius:12px;background:rgba(14,17,24,.72)}
+html.touch .hb span,html.touch .hb kbd{display:none}
+html.touch #speed{display:none}
+html.touch #carVal{color:#fff;font-weight:700}
+html.touch #speed small{font-size:10px}
+html.touch #combo{right:auto;left:50%;transform:translateX(-50%);top:auto;bottom:calc(env(safe-area-inset-bottom) + 210px);text-align:center;font-size:24px}html.touch #combo b{font-size:30px}
+html.touch #slowTag{top:auto;bottom:calc(env(safe-area-inset-bottom) + 250px);font-size:16px}
+html.touch #prompt{bottom:calc(env(safe-area-inset-bottom) + 230px);font-size:18px;background:rgba(14,17,24,.7);border-radius:14px;padding:8px 14px}
+html.touch #earns{top:38%}
+html.touch .earn{font-size:21px}
+html.touch #touch button{background:rgba(16,20,28,.45);border:2px solid rgba(255,255,255,.28);border-radius:22px;font-size:28px;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);line-height:1}
+html.touch #touch button.on{background:rgba(255,176,32,.6);border-color:#ffd35a}
+html.touch #tL{left:max(12px,env(safe-area-inset-left));bottom:max(16px,env(safe-area-inset-bottom));width:84px;height:96px}
+html.touch #tR{left:calc(max(12px,env(safe-area-inset-left)) + 94px);bottom:max(16px,env(safe-area-inset-bottom));width:84px;height:96px}
+html.touch #tG{right:max(12px,env(safe-area-inset-right));bottom:max(16px,env(safe-area-inset-bottom));width:92px;height:128px;background:rgba(40,160,80,.45)}
+html.touch #tB{right:calc(max(12px,env(safe-area-inset-right)) + 102px);bottom:max(16px,env(safe-area-inset-bottom));width:78px;height:78px}
+html.touch #tH{right:calc(max(12px,env(safe-area-inset-right)) + 102px);bottom:calc(max(16px,env(safe-area-inset-bottom)) + 88px);width:78px;height:58px;font-size:20px}
+html.touch #tN{right:max(12px,env(safe-area-inset-right));bottom:calc(max(16px,env(safe-area-inset-bottom)) + 138px);width:92px;height:62px;font-size:22px;background:rgba(60,140,255,.4)}
+html.touch #tE{display:grid;left:50%;transform:translateX(-50%);bottom:calc(max(16px,env(safe-area-inset-bottom)) + 120px);width:92px;height:92px;border-radius:50%;background:rgba(255,90,40,.7);border-color:#ffd35a;font-size:32px}
+html.touch #tE[hidden]{display:none}
+@media (orientation:portrait){html.touch #tr{flex-direction:column;flex-wrap:nowrap;max-width:none}}
+@media (orientation:landscape) and (max-height:500px){html.touch #tl{width:180px}html.touch #zone{display:none}html.touch #tG{height:110px}html.touch #tN{bottom:calc(max(10px,env(safe-area-inset-bottom)) + 124px);height:50px}html.touch #tL,html.touch #tR{height:84px;width:80px}html.touch #tR{left:calc(max(12px,env(safe-area-inset-left)) + 88px)}html.touch #prompt{bottom:calc(env(safe-area-inset-bottom) + 118px)}html.touch #tE{bottom:calc(max(10px,env(safe-area-inset-bottom)) + 4px)}}
+html.touch .mbox{max-height:100%;border-radius:14px}
+html.touch .modal{padding:6px}
+html.touch .mhead{padding:10px 12px}html.touch .mhead h2{font-size:21px}html.touch .mbody{padding:12px}
+html.touch .cars{grid-template-columns:repeat(auto-fill,minmax(230px,1fr))}
+@media (max-width:520px){html.touch .cars{grid-template-columns:1fr}}
+@media (max-height:500px){html.touch #start h1{font-size:46px}html.touch #start p{font-size:13px}html.touch .tkeys{font-size:12px;padding:8px 12px}}
+html.touch .btn.small{padding:10px 14px;font-size:15px}
+html.touch #start h1{font-size:clamp(46px,14vw,90px)}
 </style>
 </head>
 <body>
@@ -123,14 +171,15 @@ button{font:inherit;color:inherit}
     <div id="mis" class="pill"></div>
   </div>
   <div id="tr">
-    <a class="hb" href="../hub/" aria-label="허브로 돌아가기">🏠 허브</a>
-    <button class="hb" id="bGarage">🔧 차고 <kbd>G</kbd></button>
-    <button class="hb" id="bMap">🗺️ 이동 <kbd>M</kbd></button>
-    <button class="hb" id="bSlow">🐢 슬로모션 <kbd>T</kbd></button>
-    <button class="hb" id="bFix">🔄 새 차 <kbd>R</kbd></button>
-    <button class="hb" id="bFlip">↕ 뒤집기 <kbd>F</kbd></button>
-    <button class="hb" id="bCam">🎥 <kbd>C</kbd></button>
-    <button class="hb" id="bSnd">🔊</button>
+    <a class="hb" href="../hub/" aria-label="허브로 돌아가기"><i>🏠</i><span>허브</span></a>
+    <button class="hb" id="bGarage" aria-label="차고"><i>🔧</i><span>차고</span> <kbd>G</kbd></button>
+    <button class="hb" id="bMap" aria-label="이동"><i>🗺️</i><span>이동</span> <kbd>M</kbd></button>
+    <button class="hb" id="bMis" aria-label="미션"><i>🏆</i><span>미션</span></button>
+    <button class="hb" id="bSlow" aria-label="슬로모션"><i>🐢</i><span>슬로모션</span> <kbd>T</kbd></button>
+    <button class="hb" id="bFix" aria-label="새 차"><i>🔄</i><span>새 차</span> <kbd>R</kbd></button>
+    <button class="hb" id="bFlip" aria-label="뒤집기"><i>↕️</i><span>뒤집기</span> <kbd>F</kbd></button>
+    <button class="hb" id="bCam" aria-label="카메라"><i>🎥</i> <kbd>C</kbd></button>
+    <button class="hb" id="bSnd" aria-label="소리">🔊</button>
   </div>
   <div id="slowTag" hidden>SLOW MOTION</div>
   <div id="prompt" hidden></div>
@@ -148,8 +197,9 @@ button{font:inherit;color:inherit}
 </div>
 
 <div id="touch" hidden>
-  <button id="tL">◀</button><button id="tR">▶</button>
-  <button id="tG">가속</button><button id="tB">후진</button><button id="tH">브레이크</button><button id="tN">🚀</button>
+  <button id="tL" aria-label="왼쪽">◀</button><button id="tR" aria-label="오른쪽">▶</button>
+  <button id="tG">▲<small>가속</small></button><button id="tB">▼<small>후진</small></button><button id="tH">⛔<small>브레이크</small></button><button id="tN">🚀<small>부스터</small></button>
+  <button id="tE" hidden>💥<small>작동</small></button>
 </div>
 
 <div id="toast" hidden></div>
@@ -159,6 +209,12 @@ button{font:inherit;color:inherit}
   <div class="mbox">
     <div class="mhead"><h2>🔧 차고</h2><div class="tabs"><button data-tab="cars" class="on">차량</button><button data-tab="up">업그레이드</button></div><button class="x" data-close>✕</button></div>
     <div class="mbody" id="gBody"></div>
+  </div>
+</div>
+<div class="modal" id="misM" hidden>
+  <div class="mbox" style="width:min(640px,100%)">
+    <div class="mhead"><h2>🏆 미션</h2><button class="x" data-close>✕</button></div>
+    <div class="mbody" id="misBody"></div>
   </div>
 </div>
 <div class="modal" id="mapm" hidden>
@@ -178,6 +234,7 @@ button{font:inherit;color:inherit}
       <span><kbd>G</kbd> 차고 (차 사기 · 업그레이드)</span><span><kbd>M</kbd> 장소 이동</span>
       <span><kbd>T</kbd> 슬로모션</span><span><kbd>R</kbd> 새 차 · <kbd>F</kbd> 뒤집기</span>
     </div>
+    <div class="tkeys"><span>◀ ▶ 핸들</span><span>▲ 가속 · ▼ 후진</span><span>🚀 부스터 · ⛔ 브레이크</span><span>💥 기계 앞에서 작동</span><span>화면 드래그: 시점 돌리기</span><span>📱 가로로 돌리면 더 넓게 보여요</span></div>
     <button class="btn" id="bStart" style="font-size:24px;padding:14px 34px">시동 걸기 ▶</button>
     <p style="font-size:12px;color:#8892a2" id="startNote">파괴 연구소는 북쪽(앞), 충돌 실험장은 동쪽, 시내는 서쪽이에요</p>
   </div>
@@ -253,7 +310,8 @@ const SND={
 
 /* ================= 3D 기본 ================= */
 const renderer=new THREE.WebGLRenderer({canvas:$('#c'),antialias:true});
-renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.75));
+const TOUCH=document.documentElement.classList.contains('touch');
+renderer.setPixelRatio(Math.min(devicePixelRatio||1,TOUCH?1.5:1.75));
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
 const scene=new THREE.Scene();
 const SKY=new THREE.Color('#9fc7ea');scene.background=SKY;scene.fog=new THREE.Fog('#b7d3ea',160,620);
@@ -262,7 +320,7 @@ function resize(){const w=innerWidth,h=innerHeight;renderer.setSize(w,h,false);c
 addEventListener('resize',resize);resize();
 scene.add(new THREE.HemisphereLight(0xdfefff,0x5b5140,.75));
 const sun=new THREE.DirectionalLight(0xfff2dc,1.05);sun.position.set(60,110,40);sun.castShadow=true;
-sun.shadow.mapSize.set(2048,2048);Object.assign(sun.shadow.camera,{left:-45,right:45,top:45,bottom:-45,near:10,far:260});sun.shadow.bias=-.0006;scene.add(sun);scene.add(sun.target);
+sun.shadow.mapSize.set(TOUCH?1024:2048,TOUCH?1024:2048);Object.assign(sun.shadow.camera,{left:-45,right:45,top:45,bottom:-45,near:10,far:260});sun.shadow.bias=-.0006;scene.add(sun);scene.add(sun.target);
 
 /* ================= 물리 ================= */
 const world=new CANNON.World({gravity:new CANNON.Vec3(0,-12,0)});
@@ -1141,7 +1199,7 @@ function renderMis(){const box=$('#mis');if(!box)return;const list=MISSIONS.filt
 /* ================= 입력 ================= */
 const K={};
 addEventListener('keydown',e=>{if(document.activeElement&&document.activeElement.tagName==='INPUT')return;
-  if(!$('#garage').hidden||!$('#mapm').hidden){if(e.code==='Escape'||e.code==='KeyG'||e.code==='KeyM'){closeModals();}return;}
+  if(!$('#garage').hidden||!$('#mapm').hidden||!$('#misM').hidden){if(e.code==='Escape'||e.code==='KeyG'||e.code==='KeyM'){closeModals();}return;}
   if(['Space','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.code))e.preventDefault();
   K[e.code]=true;if(e.repeat)return;
   if(e.code==='KeyT')toggleSlow();if(e.code==='KeyR')respawn();if(e.code==='KeyF')flipCar();if(e.code==='KeyG')openGarage();if(e.code==='KeyM')openMap();
@@ -1149,6 +1207,7 @@ addEventListener('keydown',e=>{if(document.activeElement&&document.activeElement
 addEventListener('keyup',e=>{K[e.code]=false;});
 addEventListener('blur',()=>{for(const k in K)K[k]=false;});
 const TB={};
+$('#tE').addEventListener('pointerdown',e=>{e.preventDefault();audio();useMachine();});
 for(const id of ['tL','tR','tG','tB','tH','tN']){const b=$('#'+id);b.addEventListener('pointerdown',e=>{e.preventDefault();TB[id]=true;b.classList.add('on');audio();});
   const up=()=>{TB[id]=false;b.classList.remove('on');};b.addEventListener('pointerup',up);b.addEventListener('pointercancel',up);b.addEventListener('pointerleave',up);}
 const isTouch=matchMedia('(pointer:coarse)').matches;
@@ -1165,7 +1224,7 @@ function toggleSlow(){slowOn=!slowOn;$('#bSlow').classList.toggle('on',slowOn);}
 const camPos=new THREE.Vector3(0,8,40),camLook=new THREE.Vector3();
 function updCamera(dt){if(!car)return;const p=car.ch.position;const [fx,fz]=yawOf(car);const yaw=Math.atan2(fx,fz);
   if(!drag){dragT-=dt;if(dragT<=0)camYaw*=Math.pow(.02,dt);}
-  const sz=car.def.l,dist=(camMode===1?sz*3.4+8:camMode===2?.01:sz*1.6+5)+camDist;
+  const sz=car.def.l,dist=((camMode===1?sz*3.4+8:camMode===2?.01:sz*1.6+5)+camDist)*(camera.aspect<1&&camMode!==2?1.18:1);
   if(camMode===2){const q=car.ch.quaternion;const off=new CANNON.Vec3(0,car.def.h/2+car.def.cab.h*.75,car.def.cab.z-car.def.cab.l*.2);const w=q.vmult(off);camPos.set(p.x+w.x,p.y+w.y,p.z+w.z);const fw=q.vmult(new CANNON.Vec3(0,-.05,-1));camera.position.copy(camPos);camera.lookAt(camPos.x+fw.x*10,camPos.y+fw.y*10,camPos.z+fw.z*10);return;}
   const a=yaw+Math.PI+camYaw;const want=new THREE.Vector3(p.x+Math.sin(yaw+camYaw)*dist*Math.cos(camPitch),p.y+1+dist*Math.sin(camPitch),p.z+Math.cos(yaw+camYaw)*dist*Math.cos(camPitch));
   want.y=Math.max(want.y,.8);camPos.lerp(want,1-Math.pow(.0008,dt));camLook.lerp(new THREE.Vector3(p.x,p.y+1,p.z),1-Math.pow(.00001,dt));
@@ -1215,6 +1274,8 @@ const PLACES=[
  {n:'🧪 파괴 연구소 입구',s:'안에 10개의 파괴 기계',x:0,z:-72,ry:0},
 ];
 function teleport(x,y,z,ry){spawnCar(S.cur,x,y??1,z,ry??0);closeModals();}
+function openMis(){const b=$('#misBody');const done=MISSIONS.filter(m=>(S.mis[m.id]||{}).d).length;
+  b.innerHTML=`<p style="margin:0 0 10px;color:var(--muted)">${done}/${MISSIONS.length}개 완료 · 깨면 보상금이 바로 들어와요</p><div class="mlist">${MISSIONS.map(m=>{const st=S.mis[m.id]||{p:0};return `<div class="mi ${st.d?'done':''}"><b>${st.d?'✅ ':''}${m.t}</b><div class="bar"><i style="width:${Math.min(100,(st.p||0)/m.goal*100)}%"></i></div><small>${m.goal>1?Math.floor(st.p||0).toLocaleString('ko-KR')+' / '+m.goal.toLocaleString('ko-KR')+' · ':''}보상 ${fmt(m.r)}</small></div>`;}).join('')}</div>`;$('#misM').hidden=false;}
 function openMap(){const b=$('#mBody');
   b.innerHTML=`<div class="maps">${PLACES.map((p,i)=>`<button data-pl="${i}"><b>${p.n}</b><small>${p.s}</small></button>`).join('')}</div><div class="sect">파괴 기계 앞으로</div><div class="maps">${MACH.map((m,i)=>`<button data-mc="${i}"><b>${i+1}. ${m.icon} ${m.name}</b><small>돈 ×${m.mult}</small></button>`).join('')}</div>`;
   b.querySelectorAll('[data-pl]').forEach(x=>x.onclick=()=>{const p=PLACES[+x.dataset.pl];teleport(p.x,p.y,p.z,p.ry);});
@@ -1224,7 +1285,7 @@ function openMap(){const b=$('#mBody');
 /* ================= 차고 ================= */
 let gTab='cars';
 function openGarage(){$('#garage').hidden=false;renderGarage();}
-function closeModals(){$('#garage').hidden=true;$('#mapm').hidden=true;}
+function closeModals(){$('#garage').hidden=true;$('#mapm').hidden=true;$('#misM').hidden=true;}
 document.querySelectorAll('[data-close]').forEach(b=>b.onclick=closeModals);
 document.querySelectorAll('.modal').forEach(m=>m.addEventListener('pointerdown',e=>{if(e.target===m)closeModals();}));
 document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{gTab=b.dataset.tab;document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('on',x===b));renderGarage();});
@@ -1247,7 +1308,7 @@ function renderGarage(){const b=$('#gBody');
 /* ================= HUD ================= */
 function updDmg(){if(!car)return;const d=Math.round(car.damage*100);$('#dmgBar').style.width=d+'%';$('#dmgP').textContent=d+'%';
   $('#engT').textContent=car.engine<=0?'💀 엔진 고장 · R로 새 차':car.engine<.6?'🔥 엔진 손상':car.damage>.3?'⚠️ 많이 찌그러짐':'엔진 정상';}
-$('#bGarage').onclick=openGarage;$('#bMap').onclick=openMap;$('#bSlow').onclick=toggleSlow;$('#bFix').onclick=respawn;$('#bFlip').onclick=flipCar;$('#bCam').onclick=()=>camMode=(camMode+1)%3;
+$('#bGarage').onclick=openGarage;$('#bMis').onclick=openMis;$('#bMap').onclick=openMap;$('#bSlow').onclick=toggleSlow;$('#bFix').onclick=respawn;$('#bFlip').onclick=flipCar;$('#bCam').onclick=()=>camMode=(camMode+1)%3;
 $('#bSnd').onclick=()=>{S.muted=!S.muted;persist();if(master)master.gain.value=S.muted?0:.55;$('#bSnd').textContent=S.muted?'🔇':'🔊';};$('#bSnd').textContent=S.muted?'🔇':'🔊';
 
 /* ================= 루프 ================= */
@@ -1276,16 +1337,17 @@ function frame(now){
     if(p.y<-20)respawn();
     // 기계 근처
     nearM=null;for(const M of MACH){if(!M.auto&&onPad(M)){nearM=M;break;}}
+    $('#tE').hidden=!((nearCannon()||(nearM&&nearM.state==='idle'))&&!car.locked);
     const pr=$('#prompt');if(nearCannon()&&!car.locked){pr.hidden=false;pr.innerHTML=`<b>${isTouch?'탭':'E'}</b>💥 자동차 대포 발사<span>과녁 ×2.4</span>`;}else if(nearM&&!car.locked){pr.hidden=false;pr.innerHTML=nearM.state==='idle'?`<b>${isTouch?'탭':'E'}</b>${nearM.icon} ${nearM.name} 작동<span>돈 ×${nearM.mult}</span>`:`${nearM.icon} 작동 중…`;}else pr.hidden=true;
     const z=zoneAt(p.x,p.z);$('#zone').textContent=(z?z.name:'자유 운전')+(z&&z.mult>1?` · 돈 ×${z.mult}`:'');
-    $('#speed').firstChild.nodeValue=Math.round(Math.abs(car.speed||0)*3.6);
+    $('#speed').firstChild.nodeValue=Math.round(Math.abs(car.speed||0)*3.6);if(TOUCH)$('#carVal').textContent=Math.round(Math.abs(car.speed||0)*3.6)+' km/h';
     updDmg();
   }
   for(const d of DEBRIS){d.m.position.copy(d.b.position);d.m.quaternion.copy(d.b.quaternion);}
   for(const pr of PROPS){pr.m.position.copy(pr.b.position);pr.m.quaternion.copy(pr.b.quaternion);}
   updParticles(sdt);flushEarn(dt);updBrk();updChunks(sdt);updRings(dt);updWater(sdt);
   if(comboT>0){comboT-=dt;if(comboT<=0){combo=0;$('#combo').hidden=true;}}
-  fovKick=Math.max(0,fovKick-dt*2.5);{const fv=60+fovKick*12;if(Math.abs(camera.fov-fv)>.01){camera.fov=fv;camera.updateProjectionMatrix();}}
+  fovKick=Math.max(0,fovKick-dt*2.5);{const fv=(camera.aspect<1?78:camera.aspect<1.5?66:60)+fovKick*12;if(Math.abs(camera.fov-fv)>.01){camera.fov=fv;camera.updateProjectionMatrix();}}
   shake=Math.max(0,shake-dt*1.8);
   updCamera(dt);
   if(!window.__noRender)renderer.render(scene,camera);
@@ -1293,7 +1355,7 @@ function frame(now){
 spawnCar(S.cur,GARAGE.x,1,GARAGE.z,0);updMoney();
 requestAnimationFrame(frame);
 renderMis();
-$('#bStart').onclick=()=>{audio();started=true;$('#start').hidden=true;$('#hud').hidden=false;if(isTouch)$('#touch').hidden=false;};
+$('#bStart').onclick=()=>{if(TOUCH&&innerHeight>innerWidth)setTimeout(()=>toast('📱 가로로 돌리면 더 넓게 보여요',3000),800);audio();started=true;$('#start').hidden=true;$('#hud').hidden=false;if(TOUCH)$('#touch').hidden=false;};
 // 상자 다시 쌓기 (멀리 갔으면)
 setInterval(()=>{if(!started)return;let far=0;for(const pr of PROPS){if(Math.hypot(pr.b.position.x-pr.home[0],pr.b.position.z-pr.home[2])>40)far++;}
   if(far>PROPS.length*.6&&car&&Math.hypot(car.ch.position.x-240,car.ch.position.z)>60){for(const pr of PROPS){pr.b.position.set(...pr.home);pr.b.velocity.setZero();pr.b.angularVelocity.setZero();pr.b.quaternion.set(0,0,0,1);}}},8000);
