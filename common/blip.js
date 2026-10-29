@@ -30,7 +30,6 @@
     mudlark: { name: '머드락 섬', icon: '🐄', path: 'mudlark/' },
     hoops: { name: '하프코트 레전드', icon: '🏀', path: 'hoops/' },
     carcrash: { name: '차를 부수세요', icon: '💥', path: 'carcrash/' },
-    worldmap: { name: '월드 아틀라스', icon: '🗺️', path: 'worldmap/' },
   };
   const AVAS = ['😺', '🐶', '🦊', '🐼', '🐸', '🐵', '🦁', '🐯', '🐰', '🐻', '🐧', '🦄', '👾', '🤖', '👻', '🐲'];
 

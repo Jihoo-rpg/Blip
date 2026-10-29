@@ -276,7 +276,6 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--panel-2); bor
   #optbar input[type=range] { width: 80px; }
 }
 @media (min-width: 861px) { #panelToggleMobile { display: none; } }
-.hubbtn{display:inline-flex;align-items:center;gap:4px;padding:5px 9px;border:1px solid var(--line);border-radius:6px;color:var(--fg-2);text-decoration:none;font-size:12px;white-space:nowrap;flex:none}.hubbtn:hover{background:var(--panel-2);color:var(--fg)}
 </style>
 </head>
 <body>
@@ -287,7 +286,6 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--panel-2); bor
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="12" cy="12" r="9"/><path d="M12 3v18M3 12h18M5.6 5.6c3.6 2.6 9.2 2.6 12.8 0M5.6 18.4c3.6-2.6 9.2-2.6 12.8 0"/></svg>
       <b>월드 아틀라스</b>
     </div>
-    <a class="hubbtn" href="../hub/" aria-label="허브로 돌아가기">🏠 허브</a>
     <button id="projName" title="프로젝트 이름 변경">새 세계</button>
     <nav class="menus" id="menus">
       <button class="menubtn" data-menu="file">파일</button>
@@ -365,7 +363,6 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--panel-2); bor
 </div>
 <div id="toasts" aria-live="polite"></div>
 <input type="file" id="fileInput" accept=".json,application/json" hidden>
-<script src="../common/blip.js" data-game="worldmap"></script>
 <script>
 (function(){
 /* ===== 00-util.js ===== */
