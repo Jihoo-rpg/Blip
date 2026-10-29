@@ -127,6 +127,7 @@ html.touch .hb{width:42px;height:42px;padding:0;justify-content:center;font-size
 html.touch .hb span,html.touch .hb kbd{display:none}
 html.touch #speed{display:none}
 html.touch #carVal{color:#fff;font-weight:700}
+html.touch #tl kbd{display:none}
 html.touch #speed small{font-size:10px}
 html.touch #combo{right:auto;left:50%;transform:translateX(-50%);top:auto;bottom:calc(env(safe-area-inset-bottom) + 210px);text-align:center;font-size:24px}html.touch #combo b{font-size:30px}
 html.touch #slowTag{top:auto;bottom:calc(env(safe-area-inset-bottom) + 250px);font-size:16px}
@@ -141,10 +142,10 @@ html.touch #tG{right:max(12px,env(safe-area-inset-right));bottom:max(16px,env(sa
 html.touch #tB{right:calc(max(12px,env(safe-area-inset-right)) + 102px);bottom:max(16px,env(safe-area-inset-bottom));width:78px;height:78px}
 html.touch #tH{right:calc(max(12px,env(safe-area-inset-right)) + 102px);bottom:calc(max(16px,env(safe-area-inset-bottom)) + 88px);width:78px;height:58px;font-size:20px}
 html.touch #tN{right:max(12px,env(safe-area-inset-right));bottom:calc(max(16px,env(safe-area-inset-bottom)) + 138px);width:92px;height:62px;font-size:22px;background:rgba(60,140,255,.4)}
-html.touch #tE{display:grid;left:50%;transform:translateX(-50%);bottom:calc(max(16px,env(safe-area-inset-bottom)) + 120px);width:92px;height:92px;border-radius:50%;background:rgba(255,90,40,.7);border-color:#ffd35a;font-size:32px}
+html.touch #tE{display:grid;left:max(12px,env(safe-area-inset-left));transform:none;bottom:calc(max(16px,env(safe-area-inset-bottom)) + 108px);width:178px;height:72px;border-radius:20px;background:rgba(255,90,40,.7);border-color:#ffd35a;font-size:32px}
 html.touch #tE[hidden]{display:none}
 @media (orientation:portrait){html.touch #tr{flex-direction:column;flex-wrap:nowrap;max-width:none}}
-@media (orientation:landscape) and (max-height:500px){html.touch #tl{width:180px}html.touch #zone{display:none}html.touch #tG{height:110px}html.touch #tN{bottom:calc(max(10px,env(safe-area-inset-bottom)) + 124px);height:50px}html.touch #tL,html.touch #tR{height:84px;width:80px}html.touch #tR{left:calc(max(12px,env(safe-area-inset-left)) + 88px)}html.touch #prompt{bottom:calc(env(safe-area-inset-bottom) + 118px)}html.touch #tE{bottom:calc(max(10px,env(safe-area-inset-bottom)) + 4px)}}
+@media (orientation:landscape) and (max-height:500px){html.touch #tl{width:180px}html.touch #zone{display:none}html.touch #tG{height:110px}html.touch #tN{bottom:calc(max(10px,env(safe-area-inset-bottom)) + 124px);height:50px}html.touch #tL,html.touch #tR{height:84px;width:80px}html.touch #tR{left:calc(max(12px,env(safe-area-inset-left)) + 88px)}html.touch #prompt{bottom:calc(env(safe-area-inset-bottom) + 118px)}html.touch #tE{bottom:calc(max(10px,env(safe-area-inset-bottom)) + 94px);width:168px;height:60px}}
 html.touch .mbox{max-height:100%;border-radius:14px}
 html.touch .modal{padding:6px}
 html.touch .mhead{padding:10px 12px}html.touch .mhead h2{font-size:21px}html.touch .mbody{padding:12px}
