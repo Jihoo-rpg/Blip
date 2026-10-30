@@ -392,6 +392,12 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--panel-2); bor
 .seg button.on { font-weight: 700; }
 .sidesel { max-width: 150px; font-weight: 600; }
 @media (max-width: 860px) { .seg button { min-width: 42px; } .sidesel { max-width: 140px; } }
+
+/* colonies */
+.colbox { border: 1px dashed var(--line-2); border-radius: 8px; padding: 9px 10px; background: var(--panel-2); }
+.crow.sub { padding-left: 22px; }
+.crow.sub .nm { color: var(--fg-2); }
+.colbox a, #panelBody a { color: var(--accent); text-decoration: none; font-weight: 600; }
 </style>
 </head>
 <body>
@@ -441,6 +447,7 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--panel-2); bor
             <g id="gCompare"></g>
             <path id="pUnclaimed" fill="none"/>
             <path id="pBorders" fill="none"/>
+            <path id="pColony" fill="none"/>
             <path id="pCoast" fill="none"/>
             <path id="pSel" fill="none"/>
             <g id="gFeatures"></g>
@@ -689,6 +696,7 @@ function colorField(value, onChange) {
   PALETTE.forEach((c) => sw.append(el('button', { type: 'button', 'data-c': c, style: { background: c }, title: c, onclick: () => set(c) })));
   inp.addEventListener('input', () => set(inp.value));
   wrap.get = () => inp.value;
+  wrap.set = (c) => set(c);
   return wrap;
 }
 
@@ -1015,7 +1023,7 @@ const TERRAINS = [
   { id: 0, name: '평야' }, { id: 1, name: '숲' }, { id: 2, name: '사막' },
   { id: 3, name: '툰드라' }, { id: 4, name: '습지' }, { id: 5, name: '고원' },
 ];
-const GOVS = ['제정(제국)', '공화제', '입헌군주제', '절대군주제', '연방제', '국가연합', '신정', '과두정', '군사정권', '부족연맹', '기타'];
+const GOVS = ['제정(제국)', '공화제', '입헌군주제', '절대군주제', '연방제', '국가연합', '신정', '과두정', '군사정권', '부족연맹', '식민 총독부', '기타'];
 const WAR_STATES = ['평화', '전쟁 중', '휴전', '냉전', '중립'];
 const CITY_ICONS = [
   { id: 'dot', name: '점' }, { id: 'square', name: '사각' }, { id: 'star', name: '별' },
@@ -1045,7 +1053,7 @@ function newCountry(props = {}) {
   const c = Object.assign({
     id, name: '새 국가 ' + id, color: autoColor(d.countries.length), status: 'active', capitalId: null,
     population: 0, areaOverride: '', gov: '공화제', leader: '', founded: '', allies: [], enemies: [], warStatus: '평화', desc: '',
-    lastTerritory: null, fate: '', created: Date.now(),
+    lastTerritory: null, fate: '', created: Date.now(), overlord: null, colonyType: '', colonySince: '',
   }, props);
   d.countries.push(c);
   return c;
@@ -1322,6 +1330,7 @@ const Ops = {
       if (occ[i] === cid || occ[i] === own[i]) occ[i] = 0;
     }
     const d = D();
+    Colonies.orphan(cid, mode === 'transfer' ? toId : 0);
     d.countries = d.countries.filter((c) => c.id !== cid);
     for (const c of d.countries) { c.allies = c.allies.filter((x) => x !== cid); c.enemies = c.enemies.filter((x) => x !== cid); }
     for (const w of d.wars) { for (const sd of w.sides) sd.ids = sd.ids.filter((x) => x !== cid); }
@@ -1334,6 +1343,7 @@ const Ops = {
       if (own[i] === cid) own[i] = mode === 'transfer' && toId ? toId : 0;
       if (occ[i] === cid || (occ[i] && occ[i] === own[i])) occ[i] = 0;
     }
+    Colonies.orphan(cid, mode === 'transfer' ? toId : 0);
     c.status = 'fallen';
     c.fate = fate || (mode === 'transfer' && toId ? `${cById(toId)?.name || ''}에 흡수` : '멸망');
     c.fellIn = yearText(D().year);
@@ -1347,6 +1357,7 @@ const Ops = {
     return n;
   },
   merge(targetId, srcId) {
+    Colonies.orphan(srcId, targetId);
     const own = P.owner, occ = P.occ;
     for (let i = 0; i < own.length; i++) { if (own[i] === srcId) own[i] = targetId; if (occ[i] === srcId) occ[i] = targetId; if (occ[i] === own[i]) occ[i] = 0; }
   },
@@ -1465,6 +1476,34 @@ const War = {
     for (const s of w.sides) { s.ids = Array.isArray(s.ids) ? s.ids : []; s.name = s.name || ''; }
   },
   inActiveWar(id, except) { return D().wars.some((x) => x !== except && x.status === '진행 중' && this.sideOf(x, id) >= 0); },
+};
+
+/* ---------- colonies: a country ruled by an overlord ---------- */
+const COLONY_TYPES = ['식민지', '보호령', '자치령', '위임통치령', '해외 영토', '괴뢰국'];
+const Colonies = {
+  master(c) { const m = c && c.overlord ? cById(c.overlord) : null; return m && m.status !== 'fallen' ? m : null; },
+  of(id) { return activeCountries().filter((c) => c.overlord === id); },
+  typeOf(c) { return c.colonyType || '식민지'; },
+  tint(color) { return mixHex(color, '#ffffff', 0.42); },
+  /* would making cid a colony of mid create a loop (A rules B rules A)? */
+  wouldLoop(cid, mid) { let x = cById(mid), guard = 0; while (x && guard++ < 50) { if (x.id === cid) return true; x = x.overlord ? cById(x.overlord) : null; } return false; },
+  make(cid, mid, type, since) {
+    const c = cById(cid); if (!c || !cById(mid) || cid === mid) return false;
+    if (this.wouldLoop(cid, mid)) return false;
+    c.overlord = mid; c.colonyType = type || '식민지'; c.colonySince = since || yearText(D().year); c.independentSince = '';
+    const m = cById(mid);
+    // overlord and colony are not enemies
+    c.enemies = c.enemies.filter((x) => x !== mid); m.enemies = m.enemies.filter((x) => x !== cid);
+    return true;
+  },
+  free(cid) { const c = cById(cid); if (!c) return; c.formerOverlord = c.overlord; c.overlord = null; c.independentSince = yearText(D().year); },
+  /* the overlord disappears: colonies pass to an heir or become free */
+  orphan(mid, heir) {
+    for (const c of D().countries) if (c.overlord === mid && c.id !== heir) { if (heir && cById(heir)) c.overlord = heir; else { c.overlord = null; c.independentSince = yearText(D().year); } }
+    for (const c of D().countries) if (c.overlord === heir && c.id === heir) c.overlord = null;
+  },
+  /* country, its overlord and its colonies (used for alliances in wars) */
+  kin(c) { const out = new Set(c?.allies || []); if (c?.overlord) out.add(c.overlord); for (const x of this.of(c?.id)) out.add(x.id); return [...out]; },
 };
 
 /* ===== 30-worldgen.js ===== */
@@ -1782,12 +1821,12 @@ const MAP_THEMES = {
     label: '#22282d', halo: '#ffffff', river: '#7fb1cf', mtn: '#8a8174', mtnFill: '#ece6da', city: '#22282d', ter: ['#f7f6f1', '#e2ecd8', '#f6ecd2', '#f3f5f5', '#e2ebe1', '#ece5d8'] },
 };
 const MODE_OPACITY = { political: 0.8, mixed: 0.5, physical: 0 };
-const DEFAULT_VIEW_SETTINGS = { mode: 'mixed', theme: 'classic', showBorders: true, showCountryNames: true, showCityNames: true, showCities: true, showFeatures: true, showOcc: true, showGrid: true };
+const DEFAULT_VIEW_SETTINGS = { mode: 'mixed', theme: 'classic', showBorders: true, showCountryNames: true, showCityNames: true, showCities: true, showFeatures: true, showOcc: true, showGrid: true, colonyMasterColor: false };
 
 const View = { tx: 0, ty: 0, s: 1, w: 800, h: 600 };
 const Render = {
   dirty: { theme: true, ter: true, pol: true, occ: true, feat: true, cities: true, screen: true, cmp: true },
-  topoPol: null, stats: null, countryEls: new Map(), cityEls: new Map(), labelEls: new Map(), raf: 0,
+  topoPol: null, stats: null, countryEls: new Map(), cityEls: new Map(), labelEls: new Map(), subLabelEls: new Map(), raf: 0,
   lastT: {},
   compare: null, // { label, owner, land, stats }
   preview: null, // function(g) drawing tool previews in world group
@@ -1874,14 +1913,18 @@ const Render = {
       let p = this.countryEls.get(c.id);
       if (!p) { p = sv('path', { 'data-cid': c.id }); this.countryEls.set(c.id, p); }
       gc.append(p);
-      p.setAttribute('d', Topo.ringsD(topo, sel)); p.setAttribute('fill', c.color); p.setAttribute('fill-opacity', op); p.setAttribute('stroke', 'none');
+      p.setAttribute('d', Topo.ringsD(topo, sel)); p.setAttribute('fill', this.fillOf(c)); p.setAttribute('fill-opacity', op); p.setAttribute('stroke', 'none');
       p.removeAttribute('transform');
       seen.add(c.id);
     }
     for (const [id, p] of this.countryEls) if (!seen.has(id)) { p.remove(); this.countryEls.delete(id); }
     const pb = $('#pBorders'), pu = $('#pUnclaimed');
     const showB = vs.showBorders;
-    pb.setAttribute('d', showB ? Topo.strokeD(topo, (L, R) => L >= 2 && R >= 2) : '');
+    const colonyPair = (L, R) => { const a = cById(L - 1), b = cById(R - 1); return !!(a && b && (a.overlord === b.id || b.overlord === a.id || (a.overlord && a.overlord === b.overlord))); };
+    pb.setAttribute('d', showB ? Topo.strokeD(topo, (L, R) => L >= 2 && R >= 2 && !colonyPair(L, R)) : '');
+    const pc = $('#pColony');
+    pc.setAttribute('d', showB ? Topo.strokeD(topo, (L, R) => L >= 2 && R >= 2 && colonyPair(L, R)) : '');
+    pc.setAttribute('stroke', t.border); pc.setAttribute('stroke-width', 1); pc.setAttribute('vector-effect', 'non-scaling-stroke'); pc.setAttribute('stroke-dasharray', '1.5 3'); pc.setAttribute('stroke-linecap', 'round'); pc.setAttribute('stroke-opacity', 0.75);
     pb.setAttribute('stroke', t.border); pb.setAttribute('stroke-width', 1.25); pb.setAttribute('vector-effect', 'non-scaling-stroke'); pb.setAttribute('stroke-linejoin', 'round'); pb.setAttribute('stroke-opacity', 0.85);
     pu.setAttribute('d', showB ? Topo.strokeD(topo, (L, R) => (L === 1 && R >= 2) || (R === 1 && L >= 2)) : '');
     pu.setAttribute('stroke', t.borderU); pu.setAttribute('stroke-width', 1); pu.setAttribute('vector-effect', 'non-scaling-stroke'); pu.setAttribute('stroke-dasharray', '4 3');
@@ -1889,6 +1932,7 @@ const Render = {
     if (this.compare) this.dirty.cmp = true;
     this.dirty.cities = true;
   },
+  fillOf(c) { const m = Colonies.master(c); return m && this.vs().colonyMasterColor ? m.color : c.color; },
   renderSelection() {
     const ps = $('#pSel'); const s = App.sel;
     if (s && s.type === 'country' && this.countryEls.has(s.id)) {
@@ -2005,8 +2049,9 @@ const Render = {
         const len = Math.max(2, [...c.name].length);
         const fw = Math.min(st.ld * 0.95, (st.hw * 0.92) / len, 26);
         const px = fw * s;
-        let el2 = this.labelEls.get(c.id);
-        if (px < 7.5) { if (el2) el2.setAttribute('display', 'none'); used.add(c.id); continue; }
+        let el2 = this.labelEls.get(c.id); const subEl = this.subLabelEls.get(c.id);
+        const m = Colonies.master(c);
+        if (px < 7.5) { if (el2) el2.setAttribute('display', 'none'); if (subEl) subEl.setAttribute('display', 'none'); used.add(c.id); continue; }
         if (!el2) { el2 = sv('text', { class: 'mlabel', 'text-anchor': 'middle' }); this.labelEls.set(c.id, el2); gl.append(el2); }
         el2.removeAttribute('display');
         if (el2.textContent !== c.name) el2.textContent = c.name;
@@ -2016,11 +2061,21 @@ const Render = {
         el2.setAttribute('font-size', f1(fs)); el2.setAttribute('letter-spacing', f1(fs * 0.08));
         el2.setAttribute('fill', vs.mode === 'physical' ? t.label : mixHex(c.color, t.label, 0.72));
         el2.setAttribute('stroke', t.halo); el2.setAttribute('stroke-width', Math.max(2, fs * 0.16)); el2.setAttribute('stroke-opacity', 0.85);
-        { const lx = tx + (st.lx + off[0]) * s, ly = ty + (st.ly + off[1]) * s + px * 0.35, wdt = fs * len * 1.08; rects.push([lx - wdt / 2, ly - fs * 0.92, lx + wdt / 2, ly + fs * 0.2]); }
+        let subH = 0;
+        if (m) {
+          // second line: "에치제국 식민지"
+          let se = subEl; if (!se) { se = sv('text', { class: 'clabel', 'text-anchor': 'middle' }); this.subLabelEls.set(c.id, se); gl.append(se); }
+          const sfs = clamp(fs * 0.42, 9, 14); subH = sfs * 1.2;
+          se.removeAttribute('display'); se.textContent = `${m.name} ${Colonies.typeOf(c)}`;
+          se.setAttribute('x', el2.getAttribute('x')); se.setAttribute('y', f1(Number(el2.getAttribute('y')) + sfs * 1.25));
+          se.setAttribute('font-size', f1(sfs)); se.setAttribute('fill', mixHex(m.color, t.label, 0.65)); se.setAttribute('stroke', t.halo); se.setAttribute('stroke-width', 3); se.setAttribute('stroke-opacity', 0.85);
+        } else if (subEl) subEl.setAttribute('display', 'none');
+        { const lx = tx + (st.lx + off[0]) * s, ly = ty + (st.ly + off[1]) * s + px * 0.35, wdt = fs * len * 1.08; rects.push([lx - wdt / 2, ly - fs * 0.92, lx + wdt / 2, ly + fs * 0.2 + subH]); }
         used.add(c.id);
       }
     }
     for (const [id, e] of this.labelEls) if (!used.has(id)) { e.remove(); this.labelEls.delete(id); }
+    for (const [id, e] of this.subLabelEls) if (!used.has(id) || !Colonies.master(cById(id))) { e.remove(); this.subLabelEls.delete(id); }
     // cities
     for (const { g, txt, cap, c } of this.cityEls.values()) {
       const show = cap || s > 1.1 || (c.pop > 400000 && s > 0.6) || (App.sel && App.sel.type === 'city' && App.sel.id === c.id);
@@ -2102,6 +2157,8 @@ function buildExportSVG() {
       if (fw < 3) continue;
       const tx = sv('text', { x: f1(st.lx), y: f1(st.ly + fw * 0.35), 'font-size': f1(fw), 'letter-spacing': f1(fw * 0.08), fill: vs.mode === 'physical' ? t.label : mixHex(c.color, t.label, 0.72), stroke: t.halo, 'stroke-width': f1(fw * 0.14), 'paint-order': 'stroke', 'stroke-linejoin': 'round' });
       tx.textContent = c.name; labels.append(tx);
+      const m = Colonies.master(c);
+      if (m) { const sfs = Math.max(3, fw * 0.42); const st2 = sv('text', { x: f1(st.lx), y: f1(st.ly + fw * 0.35 + sfs * 1.25), 'font-size': f1(sfs), 'font-family': '"IBM Plex Sans KR", sans-serif', 'font-weight': 600, fill: mixHex(m.color, t.label, 0.65), stroke: t.halo, 'stroke-width': f1(sfs * 0.25), 'paint-order': 'stroke' }); st2.textContent = `${m.name} ${Colonies.typeOf(c)}`; labels.append(st2); }
     }
   }
   const cities = sv('g', { 'font-family': '"IBM Plex Sans KR", sans-serif', 'font-weight': 600 });
@@ -2388,8 +2445,11 @@ const App = {
 };
 Render.refreshColors = function () {
   let missing = false;
-  for (const [id, p] of this.countryEls) { const c = cById(id); if (!c || c.status === 'fallen') { missing = true; continue; } p.setAttribute('fill', c.color); }
+  for (const [id, p] of this.countryEls) { const c = cById(id); if (!c || c.status === 'fallen') { missing = true; continue; } p.setAttribute('fill', this.fillOf(c)); }
   for (const c of activeCountries()) if (!this.countryEls.has(c.id) && this.stats && this.stats.has(c.id + 1)) missing = true;
+  // colony links change the dashed borders and labels
+  const sig = D().countries.map((c) => (c.status === 'fallen' ? 'x' : c.overlord || 0)).join(',');
+  if (sig !== this.colSig) { this.colSig = sig; missing = true; }
   if (missing) this.invalidate('pol');
   this.invalidate('screen');
 };
@@ -3004,7 +3064,7 @@ const UI = {
     if (i < 0) { $('#hoverInfo').textContent = ''; return; }
     if (P.land[i] !== 1) { $('#hoverInfo').textContent = P.land[i] === 2 ? '호수' : '바다'; return; }
     const c = cById(P.owner[i]); const parts = [];
-    parts.push(c ? c.name : '무주지'); parts.push(TERRAINS[P.terrain[i]].name);
+    parts.push(c ? c.name + (Colonies.master(c) ? ` (${Colonies.master(c).name} ${Colonies.typeOf(c)})` : '') : '무주지'); parts.push(TERRAINS[P.terrain[i]].name);
     if (P.occ[i] && P.occ[i] !== P.owner[i]) parts.push('점령: ' + (cById(P.occ[i])?.name || '?'));
     const hi = $('#hoverInfo'); hi.innerHTML = '';
     if (c) hi.append(el('i', { class: 'sw', style: { background: c.color, marginRight: '6px' } }));
@@ -3061,8 +3121,9 @@ const UI = {
         break;
       case 'fill': add(this.targetField('편입할 국가')); break;
       case 'lasso':
-        add(el('label', {}, '동작', sel([['assign', '대상 국가에 편입'], ['new', '새 국가로 독립'], ['occupy', '점령 지역으로 표시'], ['swap', '두 국가 간 영토 교환'], ['unclaim', '무주지로 만들기'], ['unoccupy', '점령 해제']], o.lassoAction, (v) => { o.lassoAction = v; this.renderOptbar(); })));
-        if (['assign', 'occupy', 'swap'].includes(o.lassoAction)) add(this.targetField(o.lassoAction === 'occupy' ? '점령국' : o.lassoAction === 'swap' ? '국가 A' : '대상 국가'));
+        add(el('label', {}, '동작', sel([['assign', '대상 국가에 편입'], ['new', '새 국가로 독립'], ['colony', '새 식민지 세우기'], ['occupy', '점령 지역으로 표시'], ['swap', '두 국가 간 영토 교환'], ['unclaim', '무주지로 만들기'], ['unoccupy', '점령 해제']], o.lassoAction, (v) => { o.lassoAction = v; this.renderOptbar(); })));
+        if (['assign', 'occupy', 'swap', 'colony'].includes(o.lassoAction)) add(this.targetField(o.lassoAction === 'occupy' ? '점령국' : o.lassoAction === 'swap' ? '국가 A' : o.lassoAction === 'colony' ? '종주국' : '대상 국가'));
+        if (o.lassoAction === 'colony') add(el('label', {}, '범위', sel([['unclaimed', '무주지만'], ['all', '안쪽 모든 땅']], o.colonyFilter || 'unclaimed', (v) => { o.colonyFilter = v; })));
         if (o.lassoAction === 'assign') add(el('label', {}, '범위', sel([['all', '안쪽 모든 땅'], ['unclaimed', '무주지만']], o.lassoFilter, (v) => { o.lassoFilter = v; })));
         if (o.lassoAction === 'swap') add(el('label', {}, '국가 B', this.countrySelect(o.swapWith, (v) => { o.swapWith = v; }, { allowNone: true, exclude: App.activeCid })));
         break;
@@ -3131,6 +3192,7 @@ const UI = {
       { label: '도시 이름', checked: vs.showCityNames, fn: () => this.toggleSetting('showCityNames') },
       { label: '강 · 산맥', checked: vs.showFeatures, fn: () => this.toggleSetting('showFeatures') },
       { label: '점령 지역', checked: vs.showOcc, fn: () => this.toggleSetting('showOcc') },
+      { label: '식민지를 본국 색으로', checked: vs.colonyMasterColor, fn: () => this.toggleSetting('colonyMasterColor') },
       { label: '경위선 격자', checked: vs.showGrid, fn: () => this.toggleSetting('showGrid') }, '|',
       { group: '지도 배경' }, ...Object.entries(MAP_THEMES).map(([k, t]) => ({ label: t.name, checked: vs.theme === k, fn: () => this.setSetting('theme', k) })), '|',
       { label: '지도 전체 보기', key: '0', fn: () => Cam.fit() }, { label: '다크 모드 전환', fn: () => this.toggleDark() },
@@ -3140,6 +3202,8 @@ const UI = {
       { label: '국가 합병…', fn: () => this.mergeDialog(App.sel?.type === 'country' ? App.sel.id : 0) },
       { label: '국가 분할 (분할선 그리기)', fn: () => Tools.set('split') },
       { label: '국가 독립 (영역 그려서 독립)', fn: () => { Tools.opt.lassoAction = 'new'; Tools.set('lasso'); } },
+      { label: '새 식민지 개척 (영역 그리기)', fn: () => { Tools.opt.lassoAction = 'colony'; Tools.set('lasso'); } },
+      { label: '식민지 현황', fn: () => this.colonyOverview() },
       { label: '국가 간 영토 교환 (영역 그리기)', fn: () => { Tools.opt.lassoAction = 'swap'; Tools.set('lasso'); } },
       { label: '영토 이동', fn: () => Tools.set('move') }, '|',
       { label: '국가 삭제 · 멸망 처리…', disabled: !(App.sel && App.sel.type === 'country'), fn: () => this.deleteCountryDialog(App.sel.id) },
@@ -3213,7 +3277,7 @@ const UI = {
     colorIn.addEventListener('change', () => { const v = colorIn.value; c.color = origColor; commit('국가 색상 변경', () => { c.color = v; }, false); });
     const sw = el('div', { class: 'bigsw', style: { background: c.color } }, colorIn);
     const fallen = c.status === 'fallen';
-    b.append(el('div', { class: 'ph' }, sw, el('div', { style: { minWidth: 0 } }, el('h2', {}, c.name), el('div', { class: 'sub' }, fallen ? `멸망 · ${c.fate || ''} ${c.fellIn ? '(' + c.fellIn + ')' : ''}` : `${c.gov} · ${c.warStatus || '평화'}`))));
+    b.append(el('div', { class: 'ph' }, sw, el('div', { style: { minWidth: 0 } }, el('h2', {}, c.name), el('div', { class: 'sub' }, fallen ? `멸망 · ${c.fate || ''} ${c.fellIn ? '(' + c.fellIn + ')' : ''}` : `${Colonies.master(c) ? Colonies.master(c).name + ' ' + Colonies.typeOf(c) + ' · ' : ''}${c.gov} · ${c.warStatus || '평화'}${Colonies.of(c.id).length ? ' · 식민지 ' + Colonies.of(c.id).length + '곳' : ''}`))));
     if (fallen) {
       b.append(el('p', { class: 'note' }, '이 국가는 멸망 처리되어 지도에 표시되지 않습니다. 복구하면 멸망 당시의 영토를 되찾습니다 (현재 그 땅을 가진 국가에서 가져옵니다).'));
       b.append(el('div', { class: 'btns' }, el('button', { class: 'btn primary', onclick: () => this.restoreCountry(c.id) }, '국가 복구'), el('button', { class: 'btn danger', onclick: () => this.deleteCountryDialog(c.id) }, '기록 완전 삭제')));
@@ -3251,6 +3315,7 @@ const UI = {
       wrap.append(chips, el('div', { style: { marginTop: '6px' } }, add));
       return wrap;
     };
+    if (!fallen) this.colonySection(b, c);
     b.append(el('div', { class: 'eyebrow' }, '외교'));
     b.append(el('div', { class: 'form' }, this.field('동맹국', rel('allies', '동맹국')), this.field('적대국', rel('enemies', '적대국'))));
     if (fallen) return;
@@ -3360,8 +3425,12 @@ const UI = {
       const sorters = { area: (a, z) => (cnt.get(z.id) || 0) - (cnt.get(a.id) || 0), name: (a, z) => a.name.localeCompare(z.name, 'ko'), pop: (a, z) => (z.population || 0) - (a.population || 0) };
       cs.sort(sorters[this.listSort]);
       const act = cs.filter((c) => c.status !== 'fallen'), fal = cs.filter((c) => c.status === 'fallen');
-      for (const c of act) list.append(el('div', { class: 'crow' + (App.sel && App.sel.id === c.id ? ' sel' : ''), onclick: () => { App.select({ type: 'country', id: c.id }); Cam.fitCountry(c.id); } },
-        el('i', { class: 'sw', style: { background: c.color } }), el('span', { class: 'nm' }, c.name), el('span', { class: 'meta' }, cnt.get(c.id) ? fmt((cnt.get(c.id) * cellArea()) / 1000) + 'k km²' : '영토 없음')));
+      const row = (c, sub) => list.append(el('div', { class: 'crow' + (sub ? ' sub' : '') + (App.sel && App.sel.id === c.id ? ' sel' : ''), onclick: () => { App.select({ type: 'country', id: c.id }); Cam.fitCountry(c.id); } },
+        el('i', { class: 'sw', style: { background: c.color } }), el('span', { class: 'nm' }, sub ? '└ ' + c.name : c.name), el('span', { class: 'meta' }, (sub ? Colonies.typeOf(c) + ' · ' : '') + (cnt.get(c.id) ? fmt((cnt.get(c.id) * cellArea()) / 1000) + 'k km²' : '영토 없음'))));
+      const shown = new Set(act.map((c) => c.id));
+      const placed = new Set();
+      const put = (c, depth) => { if (placed.has(c.id)) return; placed.add(c.id); row(c, depth > 0); for (const k of act.filter((x) => x.overlord === c.id)) put(k, depth + 1); };
+      for (const c of act) if (!Colonies.master(c) || !shown.has(c.overlord)) put(c, Colonies.master(c) ? 1 : 0);
       if (!act.length) list.append(el('div', { class: 'empty' }, qq ? '검색 결과가 없습니다' : '국가가 없습니다'));
       if (fal.length) {
         list.append(el('div', { class: 'eyebrow' }, '멸망한 국가'));
@@ -3444,8 +3513,12 @@ const UI = {
     const r = el('input', { type: 'number', min: 0, max: 150, value: 22, style: { width: '90px' } });
     const take = el('select', {}, el('option', { value: 'unclaimed' }, '무주지만 차지'), el('option', { value: 'all' }, '다른 국가 영토도 차지'));
     const onLand = w && App.cellAt(w) >= 0 && P.land[App.cellAt(w)] === 1;
+    const ctype = el('select', {}, COLONY_TYPES.map((t) => el('option', { value: t }, t)));
+    const master = this.countrySelect(0, (v) => { const m = cById(v); ctype.disabled = !m; if (m) cf.set(Colonies.tint(m.color)); }, { allowNone: true, noneLabel: '없음 (독립국)' });
+    ctype.disabled = true;
     const body = el('div', { class: 'form' },
       this.field('국가 이름', name), this.field('정치체제', gov),
+      this.field('종주국', master), this.field('형태', ctype),
       el('label', { class: 'full' }, '국가 색상'), el('div', { class: 'full' }, cf),
       w ? this.field('초기 영토', el('div', { style: { display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' } }, '반지름', r, '칸', take)) : null,
       el('p', { class: 'note full' }, w ? (onLand ? '클릭한 지점을 중심으로 원형 영토를 만듭니다. 이후 브러시·국경 편집으로 다듬으세요.' : '바다를 클릭했습니다. 영토 없이 국가만 만듭니다.') : '영토 없이 국가를 만듭니다. 만든 뒤 영토 브러시로 칠하거나 국가 생성 도구로 지도를 클릭하세요.'));
@@ -3454,6 +3527,7 @@ const UI = {
       let c;
       commit('국가 추가', () => {
         c = newCountry({ name: nm, color: cf.get(), gov: gov.value });
+        if (Number(master.value)) Colonies.make(c.id, Number(master.value), ctype.value);
         if (w && onLand) { const R = Number(r.value) || 0; if (R > 0) Ops.stamp(w[0], w[1], R, Ops.territoryFn(c.id, take.value)); }
       });
       if (c) { App.activeCid = c.id; App.select({ type: 'country', id: c.id }); toast(`${c.name}을(를) 만들었습니다`); if (!w) Tools.set('brush'); }
@@ -3522,6 +3596,12 @@ const UI = {
       let na = 0, nb = 0;
       commit('영토 교환', () => { for (const i of cells) { if (P.owner[i] === A.id) { P.owner[i] = B.id; na++; } else if (P.owner[i] === B.id) { P.owner[i] = A.id; nb++; } if (P.occ[i] === P.owner[i]) P.occ[i] = 0; } });
       toast(`교환 완료: ${A.name} → ${B.name} ${km(na)}, ${B.name} → ${A.name} ${km(nb)}`);
+    } else if (a === 'colony') {
+      const m = Tools.needActive(); if (!m) return;
+      const f = Tools.opt.colonyFilter || 'unclaimed';
+      const list = cells.filter((i) => P.owner[i] !== m.id && (f === 'all' || P.owner[i] === 0));
+      if (!list.length) { toast(f === 'unclaimed' ? '영역 안에 무주지가 없습니다 (범위를 "안쪽 모든 땅"으로 바꿀 수 있어요)' : '바뀔 땅이 없습니다', { err: true }); return; }
+      this.colonyDialog({ cells: list, masterId: m.id });
     } else if (a === 'new') {
       const votes = new Map(); for (const i of cells) votes.set(P.owner[i], (votes.get(P.owner[i]) || 0) + 1);
       const major = [...votes].filter(([k]) => k).sort((x, y) => y[1] - x[1])[0]?.[0] || 0;
@@ -3588,6 +3668,103 @@ const UI = {
       } }] });
   },
   autoColors() { commit('색상 자동 지정', () => Ops.autoColors(), false); toast('이웃 국가끼리 겹치지 않게 색을 다시 지정했습니다'); },
+  /* ---------------- colonies ---------------- */
+  colonySection(b, c) {
+    const m = Colonies.master(c), kids = Colonies.of(c.id), cnt = countCells();
+    const km = (id) => fmt((cnt.get(id) || 0) * cellArea()) + ' km²';
+    b.append(el('div', { class: 'eyebrow' }, '식민지'));
+    if (m) {
+      const tsel = el('select', { onchange: () => commit('식민지 형태 변경', () => { c.colonyType = tsel.value; }, false) }, COLONY_TYPES.map((t) => el('option', { value: t, selected: t === Colonies.typeOf(c) }, t)));
+      const msel = this.countrySelect(m.id, (v) => { if (!v || v === m.id) return; if (Colonies.wouldLoop(c.id, v)) { toast('서로가 서로의 식민지가 될 수는 없습니다', { err: true }); this.renderPanel(); return; } commit('종주국 변경', () => { c.overlord = v; }, false); toast(`${c.name}의 종주국이 ${cById(v)?.name}(으)로 바뀌었습니다`); }, { exclude: c.id });
+      b.append(el('div', { class: 'colbox' },
+        el('div', {}, el('i', { class: 'sw', style: { background: m.color } }), ' ', el('a', { href: '#', onclick: (e) => { e.preventDefault(); App.select({ type: 'country', id: m.id }); } }, el('b', {}, m.name)), ` 의 ${Colonies.typeOf(c)}`),
+        el('div', { class: 'form', style: { marginTop: '8px' } }, this.field('종주국', msel), this.field('형태', tsel), this.field('편입 연도', this.bindText(c, 'colonySince', '식민지 연도 변경', { ph: '예: 230 CE' }))),
+        el('div', { class: 'btns', style: { marginTop: '8px' } },
+          el('button', { class: 'btn sm primary', onclick: () => this.colonyIndependence(c) }, '독립'),
+          el('button', { class: 'btn sm', onclick: () => this.colonyAnnex(c) }, '본국에 완전 편입'))));
+    } else {
+      const pick = this.countrySelect(0, () => {}, { allowNone: true, noneLabel: '종주국 고르기…', exclude: c.id });
+      const tsel = el('select', {}, COLONY_TYPES.map((t) => el('option', { value: t }, t)));
+      b.append(el('div', { class: 'btns', style: { alignItems: 'center' } }, pick, tsel,
+        el('button', { class: 'btn sm', onclick: () => {
+          const v = Number(pick.value); if (!v) { toast('종주국을 고르세요', { err: true }); return; }
+          if (Colonies.wouldLoop(c.id, v)) { toast('서로가 서로의 식민지가 될 수는 없습니다', { err: true }); return; }
+          commit('식민지로 만들기', () => Colonies.make(c.id, v, tsel.value), false); toast(`${c.name}이(가) ${cById(v)?.name}의 ${tsel.value}이(가) 되었습니다`);
+        } }, '식민지로 만들기')));
+    }
+    if (kids.length) {
+      let total = 0; for (const k of kids) total += cnt.get(k.id) || 0;
+      b.append(el('div', { class: 'note', style: { margin: '10px 0 6px' } }, `거느린 식민지 ${kids.length}곳 · ${fmt(total * cellArea())} km² (본국 ${km(c.id)})`));
+      for (const k of kids) b.append(el('div', { class: 'crow sub', onclick: () => { App.select({ type: 'country', id: k.id }); Cam.fitCountry(k.id); } },
+        el('i', { class: 'sw', style: { background: k.color } }), el('span', { class: 'nm' }, k.name), el('span', { class: 'meta' }, Colonies.typeOf(k) + ' · ' + km(k.id))));
+    }
+    b.append(el('div', { class: 'btns', style: { marginTop: '8px' } },
+      el('button', { class: 'btn sm', onclick: () => { App.activeCid = c.id; Tools.opt.lassoAction = 'colony'; Tools.set('lasso'); toast(`${c.name}의 새 식민지로 만들 땅을 둘러 그리세요`, { tool: true }); } }, '+ 새 식민지 개척'),
+      kids.length ? el('button', { class: 'btn sm', onclick: () => this.colonyOverview(c.id) }, '식민지 현황') : null));
+  },
+  /* new colony from drawn cells */
+  colonyDialog({ cells, masterId }) {
+    const m = cById(masterId);
+    const name = el('input', { type: 'text', value: m.name.replace(/(제국|공화국|왕국|연방|연합국|연방공화국)$/, '') + '령 ' + genName(Math.random) });
+    const cf = colorField(Colonies.tint(m.color));
+    const tsel = el('select', {}, COLONY_TYPES.map((t) => el('option', { value: t }, t)));
+    const since = el('input', { type: 'text', value: yearText(D().year) });
+    const from = [...new Set(cells.map((i) => P.owner[i]))].filter(Boolean).map((id) => cById(id)?.name).filter(Boolean);
+    Modal.open({ title: `새 식민지 · ${m.name}`, body: el('div', { class: 'form' }, this.field('식민지 이름', name), this.field('형태', tsel), this.field('편입 연도', since),
+        el('label', { class: 'full' }, '색상 (기본: 종주국 색을 옅게)'), el('div', { class: 'full' }, cf),
+        el('p', { class: 'note full' }, `영토 ${fmt(cells.length * cellArea())} km²` + (from.length ? ` · ${from.join(', ')}에게서 가져옴` : ' · 무주지'))),
+      buttons: [{ label: '취소' }, { label: '식민지 세우기', primary: true, onClick: () => {
+        const nm = name.value.trim(); if (!nm) { toast('이름을 입력하세요', { err: true }); return false; }
+        let c;
+        commit('식민지 개척', () => {
+          c = newCountry({ name: nm, color: cf.get(), gov: '식민 총독부', desc: `${m.name}의 ${tsel.value}` });
+          Colonies.make(c.id, m.id, tsel.value, since.value.trim());
+          Ops.transfer(cells, c.id);
+        });
+        if (c) { App.select({ type: 'country', id: c.id }); toast(`${m.name}의 ${tsel.value} ${c.name}을(를) 세웠습니다`); }
+      } }] });
+  },
+  colonyIndependence(c) {
+    const m = Colonies.master(c); if (!m) return;
+    const keepColor = el('label', { class: 'radio' }, el('input', { type: 'checkbox', checked: false }), el('div', {}, '새 색상 정하기', el('small', {}, '끄면 지금 색을 그대로 씁니다')));
+    const cf = colorField(autoColor(D().countries.length + 5)); cf.hidden = true;
+    $('input', keepColor).addEventListener('change', (e) => { cf.hidden = !e.target.checked; });
+    const gov = el('select', {}, GOVS.map((g) => el('option', { value: g, selected: g === '공화제' }, g)));
+    const how = el('div', {},
+      el('label', { class: 'radio' }, el('input', { type: 'radio', name: 'ci', value: 'peace', checked: true }), el('div', {}, '평화롭게 독립', el('small', {}, '옛 종주국과 관계 변화 없음'))),
+      el('label', { class: 'radio' }, el('input', { type: 'radio', name: 'ci', value: 'hostile' }), el('div', {}, '적대 관계로 독립')),
+      el('label', { class: 'radio' }, el('input', { type: 'radio', name: 'ci', value: 'war' }), el('div', {}, '독립 전쟁 시작', el('small', {}, `${c.name} 대 ${m.name} 전쟁을 바로 엽니다`))));
+    Modal.open({ title: `${c.name} 독립`, body: el('div', {}, el('div', { class: 'form' }, this.field('정치체제', gov)), keepColor, cf, el('div', { class: 'eyebrow' }, '독립 방식'), how),
+      buttons: [{ label: '취소' }, { label: '독립', primary: true, onClick: () => {
+        const mode = $('input[name=ci]:checked').value;
+        commit('식민지 독립', () => {
+          Colonies.free(c.id); c.gov = gov.value; if ($('input', keepColor).checked) c.color = cf.get();
+          c.desc = (c.desc ? c.desc + '\n' : '') + `${yearText(D().year)} ${m.name}에게서 독립`;
+          if (mode !== 'peace') { if (!c.enemies.includes(m.id)) c.enemies.push(m.id); if (!m.enemies.includes(c.id)) m.enemies.push(c.id); c.allies = c.allies.filter((x) => x !== m.id); m.allies = m.allies.filter((x) => x !== c.id); }
+        }, false);
+        toast(`${c.name}이(가) ${m.name}에게서 독립했습니다`);
+        if (mode === 'war') setTimeout(() => this.warDialog(null, { sides: [[c.id], [m.id]] }), 0);
+      } }] });
+  },
+  async colonyAnnex(c) {
+    const m = Colonies.master(c); if (!m) return;
+    if (!(await Modal.confirm('본국에 완전 편입', `${c.name}의 영토와 점령지를 모두 ${m.name} 본토로 합칩니다. ${c.name}은(는) "멸망"으로 기록되고 나중에 복구할 수 있습니다.`, { ok: '편입' }))) return;
+    commit('식민지 본국 편입', () => { Ops.fallCountry(c.id, 'transfer', m.id, `${m.name} 본토에 편입`); Ops.merge(m.id, c.id); });
+    App.select({ type: 'country', id: m.id }); toast(`${c.name}을(를) ${m.name} 본토에 편입했습니다`);
+  },
+  colonyOverview(focusId) {
+    const cnt = countCells(); const masters = activeCountries().filter((c) => Colonies.of(c.id).length && (!focusId || c.id === focusId));
+    const box = el('div', {}); let rec;
+    if (!masters.length) box.append(el('div', { class: 'empty' }, '아직 식민지가 없습니다. 나라 정보창의 "+ 새 식민지 개척"이나 올가미 도구의 "새 식민지 세우기"로 만드세요.'));
+    for (const m of masters) {
+      const kids = Colonies.of(m.id); let total = 0; for (const k of kids) total += cnt.get(k.id) || 0;
+      const home = cnt.get(m.id) || 0;
+      box.append(el('div', { class: 'card' }, el('h4', {}, el('i', { class: 'sw', style: { background: m.color } }), m.name, el('span', { class: 'pill cur' }, `식민지 ${kids.length}곳`)),
+        el('div', { class: 'note', style: { marginTop: 0 } }, `본국 ${fmt(home * cellArea())} km² + 식민지 ${fmt(total * cellArea())} km² = ${fmt((home + total) * cellArea())} km²`),
+        kids.map((k) => el('div', { class: 'crow sub', onclick: () => { rec.close(); App.select({ type: 'country', id: k.id }); Cam.fitCountry(k.id); } }, el('i', { class: 'sw', style: { background: k.color } }), el('span', { class: 'nm' }, k.name), el('span', { class: 'meta' }, `${Colonies.typeOf(k)} · ${fmt((cnt.get(k.id) || 0) * cellArea())} km²`)))));
+    }
+    rec = Modal.open({ title: '식민지 현황', wide: true, body: box, buttons: [{ label: '닫기' }] });
+  },
   capitalBadges(w) {
     const fallen = War.members(w).map((id) => cById(id)).filter((c) => c && c.status !== 'fallen' && Capitals.fallen(c));
     if (!fallen.length) return null;
@@ -3598,9 +3775,9 @@ const UI = {
   /* allies of participants that are not in the war yet (skipped when allied with two different sides) */
   allyCandidates(w) {
     const inWar = new Set(War.members(w)); const out = [];
-    w.sides.forEach((sd, k) => { for (const id of sd.ids) for (const al of cById(id)?.allies || []) {
+    w.sides.forEach((sd, k) => { for (const id of sd.ids) for (const al of Colonies.kin(cById(id))) {
       const c = cById(al); if (!c || c.status === 'fallen' || inWar.has(al) || out.some((o) => o.id === al)) continue;
-      if (w.sides.some((o, k2) => k2 !== k && o.ids.some((x) => c.allies.includes(x)))) continue;
+      if (w.sides.some((o, k2) => k2 !== k && o.ids.some((x) => Colonies.kin(c).includes(x)))) continue;
       out.push({ id: al, side: k });
     } });
     return out;
@@ -3628,7 +3805,7 @@ const UI = {
   },
   joinWarDialog(w) {
     const inWar = new Set(War.members(w));
-    const allySide = (c) => w.sides.findIndex((sd) => sd.ids.some((x) => c.allies.includes(x)));
+    const allySide = (c) => w.sides.findIndex((sd) => sd.ids.some((x) => Colonies.kin(c).includes(x)));
     const sel = el('select', {}, el('option', { value: 0 }, '— 참전할 국가 —'));
     for (const c of activeCountries().filter((c) => !inWar.has(c.id)).sort((a, b) => a.name.localeCompare(b.name, 'ko'))) { const k = allySide(c); sel.append(el('option', { value: c.id }, c.name + (k >= 0 ? ` (${War.label(w, k)} 동맹)` : ''))); }
     const nameOf = (ids) => ids.map((id) => cById(id)?.name).filter(Boolean).join(', ') || '—';
@@ -3671,7 +3848,7 @@ const UI = {
     const q = [...side.keys()];
     while (q.length) {
       const id = q.shift(), c = cById(id), sd = side.get(id);
-      for (const al of c?.allies || []) if (cById(al)?.status !== 'fallen' && !side.has(al)) { side.set(al, sd); tot[sd] += area.get(al) || 0; q.push(al); }
+      for (const al of Colonies.kin(c)) if (cById(al)?.status !== 'fallen' && !side.has(al)) { side.set(al, sd); tot[sd] += area.get(al) || 0; q.push(al); }
       for (const en of c?.enemies || []) if (cById(en)?.status !== 'fallen' && !side.has(en)) { const o = smallest(sd); side.set(en, o); tot[o] += area.get(en) || 0; q.push(en); }
     }
     for (const c of cs.filter((c) => !side.has(c.id)).sort((x, y) => (area.get(y.id) || 0) - (area.get(x.id) || 0))) { const o = smallest(-1); side.set(c.id, o); tot[o] += area.get(c.id) || 0; }
@@ -3751,7 +3928,7 @@ const UI = {
     const picker = this.sidePicker(w);
     const notes = el('textarea', {}, w.notes || '');
     const markEnemies = el('label', { class: 'radio' }, el('input', { type: 'checkbox', checked: true }), el('div', {}, '진영에 맞춰 적대·동맹 관계와 "전쟁 중" 상태를 정리', el('small', {}, '다른 진영끼리는 적대국, 빠진 나라는 다른 전쟁이 없으면 평화로')));
-    const withAllies = el('label', { class: 'radio' }, el('input', { type: 'checkbox', checked: false }), el('div', {}, '동맹국도 함께 참전', el('small', {}, '불참인 동맹국을 같은 진영에 넣습니다')));
+    const withAllies = el('label', { class: 'radio' }, el('input', { type: 'checkbox', checked: false }), el('div', {}, '동맹국 · 식민지도 함께 참전', el('small', {}, '불참인 동맹국과 식민지(종주국)를 같은 진영에 넣습니다')));
     const before = new Set(War.members(w));
     Modal.open({ title: isNew ? (w.world ? '🌍 세계대전쟁' : '⚔️ 전쟁 시작') : (w.world ? '🌍 세계대전쟁 편집' : '전쟁 편집'), wide: true,
       body: el('div', {}, el('div', { class: 'form' }, this.field('전쟁 이름', name), this.field('시작 연도', start)),
@@ -3763,7 +3940,7 @@ const UI = {
         if (sides.length < 2) { toast('두 개 이상의 진영에 국가를 넣으세요', { err: true }); return false; }
         if ($('input', withAllies).checked) {
           const taken = new Set(sides.flatMap((s) => s.ids));
-          for (const sd of sides) for (const id of [...sd.ids]) for (const al of cById(id)?.allies || []) if (!taken.has(al) && cById(al) && cById(al).status !== 'fallen') { sd.ids.push(al); taken.add(al); }
+          for (const sd of sides) for (const id of [...sd.ids]) for (const al of Colonies.kin(cById(id))) if (!taken.has(al) && cById(al) && cById(al).status !== 'fallen') { sd.ids.push(al); taken.add(al); }
         }
         const tmp = { sides };
         if (!name.value.trim()) name.value = w.world ? '세계대전쟁' : sides.length === 2 ? `${War.label(tmp, 0).replace(/ 측$/, '')}–${War.label(tmp, 1).replace(/ 측$/, '')} 전쟁` : `${sides.length}국 전쟁`;
@@ -4004,6 +4181,7 @@ async function openProject(p) {
   App.activeCid = activeCountries()[0]?.id || 0;
   for (const e of Render.countryEls.values()) e.remove(); Render.countryEls.clear();
   for (const e of Render.labelEls.values()) e.remove(); Render.labelEls.clear();
+  for (const e of Render.subLabelEls.values()) e.remove(); Render.subLabelEls.clear();
   $$('#defs pattern').forEach((e) => e.remove());
   Cam.resize(); Render.all(); Render.now(); fitLand();
   Tools.set(Tools.cur || 'select'); UI.refresh(); UI.setSaveState(Store.ok ? 'saved' : 'memory');
