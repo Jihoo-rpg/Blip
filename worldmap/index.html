@@ -398,6 +398,10 @@ kbd { font-family: var(--mono); font-size: 11px; background: var(--panel-2); bor
 .crow.sub { padding-left: 22px; }
 .crow.sub .nm { color: var(--fg-2); }
 .colbox a, #panelBody a { color: var(--accent); text-decoration: none; font-weight: 600; }
+
+/* protected countries */
+.btn.locked { border-color: var(--accent); color: var(--accent); background: var(--accent-soft); font-weight: 600; }
+.bigchk { width: 22px; height: 22px; accent-color: var(--accent); }
 </style>
 </head>
 <body>
@@ -1041,6 +1045,14 @@ function blankProject(W = 1200, H = 760) {
   };
 }
 const D = () => P.data;
+/* ---------- protected countries: paint tools leave their land alone ---------- */
+const Locks = {
+  ids() { return new Set((P.settings && P.settings.locked) || []); },
+  has(id) { return !!id && ((P.settings && P.settings.locked) || []).includes(id); },
+  set(list) { P.settings = Object.assign({}, P.settings || {}, { locked: [...new Set(list)].filter((id) => cById(id)) }); },
+  toggle(id) { const s = this.ids(); if (s.has(id)) s.delete(id); else s.add(id); this.set([...s]); },
+  count() { return [...this.ids()].filter((id) => { const c = cById(id); return c && c.status !== 'fallen'; }).length; },
+};
 const cById = (id) => D().countries.find((c) => c.id === id) || null;
 const cityById = (id) => D().cities.find((c) => c.id === id) || null;
 const featById = (id) => D().features.find((f) => f.id === id) || null;
@@ -1159,24 +1171,25 @@ const Ops = {
   },
   /* territory paint filter: mode 'all' | 'unclaimed' | number (only from that country) */
   territoryFn(cid, mode) {
-    const own = P.owner, land = P.land, occ = P.occ;
+    const own = P.owner, land = P.land, occ = P.occ, locked = Locks.ids();
     return (i) => {
       if (land[i] !== 1) return;
       const o = own[i];
-      if (o === cid) return;
+      if (o === cid || locked.has(o)) return;
       if (mode === 'unclaimed' && o !== 0) return;
       if (typeof mode === 'number' && o !== mode) return;
       own[i] = cid; if (occ[i] === cid) occ[i] = 0;
     };
   },
   eraseFn(onlyCid) {
-    const own = P.owner, occ = P.occ;
-    return (i) => { if (!own[i]) return; if (onlyCid && own[i] !== onlyCid) return; if (occ[i] === own[i]) occ[i] = 0; own[i] = 0; };
+    const own = P.owner, occ = P.occ, locked = Locks.ids();
+    return (i) => { if (!own[i] || locked.has(own[i])) return; if (onlyCid && own[i] !== onlyCid) return; if (occ[i] === own[i]) occ[i] = 0; own[i] = 0; };
   },
   landFn(mode, claimCid) {
-    const land = P.land, ter = P.terrain, own = P.owner, occ = P.occ;
+    const land = P.land, ter = P.terrain, own = P.owner, occ = P.occ, locked = Locks.ids();
     const tid = TERRAINS.findIndex((t) => 'ter' + t.id === mode);
     return (i) => {
+      if ((mode === 'sea' || mode === 'lake') && locked.has(own[i])) return; // protected land is not carved away
       if (mode === 'land') { if (land[i] !== 1) { land[i] = 1; ter[i] = 0; own[i] = claimCid || 0; occ[i] = 0; } }
       else if (mode === 'sea') { land[i] = 0; own[i] = 0; occ[i] = 0; }
       else if (mode === 'lake') { land[i] = 2; own[i] = 0; occ[i] = 0; }
@@ -2761,6 +2774,7 @@ T.fill = {
     const c = Tools.needActive(); if (!c) return;
     const i = App.cellAt(w); if (i < 0 || P.land[i] !== 1) { toast('육지를 클릭하세요'); return; }
     if (P.owner[i] === c.id) { toast('이미 ' + c.name + '의 영토입니다'); return; }
+    if (Locks.has(P.owner[i])) { toast(`🔒 ${cById(P.owner[i])?.name}은(는) 보호 중이라 편입할 수 없습니다`, { err: true }); return; }
     const from = P.owner[i]; const cells = Ops.flood(i);
     const e = commit('영역 편입', () => Ops.transfer(cells, c.id));
     if (e) toast(`${from ? cById(from)?.name : '무주지'} 영역 ${fmt(cells.length * cellArea())} km²를 ${c.name}에 편입했습니다`);
@@ -3064,7 +3078,7 @@ const UI = {
     if (i < 0) { $('#hoverInfo').textContent = ''; return; }
     if (P.land[i] !== 1) { $('#hoverInfo').textContent = P.land[i] === 2 ? '호수' : '바다'; return; }
     const c = cById(P.owner[i]); const parts = [];
-    parts.push(c ? c.name + (Colonies.master(c) ? ` (${Colonies.master(c).name} ${Colonies.typeOf(c)})` : '') : '무주지'); parts.push(TERRAINS[P.terrain[i]].name);
+    parts.push(c ? (Locks.has(c.id) ? '🔒 ' : '') + c.name + (Colonies.master(c) ? ` (${Colonies.master(c).name} ${Colonies.typeOf(c)})` : '') : '무주지'); parts.push(TERRAINS[P.terrain[i]].name);
     if (P.occ[i] && P.occ[i] !== P.owner[i]) parts.push('점령: ' + (cById(P.occ[i])?.name || '?'));
     const hi = $('#hoverInfo'); hi.innerHTML = '';
     if (c) hi.append(el('i', { class: 'sw', style: { background: c.color, marginRight: '6px' } }));
@@ -3095,6 +3109,38 @@ const UI = {
     const r = el('input', { type: 'range', min: 1, max: 80, step: 1, value: Tools.opt.brush, id: 'brushSize', oninput: () => { Tools.opt.brush = Number(r.value); val.textContent = r.value; } });
     return el('label', { title: '브러시 크기 ( [ / ] )' }, '크기', r, val);
   },
+  lockButton() {
+    const n = Locks.count();
+    return el('button', { type: 'button', class: 'btn sm' + (n ? ' locked' : ''), title: '칠하지 않을 국가', onclick: () => this.lockDialog() }, n ? `🔒 보호 ${n}개국` : '🔒 보호할 국가');
+  },
+  lockDialog() {
+    const sel = Locks.ids();
+    const rows = el('div', { class: 'sprows' });
+    const draw = () => {
+      rows.innerHTML = '';
+      for (const c of activeCountries().slice().sort((a, b) => (sel.has(b.id) - sel.has(a.id)) || a.name.localeCompare(b.name, 'ko'))) {
+        const on = sel.has(c.id);
+        rows.append(el('label', { class: 'sprow' + (on ? ' in' : ''), style: { cursor: 'pointer' } }, el('i', { class: 'sw', style: { background: c.color } }), el('span', { class: 'nm' }, (on ? '🔒 ' : '') + c.name + (Colonies.master(c) ? ` (${Colonies.master(c).name} ${Colonies.typeOf(c)})` : '')),
+          el('input', { type: 'checkbox', checked: on, class: 'bigchk', onchange: (e) => { if (e.target.checked) sel.add(c.id); else sel.delete(c.id); draw(); } })));
+      }
+    };
+    const quick = (fn) => () => { fn(); draw(); };
+    const target = cById(App.activeCid);
+    draw();
+    Modal.open({ title: '🔒 칠하지 않을 국가', wide: true,
+      body: el('div', {},
+        el('p', { class: 'note', style: { marginTop: 0 } }, '체크한 나라의 땅은 브러시 · 지우개 · 올가미 · 영역 편입 · 바다 깎기가 건드리지 않습니다. 브러시로 넓게 칠해도 그 나라 국경은 그대로 남아요. 이 설정은 프로젝트에 저장됩니다.'),
+        el('div', { class: 'btns', style: { marginBottom: '8px' } },
+          el('button', { type: 'button', class: 'btn sm', onclick: quick(() => { for (const c of activeCountries()) if (c.id !== App.activeCid) sel.add(c.id); }) }, '대상 국가 빼고 모두'),
+          target ? el('button', { type: 'button', class: 'btn sm', onclick: quick(() => { for (const id of Colonies.kin(target)) if (cById(id)) sel.add(id); }) }, `${target.name}의 동맹·식민지`) : null,
+          el('button', { type: 'button', class: 'btn sm', onclick: quick(() => sel.clear()) }, '모두 해제')),
+        rows),
+      buttons: [{ label: '취소' }, { label: '적용', primary: true, onClick: () => {
+        if (App.activeCid && sel.has(App.activeCid)) { sel.delete(App.activeCid); toast('칠하는 대상 국가는 보호에서 뺐습니다'); }
+        Locks.set([...sel]); Store.markDirty(); this.renderOptbar(); this.renderPanel();
+        toast(sel.size ? `🔒 ${sel.size}개국을 보호합니다` : '보호를 모두 해제했습니다');
+      } }] });
+  },
   renderOptbarSoft() { const a = document.activeElement; if (a && $('#optbar').contains(a)) return; this.renderOptbar(); },
   renderOptbar() {
     const ob = $('#optbar'); ob.innerHTML = '';
@@ -3104,10 +3150,10 @@ const UI = {
     const sel = (opts, value, onChange) => { const s = el('select', { onchange: () => onChange(s.value) }); for (const [v, l] of opts) s.append(el('option', { value: v, selected: String(v) === String(value) }, l)); return s; };
     switch (Tools.cur) {
       case 'brush':
-        add(this.targetField(), this.sizeField(), el('label', {}, '덮어쓰기', sel([['all', '모든 땅'], ['unclaimed', '무주지만'], ...activeCountries().filter((c) => c.id !== App.activeCid).map((c) => [c.id, c.name + ' 영토만'])], o.terrMode, (v) => { o.terrMode = v; })));
+        add(this.targetField(), this.sizeField(), this.lockButton(), el('label', {}, '덮어쓰기', sel([['all', '모든 땅'], ['unclaimed', '무주지만'], ...activeCountries().filter((c) => c.id !== App.activeCid).map((c) => [c.id, c.name + ' 영토만'])], o.terrMode, (v) => { o.terrMode = v; })));
         break;
       case 'eraser':
-        add(this.sizeField(), el('label', {}, el('input', { type: 'checkbox', checked: o.eraseOnly, onchange: (e) => { o.eraseOnly = e.target.checked; this.renderOptbar(); } }), '대상 국가만 지우기'));
+        add(this.sizeField(), this.lockButton(), el('label', {}, el('input', { type: 'checkbox', checked: o.eraseOnly, onchange: (e) => { o.eraseOnly = e.target.checked; this.renderOptbar(); } }), '대상 국가만 지우기'));
         if (o.eraseOnly) add(this.targetField());
         break;
       case 'occupy':
@@ -3116,15 +3162,16 @@ const UI = {
         add(this.sizeField());
         break;
       case 'continent':
-        add(this.sizeField(), el('label', {}, '칠하기', sel([['land', '땅 추가 (섬·반도)'], ['sea', '바다로 깎기'], ['lake', '호수 만들기'], ...TERRAINS.map((t) => ['ter' + t.id, '지형: ' + t.name])], o.landMode, (v) => { o.landMode = v; this.renderOptbar(); })));
+        add(this.sizeField(), this.lockButton(), el('label', {}, '칠하기', sel([['land', '땅 추가 (섬·반도)'], ['sea', '바다로 깎기'], ['lake', '호수 만들기'], ...TERRAINS.map((t) => ['ter' + t.id, '지형: ' + t.name])], o.landMode, (v) => { o.landMode = v; this.renderOptbar(); })));
         if (o.landMode === 'land') { add(el('label', {}, el('input', { type: 'checkbox', checked: o.landClaim, onchange: (e) => { o.landClaim = e.target.checked; this.renderOptbar(); } }), '새 땅을 국가 영토로')); if (o.landClaim) add(this.targetField()); }
         break;
-      case 'fill': add(this.targetField('편입할 국가')); break;
+      case 'fill': add(this.targetField('편입할 국가'), this.lockButton()); break;
       case 'lasso':
         add(el('label', {}, '동작', sel([['assign', '대상 국가에 편입'], ['new', '새 국가로 독립'], ['colony', '새 식민지 세우기'], ['occupy', '점령 지역으로 표시'], ['swap', '두 국가 간 영토 교환'], ['unclaim', '무주지로 만들기'], ['unoccupy', '점령 해제']], o.lassoAction, (v) => { o.lassoAction = v; this.renderOptbar(); })));
         if (['assign', 'occupy', 'swap', 'colony'].includes(o.lassoAction)) add(this.targetField(o.lassoAction === 'occupy' ? '점령국' : o.lassoAction === 'swap' ? '국가 A' : o.lassoAction === 'colony' ? '종주국' : '대상 국가'));
         if (o.lassoAction === 'colony') add(el('label', {}, '범위', sel([['unclaimed', '무주지만'], ['all', '안쪽 모든 땅']], o.colonyFilter || 'unclaimed', (v) => { o.colonyFilter = v; })));
         if (o.lassoAction === 'assign') add(el('label', {}, '범위', sel([['all', '안쪽 모든 땅'], ['unclaimed', '무주지만']], o.lassoFilter, (v) => { o.lassoFilter = v; })));
+        if (!['occupy', 'unoccupy'].includes(o.lassoAction)) add(this.lockButton());
         if (o.lassoAction === 'swap') add(el('label', {}, '국가 B', this.countrySelect(o.swapWith, (v) => { o.swapWith = v; }, { allowNone: true, exclude: App.activeCid })));
         break;
       case 'border': {
@@ -3335,6 +3382,7 @@ const UI = {
       nIn, el('span', { class: 'note', style: { margin: 0 } }, '칸'), growMode));
     b.append(el('div', { class: 'btns' },
       el('button', { class: 'btn sm', onclick: () => { App.activeCid = c.id; Tools.set('brush'); } }, '브러시로 칠하기'),
+      el('button', { class: 'btn sm' + (Locks.has(c.id) ? ' locked' : ''), onclick: () => { Locks.toggle(c.id); Store.markDirty(); this.renderPanel(); this.renderOptbar(); toast(Locks.has(c.id) ? `🔒 ${c.name}을(를) 보호합니다 (칠해지지 않음)` : `${c.name} 보호를 해제했습니다`); } }, Locks.has(c.id) ? '🔒 보호 중 (해제)' : '🔒 칠하지 않게 보호'),
       el('button', { class: 'btn sm', onclick: () => Tools.set('border') }, '국경 편집'),
       el('button', { class: 'btn sm', onclick: () => Tools.set('move') }, '영토 이동'),
       el('button', { class: 'btn sm', onclick: () => Tools.set('split') }, '분할'),
@@ -3573,8 +3621,14 @@ const UI = {
       } }] });
   },
   lassoApply(pts) {
-    const a = Tools.opt.lassoAction; const cells = Ops.polyCells(pts);
+    const a = Tools.opt.lassoAction; let cells = Ops.polyCells(pts);
     if (!cells.length) { toast('영역 안에 육지가 없습니다'); return; }
+    if (!['occupy', 'unoccupy'].includes(a)) {
+      const locked = Locks.ids(); const n0 = cells.length;
+      cells = cells.filter((i) => !locked.has(P.owner[i]));
+      if (cells.length < n0) toast(`🔒 보호 중인 국가의 땅 ${fmt((n0 - cells.length) * cellArea())} km²는 건드리지 않았습니다`);
+      if (!cells.length) return;
+    }
     const km = (n) => fmt(n * cellArea()) + ' km²';
     if (a === 'assign') {
       const c = Tools.needActive(); if (!c) return;
