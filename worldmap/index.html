@@ -936,46 +936,54 @@ const Topo = (() => {
     return d;
   }
 
-  /* Region stats + label anchor (pole of inaccessibility via chamfer distance) */
+  /* Region stats + label anchor (pole of inaccessibility via chamfer distance).
+     Counts and bounding boxes are exact; the distance field runs on a half-resolution grid
+     (label anchors only need ~2-cell precision), which makes this ~5x faster on phones. */
   function regionStats(K, W, H) {
-    const n = W * H; const D = new Float32Array(n); const INF = 1e9;
-    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-      const i = y * W + x, k = K[i];
-      const b = x === 0 || y === 0 || x === W - 1 || y === H - 1 || K[i - 1] !== k || K[i + 1] !== k || K[i - W] !== k || K[i + W] !== k;
-      D[i] = b ? 1 : INF;
+    const n = W * H; let maxK = 0;
+    for (let i = 0; i < n; i++) if (K[i] > maxK) maxK = K[i];
+    const M = maxK + 1;
+    const cnt = new Int32Array(M), first = new Int32Array(M).fill(-1);
+    const bx0 = new Int32Array(M).fill(W), by0 = new Int32Array(M).fill(H), bx1 = new Int32Array(M).fill(-1), by1 = new Int32Array(M).fill(-1);
+    for (let y = 0, i = 0; y < H; y++) for (let x = 0; x < W; x++, i++) {
+      const k = K[i]; if (!k) continue;
+      if (!cnt[k]++) first[k] = i;
+      if (x < bx0[k]) bx0[k] = x; if (x > bx1[k]) bx1[k] = x; if (y < by0[k]) by0[k] = y; if (y > by1[k]) by1[k] = y;
+    }
+    const S = 2, w = Math.ceil(W / S), h = Math.ceil(H / S), m = w * h;
+    const K2 = new Int32Array(m);
+    for (let y = 0; y < h; y++) { const row = Math.min(H - 1, y * S + 1) * W; for (let x = 0; x < w; x++) K2[y * w + x] = K[row + Math.min(W - 1, x * S + 1)]; }
+    const D = new Float32Array(m); const INF = 1e9;
+    for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+      const i = y * w + x, k = K2[i];
+      D[i] = x === 0 || y === 0 || x === w - 1 || y === h - 1 || K2[i - 1] !== k || K2[i + 1] !== k || K2[i - w] !== k || K2[i + w] !== k ? 1 : INF;
     }
     const S2 = 1.4142;
-    for (let y = 1; y < H; y++) for (let x = 1; x < W - 1; x++) {
-      const i = y * W + x; if (D[i] === 1) continue;
-      let v = D[i];
-      const a = D[i - 1] + 1, b = D[i - W] + 1, c = D[i - W - 1] + S2, e = D[i - W + 1] + S2;
+    for (let y = 1; y < h; y++) for (let x = 1; x < w - 1; x++) {
+      const i = y * w + x; let v = D[i]; if (v === 1) continue;
+      const a = D[i - 1] + 1, b = D[i - w] + 1, c = D[i - w - 1] + S2, e = D[i - w + 1] + S2;
       if (a < v) v = a; if (b < v) v = b; if (c < v) v = c; if (e < v) v = e; D[i] = v;
     }
-    for (let y = H - 2; y >= 0; y--) for (let x = W - 2; x > 0; x--) {
-      const i = y * W + x; if (D[i] === 1) continue;
-      let v = D[i];
-      const a = D[i + 1] + 1, b = D[i + W] + 1, c = D[i + W + 1] + S2, e = D[i + W - 1] + S2;
+    for (let y = h - 2; y >= 0; y--) for (let x = w - 2; x > 0; x--) {
+      const i = y * w + x; let v = D[i]; if (v === 1) continue;
+      const a = D[i + 1] + 1, b = D[i + w] + 1, c = D[i + w + 1] + S2, e = D[i + w - 1] + S2;
       if (a < v) v = a; if (b < v) v = b; if (c < v) v = c; if (e < v) v = e; D[i] = v;
     }
+    const best = new Float32Array(M).fill(-1), bi = new Int32Array(M).fill(-1);
+    for (let i = 0; i < m; i++) { const k = K2[i]; if (k && D[i] > best[k]) { best[k] = D[i]; bi[k] = i; } }
     const st = new Map();
-    for (let i = 0; i < n; i++) {
-      const k = K[i]; if (!k) continue;
-      let s = st.get(k);
-      if (!s) st.set(k, (s = { count: 0, best: -1, bi: i, sx: 0, sy: 0, x0: W, y0: H, x1: 0, y1: 0 }));
-      s.count++;
-      const x = i % W, y = (i / W) | 0;
-      if (x < s.x0) s.x0 = x; if (x > s.x1) s.x1 = x; if (y < s.y0) s.y0 = y; if (y > s.y1) s.y1 = y;
-      // Slight bias toward horizontally wide spots by reading horizontal room
-      if (D[i] > s.best) { s.best = D[i]; s.bi = i; }
-    }
-    for (const s of st.values()) {
-      s.lx = (s.bi % W) + 0.5; s.ly = ((s.bi / W) | 0) + 0.5; s.ld = s.best;
-      // horizontal room at the label point, for fitting long names
-      const row = (s.bi / W) | 0, x = s.bi % W, k = K[s.bi], base = row * W;
-      let lx = x, rx = x;
-      while (lx > 0 && K[base + lx - 1] === k && x - lx < 400) lx--;
-      while (rx < W - 1 && K[base + rx + 1] === k && rx - x < 400) rx++;
-      s.hw = rx - lx + 1; s.lx = (lx + rx + 1) / 2;
+    for (let k = 1; k < M; k++) {
+      if (!cnt[k]) continue;
+      let cx, cy, ld;
+      if (bi[k] >= 0) { cx = (bi[k] % w) * S + 1; cy = ((bi[k] / w) | 0) * S + 1; ld = best[k] * S; }
+      else { cx = first[k] % W; cy = (first[k] / W) | 0; ld = 1; } // region smaller than the coarse grid
+      cx = Math.min(W - 1, cx); cy = Math.min(H - 1, cy);
+      if (K[cy * W + cx] !== k) { cx = first[k] % W; cy = (first[k] / W) | 0; }
+      // horizontal room at the label row, for fitting long names
+      const base = cy * W; let lx = cx, rx = cx;
+      while (lx > 0 && K[base + lx - 1] === k && cx - lx < 400) lx--;
+      while (rx < W - 1 && K[base + rx + 1] === k && rx - cx < 400) rx++;
+      st.set(k, { count: cnt[k], x0: bx0[k], y0: by0[k], x1: bx1[k], y1: by1[k], bi: cy * W + cx, best: ld, ld, ly: cy + 0.5, hw: rx - lx + 1, lx: (lx + rx + 1) / 2 });
     }
     return st;
   }
@@ -1865,7 +1873,7 @@ const Render = {
       if (d.cmp) { this.renderCompare(); d.cmp = false; }
       if (d.feat) { this.renderFeatures(); d.feat = false; }
       if (d.cities) { this.renderCities(); d.cities = false; }
-      if (d.statsLater && !Input.toolActive) { d.statsLater = false; d.pol = true; this.schedule(); }
+      if (d.statsLater && !Input.toolActive && this.lastK) { d.statsLater = false; this.stats = Topo.regionStats(this.lastK, P.W, P.H); }
       this.renderPreview();
       this.renderScreen();
     } catch (err) { console.error(err); toast('그리기 오류: ' + err.message, { err: true }); }
@@ -1907,6 +1915,7 @@ const Render = {
     const topo = Topo.build(K, W, H, 0.85);
     this.topoPol = topo;
     // label anchors are skipped mid-stroke for speed and refreshed when the stroke ends
+    this.lastK = K;
     if (!Input.toolActive || !this.stats) this.stats = Topo.regionStats(K, W, H); else this.dirty.statsLater = true;
     const landD = Topo.unionD(topo, (k) => k !== 0);
     $('#landBase').setAttribute('d', landD); $('#landBase').setAttribute('fill', t.land);
@@ -2741,15 +2750,42 @@ T.border = {
 };
 
 /* ---- generic brush ---- */
+function brushPreviewColor() {
+  const c = Tools.cur;
+  if (c === 'eraser' || (c === 'occupy' && Tools.opt.occErase)) return '#e05a4a';
+  if (c === 'continent') { const m = Tools.opt.landMode; return m === 'sea' || m === 'lake' ? MAP_THEMES[Render.vs().theme]?.ocean || '#9cc1d2' : m === 'land' ? '#d8cfb0' : (Render.theme().ter[Number(m.slice(3))] || '#ccc'); }
+  return cById(App.activeCid)?.color || '#888';
+}
 function brushTool(label, hint, makeFn, layers = ['pol', 'occ']) {
   return {
     cursor: 'none', brush: true, hint,
-    down(w) { const fn = makeFn(); if (!fn) return false; Hist.begin(label); this.fn = fn; this.last = w; Ops.stamp(w[0], w[1], Tools.opt.brush, fn); Input.drag = { kind: 'brush' }; Render.invalidate(...layers); return true; },
-    move(w) { if (!this.fn) return; Ops.strokeSeg(this.last[0], this.last[1], w[0], w[1], Tools.opt.brush, this.fn); this.last = w; Render.invalidate(...layers); },
-    up() { this.fn = null; Hist.end(); },
+    /* The grid is painted immediately (cheap). Rebuilding borders is expensive, so while the
+       finger is down only a light stroke preview is drawn; borders are rebuilt once on release. */
+    down(w) {
+      const fn = makeFn(); if (!fn) return false;
+      Hist.begin(label); this.fn = fn; this.last = w; this.pts = [w[0], w[1]];
+      Ops.stamp(w[0], w[1], Tools.opt.brush, fn); Input.drag = { kind: 'brush' };
+      const col = brushPreviewColor(), r = Tools.opt.brush, clipLand = Tools.cur !== 'continent';
+      Render.preview = (g) => {
+        const p = this.pts; if (!p || !p.length) return;
+        let d = 'M' + f1(p[0]) + ' ' + f1(p[1]); for (let k = 2; k < p.length; k += 2) d += 'L' + f1(p[k]) + ' ' + f1(p[k + 1]);
+        if (p.length === 2) d += 'l0.01 0';
+        g.append(sv('path', { d, fill: 'none', stroke: col, 'stroke-width': r * 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-opacity': 0.62, 'clip-path': clipLand ? 'url(#landClip)' : null }));
+      };
+      Render.schedule(); return true;
+    },
+    move(w) {
+      if (!this.fn) return;
+      Ops.strokeSeg(this.last[0], this.last[1], w[0], w[1], Tools.opt.brush, this.fn); this.last = w;
+      const p = this.pts, lx = p[p.length - 2], ly = p[p.length - 1];
+      if (Math.hypot(w[0] - lx, w[1] - ly) > Tools.opt.brush * 0.25) p.push(w[0], w[1]);
+      Render.schedule();
+    },
+    up() { this.fn = null; this.pts = null; Render.preview = null; Hist.end(); Render.invalidate(...layers); },
+    cancel() { this.fn = null; this.pts = null; Render.preview = null; Render.schedule(); },
   };
 }
-T.brush = brushTool('영토 브러시', '대상 국가의 영토를 칠해 확장합니다. 덮어쓰기 대상을 무주지만 / 특정 국가만으로 제한할 수 있습니다. [ ] 키로 크기 조절', () => {
+T.brush = brushTool('영토 브러시', '대상 국가의 영토를 칠해 확장합니다. 덮어쓰기 대상을 무주지만 / 특정 국가만으로 제한하고, 🔒 보호로 건드리지 않을 나라를 고를 수 있습니다.', () => {
   const c = Tools.needActive(); if (!c) return null;
   const m = Tools.opt.terrMode; return Ops.territoryFn(c.id, m === 'all' || m === 'unclaimed' ? m : Number(m));
 });
@@ -2862,6 +2898,12 @@ const Input = {
     svg.addEventListener('pointermove', (e) => this.move(e));
     svg.addEventListener('pointerup', (e) => this.up(e));
     svg.addEventListener('pointercancel', (e) => this.up(e, true));
+    // ups that land outside the map (finger slid onto a panel) still end the gesture
+    window.addEventListener('pointerup', (e) => { if (this.pointers.has(e.pointerId) && e.target !== svg && !svg.contains(e.target)) this.up(e); });
+    window.addEventListener('pointercancel', (e) => { if (this.pointers.has(e.pointerId) && e.target !== svg && !svg.contains(e.target)) this.up(e, true); });
+    svg.addEventListener('lostpointercapture', (e) => { if (this.pointers.has(e.pointerId)) setTimeout(() => { if (this.pointers.has(e.pointerId)) this.up(e); }, 0); });
+    document.addEventListener('touchend', (e) => { if (e.touches.length === 0 && this.pointers.size && !this.toolActive && !this.pan) { this.pointers.clear(); this.pinch = null; } }, { passive: true });
+    document.addEventListener('visibilitychange', () => { if (document.hidden && this.pointers.size) this.resetStale(); });
     svg.addEventListener('pointerleave', () => { $('#cursor').setAttribute('display', 'none'); $('#cursor2')?.setAttribute('display', 'none'); });
     svg.addEventListener('contextmenu', (e) => e.preventDefault());
     for (const ev of ['gesturestart', 'gesturechange', 'gestureend']) document.addEventListener(ev, (e) => e.preventDefault(), { passive: false });
@@ -2876,9 +2918,16 @@ const Input = {
     }, { passive: false });
   },
   local(e) { const r = $('#map').getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; },
+  /* forget pointers whose 'up' never arrived (iOS can drop it); finish a stroke left open */
+  resetStale() {
+    if (this.toolActive) { const t = Tools.t; this.toolActive = false; try { t.up && t.up(this.lastW || [0, 0], {}, 0, 0); } catch (err) { console.error(err); if (Hist.cur) Hist.cancel(); } this.drag = null; }
+    this.pointers.clear(); this.pinch = null; this.pan = null; $('#map').classList.remove('c-panning');
+  },
   down(e) {
     const svg = $('#map');
     this.lastType = e.pointerType || 'mouse';
+    // a fresh first finger means every earlier touch has ended
+    if ((e.isPrimary || this.lastType === 'mouse') && this.pointers.size) this.resetStale();
     try { svg.setPointerCapture(e.pointerId); } catch (_) {}
     const [sx, sy] = this.local(e);
     this.pointers.set(e.pointerId, { sx, sy });
@@ -2902,9 +2951,9 @@ const Input = {
   move(e) {
     const [sx, sy] = this.local(e);
     const p = this.pointers.get(e.pointerId); if (p) { p.sx = sx; p.sy = sy; }
-    const w = Cam.toWorld(sx, sy);
+    const w = Cam.toWorld(sx, sy); this.lastW = w;
     this.updateBrushCursor(sx, sy);
-    UI.hover(w);
+    if (!this.toolActive || this.lastType !== 'touch') UI.hover(w);
     if (this.pinch && this.pointers.size === 2) {
       const [a, b] = [...this.pointers.values()];
       const d = Math.hypot(a.sx - b.sx, a.sy - b.sy), cx = (a.sx + b.sx) / 2, cy = (a.sy + b.sy) / 2;
