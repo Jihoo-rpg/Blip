@@ -327,25 +327,54 @@ P3.assembly=function(el,d,chip,brand){ensure();host=el;if(canvas.parentNode!==el
   const spots=[[-1.55,.75],[1.55,.75],[-1.55,0],[1.55,0],[-1.55,-.75],[1.55,-.75],[0,1.25],[-1.5,1.35],[1.5,1.35]];
   ASM_STEPS.forEach((s0,i)=>{const p=parts[s0.id];const [sx,sy]=spots[i%spots.length];p.userData.start=new T.Vector3(sx*w*1.05,sy*h*.6,-t*.6);p.position.copy(p.userData.start);p.rotation.z=(i%3-1)*.35;});
   parts.screen.rotation.y=Math.PI;// 앞면이 위로 보이게 놓여 있어요
-  let flips=0,flipT=0;const anims=[];let fin=null,finT=0,spinY=0;
+  let flips=0,flipT=0;const anims=[];const fx=[];let fin=null,finT=0,spinY=0;
   const camPos=new T.Vector3(0,h*2.15,h*1.25),look=new T.Vector3(0,0,-h*.05);
   mode=(dt,tm,W,H)=>{
     for(const a of anims){a.t=Math.min(1,a.t+dt/a.dur);const e=a.t<.5?2*a.t*a.t:1-Math.pow(-2*a.t+2,2)/2;const p=a.obj;p.position.lerpVectors(a.from,a.to,e);p.position.z+=-Math.sin(a.t*Math.PI)*h*.18;
       p.rotation.z=a.r0+(a.r1-a.r0)*e;if(a.ry!=null)p.rotation.y=a.ry0+(a.ry-a.ry0)*e;if(a.t>=1&&!a.done){a.done=1;p.scale.setScalar(1.06);a.cb&&a.cb();}}
     for(const k in parts){const p=parts[k];p.scale.lerp(new T.Vector3(1,1,1),Math.min(1,dt*10));}
+    for(let i=fx.length-1;i>=0;i--){const f=fx[i];f.t=Math.min(1,f.t+dt/f.dur);f.up(f.t);if(f.t>=1)fx.splice(i,1);}
     if(flips){flipT=Math.min(1,flipT+dt*1.4);inner.rotation.y=Math.PI*(flipT<.5?2*flipT*flipT:1-Math.pow(-2*flipT+2,2)/2);}
     if(fin){finT+=dt;spinY+=dt*.6;fin.rotation.set(-.08,-.5+spinY,0);fin.position.y=t*2+Math.sin(tm/700)*.15;const k=Math.min(1,finT*1.5);outer.scale.setScalar(1-k);
       sc.cam.position.lerp(new T.Vector3(0,h*.35,h*2.3),Math.min(1,dt*2.5));look.lerp(new T.Vector3(0,t*2,0),Math.min(1,dt*2.5));}
     const asp=W/H;sc.cam.aspect=asp;sc.cam.fov=40;sc.cam.updateProjectionMatrix();const kk=asp<1.3?Math.min(2.4,1.3/asp):1;if(!fin)sc.cam.position.copy(camPos).multiplyScalar(kk);sc.cam.lookAt(look);
     if(scr.material.opacity<1&&ctl.lit)scr.material.opacity=Math.min(1,scr.material.opacity+dt*1.6);
     ren.render(sc.scene,sc.cam);};
+  // 도구로 작업할 자리 (부품 기준 좌표)
+  const bx=0,by=h*.27,bz=-t*.05,cx=-bw*.14,ramx=bw*.24,camx=w/2-1.25,camy=h/2-1.1;
+  const rectPts=(cx0,cy0,hw,hh,z,n)=>{const out=[];const per=2*(hw+hh)*2;for(let i=0;i<n;i++){let d0=i/n*per;let x,y;
+      if(d0<hw*2){x=cx0-hw+d0;y=cy0+hh;}else if((d0-=hw*2)<hh*2){x=cx0+hw;y=cy0+hh-d0;}else if((d0-=hh*2)<hw*2){x=cx0+hw-d0;y=cy0-hh;}else{d0-=hw*2;x=cx0-hw;y=cy0-hh+d0;}out.push(new T.Vector3(x,y,z));}return out;};
+  const PTS={
+    'board:drill':[[-1,-1],[1,-1],[1,1],[-1,1]].map(([a,b])=>new T.Vector3(bx+a*(bw/2-.3),by+b*(bh/2-.3),bz-.07)),
+    'chip:solder':[[-1.05,0],[1.05,0],[0,-1.05],[0,1.05]].map(([a,b])=>new T.Vector3(cx+a,by+b,bz-.07)),
+    'ram:solder':[new T.Vector3(ramx+.75,by+.4,bz-.07),new T.Vector3(ramx+.75,by-.35,bz-.07)],
+    'batt:glue':rectPts(0,-h*.14,w*.3,h*.18,t*.12,18),
+    'batt:plug':[new T.Vector3(.0,-h*.14+h*.22+.25,bz-.12)],
+    'cam:plug':[new T.Vector3(camx-.85,camy-.75,bz-.12)],
+    'cam:drill':[new T.Vector3(camx-.75,camy+.45,bz-.08)],
+    'spk:drill':[new T.Vector3(-w*.18-1.05,-h*.42,bz-.18),new T.Vector3(w*.22+.55,-h*.42,bz-.18)],
+    'back:glue':rectPts(0,0,w/2-.28,h/2-.28,-t/2+.06,26),
+    'screen:glue':rectPts(0,0,w/2-.25,h/2-.25,t/2-.03,26),
+  };
+  const v3=new T.Vector3();
+  const metal=new T.MeshStandardMaterial({color:'#d9dde3',metalness:1,roughness:.25});
+  const glueM=new T.MeshPhysicalMaterial({color:'#fff1a8',roughness:.15,clearcoat:1,emissive:'#5a4a10',emissiveIntensity:.3});
   const ctl={lit:false,
-    place(id,acc){return new Promise(res=>{const p=parts[id];const to=p.userData.target.clone();const err=(1-acc);
-      if(err>.15){to.x+=(Math.random()-.5)*err*1.2;to.y+=(Math.random()-.5)*err*1.2;}
-      const go=()=>{anims.push({obj:p,from:p.position.clone(),to,t:0,dur:.75,r0:p.rotation.z,r1:err>.15?(Math.random()-.5)*err*.5:0,ry0:p.rotation.y,ry:id==='screen'?0:null,cb:()=>{if(id==='screen'){ctl.lit=true;}res();}});};
-      if(id==='screen'){flips=1;setTimeout(go,650);}else go();});},
+    pts(part,tool){return PTS[part+':'+tool]||[];},
+    partPos(id){return parts[id].position.clone();},
+    project(list){const r=el.getBoundingClientRect();sc.scene.updateMatrixWorld();return list.map(p=>{v3.copy(p);inner.localToWorld(v3);v3.project(sc.cam);return {x:(v3.x+1)/2*r.width,y:(1-v3.y)/2*r.height,vis:v3.z<1};});},
+    place(id){return new Promise(res=>{const p=parts[id];const to=p.userData.target.clone();
+      const go=()=>{anims.push({obj:p,from:p.position.clone(),to,t:0,dur:.7,r0:p.rotation.z,r1:0,ry0:p.rotation.y,ry:id==='screen'?0:null,cb:()=>{if(id==='screen'){ctl.lit=true;}res();}});};
+      if(id==='screen'&&!flips){flips=1;setTimeout(go,650);}else go();});},
+    flipOver(){return new Promise(res=>{flips=1;setTimeout(res,900);});},
+    addScrew(p){const g=new T.Group();const head=new T.Mesh(cyl(.14,.07,20),metal);g.add(head);const sl=new T.Mesh(new T.BoxGeometry(.2,.035,.03),new T.MeshStandardMaterial({color:'#333'}));sl.position.z=-.04;g.add(sl);
+      const sl2=sl.clone();sl2.rotation.z=Math.PI/2;g.add(sl2);const shaft=new T.Mesh(cyl(.05,.4,10),metal);shaft.position.z=.22;g.add(shaft);inner.add(g);
+      const z0=p.z-.6;g.position.set(p.x,p.y,z0);fx.push({t:0,dur:.55,up:k=>{g.position.z=z0+(p.z-z0)*k;g.rotation.z=k*Math.PI*8;}});},
+    addGlue(p){const m=new T.Mesh(new T.SphereGeometry(.13,12,8),glueM);m.scale.set(1,1,.45);m.position.copy(p);inner.add(m);fx.push({t:0,dur:.18,up:k=>{m.scale.set(k*1.2,k*1.2,.45*k);}});},
+    addPlug(p){const m=new T.Mesh(new T.BoxGeometry(.6,.3,.16),new T.MeshStandardMaterial({color:'#e8e8e8',metalness:.3,roughness:.4}));const z0=p.z-.5;m.position.set(p.x,p.y,z0);inner.add(m);fx.push({t:0,dur:.2,up:k=>{m.position.z=z0+(p.z-z0)*k;}});},
+    addSolder(p){const mm=new T.MeshStandardMaterial({color:'#c9ced6',metalness:.9,roughness:.2,emissive:'#ff6a00',emissiveIntensity:1.6});const m=new T.Mesh(new T.SphereGeometry(.12,12,8),mm);m.scale.z=.5;m.position.copy(p);inner.add(m);fx.push({t:0,dur:1.2,up:k=>{mm.emissiveIntensity=1.6*(1-k);}});},
     finish(){const ph=buildPhone(d,brand);sc.scene.add(ph);fin=ph;const an=ph.userData.anim;if(an&&an.set)an.set(1);ph.scale.setScalar(.9);},
-    destroy(){mode=null;sc.scene.traverse(o=>{});}};
+    destroy(){mode=null;}};
   return ctl;};
 
 /* ---------- 광고 영상용 렌더러 ---------- */

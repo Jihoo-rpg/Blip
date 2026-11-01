@@ -215,6 +215,26 @@ canvas.chart{width:100%;height:120px;background:var(--bg2);border-radius:12px}
 .share{display:flex;height:14px;border-radius:7px;overflow:hidden;margin:4px 0}.share i{display:block;height:100%;transition:width .25s}
 .shareL{display:flex;flex-wrap:wrap;gap:8px;font-size:11.5px;font-weight:700;color:var(--muted)}
 @media(max-width:480px){#coName{display:none}#top{gap:7px}#date{font-size:12px}#money{font-size:18px}}
+
+.tools{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.tool{display:grid;justify-items:center;gap:2px;background:linear-gradient(180deg,#2c3545,#222a37);border:2px solid var(--line);border-radius:12px;padding:8px 2px;font-size:12px;font-weight:700;box-shadow:0 4px 0 #0c1017}
+.tool span{font-size:24px}
+.tool.on{border-color:var(--accent);background:linear-gradient(180deg,#24406a,#1a2c47);box-shadow:0 4px 0 #1f6fc0,0 0 14px rgba(78,168,255,.4);transform:translateY(-2px)}
+.tool.need{border-color:var(--gold);animation:glow 1s infinite alternate}
+#asmOv{position:absolute;inset:0;z-index:2}
+#asmOv.glueMode{touch-action:none;cursor:crosshair}
+.hs{position:absolute;transform:translate(-50%,-50%);width:46px;height:46px;border-radius:50%;border:3px solid #fff;background:rgba(78,168,255,.35);display:grid;place-items:center;font-size:20px;color:#fff;font-weight:900;
+  box-shadow:0 0 0 0 rgba(255,255,255,.6);animation:ping 1.2s infinite;padding:0}
+.hs span{pointer-events:none}
+.hs-hand{width:64px;height:64px;background:rgba(61,220,132,.3);border-color:#7af0ab}
+.hs-solder{width:36px;height:36px;font-size:15px;background:rgba(255,120,40,.3);border-color:#ffb27a}
+.hs-solder em{position:absolute;inset:-6px;border-radius:50%;border:4px solid transparent}
+.hs-solder.heat em{border-top-color:#ff6a00;animation:spin .55s linear}
+.hs.ok{pointer-events:none;animation:none;background:rgba(61,220,132,.7);border-color:#3ddc84;transform:translate(-50%,-50%) scale(.6);opacity:.0;transition:all .4s}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(255,255,255,.55)}100%{box-shadow:0 0 0 16px rgba(255,255,255,0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gdot{position:absolute;transform:translate(-50%,-50%);width:14px;height:14px;border-radius:50%;background:rgba(255,241,168,.25);border:2px dashed #ffe58a;pointer-events:none;animation:ping 1.4s infinite}
+.gdot.ok{background:#fff1a8;border-style:solid;animation:none;width:10px;height:10px;opacity:.6}
 </style>
 </head>
 <body>
@@ -778,41 +798,87 @@ function renderStepChip(){const pr=S.proj;const fc=frontierChip(S.year);
   const n=$('#bNext1');if(n)n.onclick=()=>{S.proj.step=1;dStep=0;save();render();};
   $('#bCancel').onclick=()=>{if(confirm('이 폰 만들기를 그만둘까요? 쓴 돈은 돌아오지 않아요')){S.proj=null;save();render();}};}
 
-/* ----- 3단계: 시제품 조립 ----- */
-const ASM_HINT={frame:'먼저 뼈대부터!',board:'뼈대 안에 큰 기판을 깔아요',chip:'기판 위에 폰의 두뇌를!',ram:'두뇌 옆에 기억 장치를',batt:'이제 에너지를 넣어요',cam:'세상을 보는 눈을 달아요',spk:'소리 나는 부품을 넣어요',back:'뒤를 덮어서 닫아요',screen:'마지막! 뒤집어서 얼굴을 달아요'};
-let ASM=null;
-function renderAssembly(){const pr=S.proj;const steps=(window.P3&&P3.ASM_STEPS)||[{id:'frame',n:'프레임',i:'🔲'},{id:'board',n:'메인보드',i:'🟩'},{id:'chip',n:'칩',i:'🧠'},{id:'ram',n:'램 · 저장',i:'💾'},{id:'batt',n:'배터리',i:'🔋'},{id:'cam',n:'카메라 모듈',i:'📸'},{id:'spk',n:'스피커 · 진동',i:'🔊'},{id:'back',n:'뒷판',i:'🎨'},{id:'screen',n:'화면',i:'🖥️'}];
-  ASM={i:0,acc:[],miss:0,stepMiss:0,steps,order:steps.map(s=>s.id).sort(()=>Math.random()-.5),busy:false,ctl:null,done:false};
-  $('#main').innerHTML=`${projHeader()}<div id="asmWrap"><div id="asm3d"><div class="asmFloat" id="asmFloat"></div></div>
-   <div class="card grid" style="gap:10px"><div class="row" style="justify-content:space-between"><b style="font-size:17px">🔧 시제품 조립 <small class="muted" id="asmCnt">0/${steps.length}</small></b><span class="pill" id="asmQ">품질 100%</span></div>
+/* ----- 3단계: 시제품 조립 (드릴 · 본드 · 납땜 · 커넥터로 직접!) ----- */
+const TOOLS=[['hand','🖐','손'],['drill','🪛','드릴'],['glue','🧴','본드'],['solder','🔥','납땜'],['plug','🔌','커넥터']];
+const ASM_SEQ=[
+ {p:'frame',t:'hand',x:'프레임을 눌러서 작업대 가운데에 놓아요'},
+ {p:'board',t:'hand',x:'메인보드를 눌러서 프레임 안에 넣어요'},
+ {p:'board',t:'drill',x:'🪛 드릴로 메인보드 나사 4개를 박아요'},
+ {p:'chip',t:'hand',x:'내 칩을 눌러서 메인보드에 올려요'},
+ {p:'chip',t:'solder',x:'🔥 납땜인두로 칩 다리를 붙여요 (꾹 누르고 있기)'},
+ {p:'ram',t:'hand',x:'램 · 저장 칩을 보드에 올려요'},
+ {p:'ram',t:'solder',x:'🔥 램도 납땜해요 (꾹)'},
+ {p:'batt',t:'glue',x:'🧴 배터리 자리에 본드를 발라요 (손가락으로 점을 따라 쭉 문지르기)'},
+ {p:'batt',t:'hand',x:'배터리를 본드 위에 꾹 붙여요'},
+ {p:'batt',t:'plug',x:'🔌 배터리 커넥터를 보드에 꽂아요'},
+ {p:'cam',t:'hand',x:'카메라 모듈을 넣어요'},
+ {p:'cam',t:'plug',x:'🔌 카메라 커넥터를 꽂아요'},
+ {p:'cam',t:'drill',x:'🪛 카메라를 나사로 고정해요'},
+ {p:'spk',t:'hand',x:'스피커 · 진동 모터를 넣어요'},
+ {p:'spk',t:'drill',x:'🪛 스피커 나사 2개를 박아요'},
+ {p:'back',t:'glue',x:'🧴 테두리를 따라 본드를 발라요'},
+ {p:'back',t:'hand',x:'뒷판을 덮어요'},
+ {p:'*',t:'flip',x:'폰을 뒤집어요…'},
+ {p:'screen',t:'glue',x:'🧴 앞쪽 테두리에도 본드를 발라요'},
+ {p:'screen',t:'hand',x:'화면을 붙이면 완성!'},
+];
+let ASM=null,SFX=null;
+function sfx(k){try{if(!SFX)SFX=new (window.AudioContext||window.webkitAudioContext)();const c=SFX,t=c.currentTime,g=c.createGain();g.connect(c.destination);
+  if(k==='drill'){const o=c.createOscillator();o.type='sawtooth';o.frequency.setValueAtTime(90,t);o.frequency.linearRampToValueAtTime(220,t+.45);const l=c.createOscillator();l.frequency.value=38;const lg=c.createGain();lg.gain.value=40;l.connect(lg);lg.connect(o.frequency);g.gain.setValueAtTime(.08,t);g.gain.linearRampToValueAtTime(0,t+.5);o.connect(g);o.start(t);l.start(t);o.stop(t+.5);l.stop(t+.5);}
+  else{const n=c.createBuffer(1,c.sampleRate*.3,c.sampleRate),dd=n.getChannelData(0);for(let i=0;i<dd.length;i++)dd[i]=Math.random()*2-1;const s=c.createBufferSource();s.buffer=n;const f=c.createBiquadFilter();f.type=k==='solder'?'highpass':'bandpass';f.frequency.value=k==='solder'?4000:k==='glue'?900:2500;
+    const len=k==='solder'?.3:k==='glue'?.08:.05;g.gain.setValueAtTime(k==='glue'?.05:.25,t);g.gain.exponentialRampToValueAtTime(.001,t+len);s.connect(f);f.connect(g);s.start(t);s.stop(t+len+.02);}}catch(e){}}
+function renderAssembly(){const pr=S.proj;
+  ASM={i:0,tool:'hand',wrong:0,ctl:null,done:false,busy:false,spots:[],raf:0,down:false};
+  $('#main').innerHTML=`${projHeader()}<div id="asmWrap"><div id="asm3d"><div class="asmFloat" id="asmFloat"></div><div id="asmOv"></div></div>
+   <div class="card grid" style="gap:10px"><div class="row" style="justify-content:space-between"><b style="font-size:17px">🔧 시제품 조립 <small class="muted" id="asmCnt"></small></b><span class="pill" id="asmQ">품질 100%</span></div>
+    <div class="bar"><i id="asmBar" style="width:0"></i></div>
     <div id="asmHint" class="asmHint"></div>
-    <div class="tray" id="asmTray"></div>
-    <div id="asmTime" class="tbox" hidden><div class="tbar"><i class="zone" id="tZone"></i><i class="needle" id="tNeedle"></i></div><button class="btn good" id="asmHit" style="font-size:18px;padding:14px">👆 딱! 끼우기</button></div>
+    <div class="tools" id="asmTools">${TOOLS.map(([id,ic,n])=>`<button class="tool" data-tool="${id}"><span>${ic}</span>${n}</button>`).join('')}</div>
     <div id="asmDone" hidden></div></div></div>`;
   if(window.P3&&P3.assembly){try{ASM.ctl=P3.assembly($('#asm3d'),pr.d,pr.d.chipSpec,S.name);}catch(e){console.warn(e);ASM.ctl=null;}}
-  if(!ASM.ctl)$('#asm3d').innerHTML='<div class="empty">🔧 (3D를 못 켜서 그림 없이 조립해요)</div>';
-  asmUI();}
-function asmQuality(){const a=ASM.acc.length?ASM.acc.reduce((x,y)=>x+y,0)/ASM.acc.length:1;return Math.round(clamp(a*100-ASM.miss*4,30,100));}
-function asmUI(){const st=ASM.steps;const next=st[ASM.i];$('#asmCnt').textContent=`${ASM.i}/${st.length}`;$('#asmQ').textContent=`품질 ${asmQuality()}%`;
-  $('#asmHint').innerHTML=next?`<b>${ASM.i+1}번째:</b> ${ASM_HINT[next.id]||''}`:'';
-  $('#asmTray').innerHTML=ASM.order.filter(id=>st.findIndex(s=>s.id===id)>=ASM.i).map(id=>{const s=st.find(x=>x.id===id);return `<button class="part ${ASM.stepMiss>=2&&id===next.id?'hintme':''}" data-part="${id}"><span>${s.i}</span>${esc(s.n)}</button>`;}).join('');
-  $$('[data-part]').forEach(b=>b.onclick=()=>asmPick(b.dataset.part,b));}
-function asmPick(id,btn){if(ASM.busy||ASM.done)return;const next=ASM.steps[ASM.i];
-  if(id!==next.id){ASM.miss++;ASM.stepMiss++;btn.classList.remove('shake');void btn.offsetWidth;btn.classList.add('shake');floatTxt('❌ 아직 아니에요!','bad');buzz();$('#asmQ').textContent=`품질 ${asmQuality()}%`;if(ASM.stepMiss>=2)asmUI();return;}
-  ASM.busy=true;$$('[data-part]').forEach(b=>b.disabled=true);btn.classList.add('picked');
-  // 타이밍 막대: 초록 칸에서 누르면 딱 맞게 들어가요
-  const tb=$('#asmTime');tb.hidden=false;const zw=.24-ASM.i*.012,zc=rand(.3,.7);const z=$('#tZone'),nd=$('#tNeedle');z.style.left=((zc-zw/2)*100)+'%';z.style.width=(zw*100)+'%';
-  const sp=1.6+ASM.i*.18;const t0=performance.now();let raf=0,pos=0;const mv=()=>{pos=(Math.sin((performance.now()-t0)/1000*sp*Math.PI)+1)/2;nd.style.left=(pos*100)+'%';raf=requestAnimationFrame(mv);};mv();
-  $('#asmHit').onclick=()=>{cancelAnimationFrame(raf);tb.hidden=true;const dist=Math.abs(pos-zc),half=zw/2;const acc=dist<=half?1-dist/half*.12:Math.max(.2,.86-(dist-half)*3);
-    ASM.acc.push(acc);floatTxt(acc>=.96?'✨ PERFECT!':acc>=.85?'👍 GOOD':'😬 삐뚤어졌어요',acc>=.85?'good':'bad');buzz();
-    const fin=()=>{ASM.i++;ASM.stepMiss=0;ASM.busy=false;if(ASM.i>=ASM.steps.length)asmFinish();else asmUI();};
-    if(ASM.ctl)ASM.ctl.place(id,acc).then(fin);else setTimeout(fin,300);};}
+  $$('[data-tool]').forEach(b=>b.onclick=()=>{ASM.tool=b.dataset.tool;asmTools();sfx('click');});
+  const ov=$('#asmOv');
+  ov.onpointerdown=e=>{const st=ASM_SEQ[ASM.i];if(!st||st.t!=='glue')return;ASM.down=true;try{ov.setPointerCapture(e.pointerId);}catch(_){}asmGlue(e);};
+  ov.onpointermove=e=>{if(ASM.down)asmGlue(e);};
+  ov.onpointerup=ov.onpointercancel=()=>{ASM.down=false;};
+  asmStep();const loop=()=>{if(!ASM||!$('#asmOv')){return;}asmPos();ASM.raf=requestAnimationFrame(loop);};loop();}
+function asmQuality(){return Math.round(clamp(100-ASM.wrong*3,60,100));}
+function asmTools(){const need=ASM_SEQ[ASM.i]&&ASM_SEQ[ASM.i].t;$$('[data-tool]').forEach(b=>{b.classList.toggle('on',b.dataset.tool===ASM.tool);b.classList.toggle('need',b.dataset.tool===need&&ASM.tool!==need);});}
+function asmStep(){const st=ASM_SEQ[ASM.i];$('#asmCnt').textContent=`${Math.min(ASM.i,ASM_SEQ.length)}/${ASM_SEQ.length}`;$('#asmBar').style.width=(ASM.i/ASM_SEQ.length*100)+'%';$('#asmQ').textContent=`품질 ${asmQuality()}%`;
+  if(!st){asmFinish();return;}
+  $('#asmHint').innerHTML=`<b>${ASM.i+1}.</b> ${st.x}`;asmTools();
+  const ov=$('#asmOv');ov.innerHTML='';ASM.spots=[];ov.classList.toggle('glueMode',st.t==='glue');
+  if(st.t==='flip'){ASM.busy=true;const go=()=>{ASM.busy=false;ASM.i++;asmStep();};if(ASM.ctl)ASM.ctl.flipOver().then(go);else setTimeout(go,300);return;}
+  const pts=st.t==='hand'?(ASM.ctl?[ASM.ctl.partPos(st.p)]:[null]):(ASM.ctl?ASM.ctl.pts(st.p,st.t):[null,null]);
+  pts.forEach((p,k)=>{const e=document.createElement(st.t==='glue'?'i':'button');e.className=st.t==='glue'?'gdot':'hs hs-'+st.t;
+    if(st.t!=='glue'){e.innerHTML=st.t==='hand'?'<span>👆</span>':st.t==='drill'?'<span>⊕</span>':st.t==='plug'?'<span>🔌</span>':'<span>✦</span><em></em>';
+      if(st.t==='solder'){e.onpointerdown=ev=>{ev.stopPropagation();asmSolderStart(k,e);};e.onpointerup=e.onpointerleave=()=>asmSolderStop(e);}else e.onclick=ev=>{ev.stopPropagation();asmTap(k,e);};}
+    if(!ASM.ctl){e.style.left=(20+(k*25)%60)+'%';e.style.top=(35+Math.floor(k/3)*15)+'%';}
+    ov.appendChild(e);ASM.spots.push({p,el:e,done:false});});}
+function asmPos(){if(!ASM.ctl||!ASM.spots.length)return;const st=ASM_SEQ[ASM.i];if(!st)return;
+  if(st.t==='hand')ASM.spots[0].p=ASM.ctl.partPos(st.p);
+  const sc=ASM.ctl.project(ASM.spots.map(s=>s.p));sc.forEach((q,k)=>{const el=ASM.spots[k].el;el.style.left=q.x+'px';el.style.top=q.y+'px';});}
+function asmNeed(t,el){if(ASM.tool===t)return true;ASM.wrong++;$('#asmQ').textContent=`품질 ${asmQuality()}%`;const T=TOOLS.find(x=>x[0]===t);floatTxt(`${T[1]} ${T[2]}(으)로 해요!`,'bad');buzz();
+  if(el){el.classList.remove('shake');void el.offsetWidth;el.classList.add('shake');}asmTools();return false;}
+function asmSpotDone(k){const s=ASM.spots[k];s.done=true;s.el.classList.add('ok');if(ASM.spots.every(x=>x.done)){ASM.busy=true;setTimeout(()=>{ASM.busy=false;ASM.i++;asmStep();},350);}}
+function asmTap(k,el){if(ASM.busy||ASM.done)return;const st=ASM_SEQ[ASM.i];const s=ASM.spots[k];if(s.done)return;if(!asmNeed(st.t,el))return;
+  if(st.t==='hand'){ASM.busy=true;el.classList.add('ok');sfx('click');floatTxt('👍 착!','good');const go=()=>{ASM.busy=false;ASM.i++;asmStep();};if(ASM.ctl)ASM.ctl.place(st.p).then(go);else setTimeout(go,300);return;}
+  if(st.t==='drill'){sfx('drill');buzz();if(ASM.ctl)ASM.ctl.addScrew(s.p);}
+  if(st.t==='plug'){sfx('click');if(ASM.ctl)ASM.ctl.addPlug(s.p);floatTxt('딸깍!','good');}
+  asmSpotDone(k);}
+function asmSolderStart(k,el){if(ASM.busy||ASM.done)return;const st=ASM_SEQ[ASM.i];const s=ASM.spots[k];if(s.done)return;if(!asmNeed(st.t,el))return;
+  el.classList.add('heat');sfx('solder');el._t=setTimeout(()=>{el.classList.remove('heat');if(ASM.ctl)ASM.ctl.addSolder(s.p);sfx('solder');floatTxt('치익~','good');asmSpotDone(k);},550);}
+function asmSolderStop(el){clearTimeout(el._t);el.classList.remove('heat');}
+function asmGlue(e){const st=ASM_SEQ[ASM.i];if(!st||st.t!=='glue'||ASM.busy)return;const r=$('#asmOv').getBoundingClientRect();const x=e.clientX-r.left,y=e.clientY-r.top;
+  if(ASM.tool!=='glue'){if(!ASM._gw||performance.now()-ASM._gw>900){ASM._gw=performance.now();asmNeed('glue');}return;}
+  let any=false;ASM.spots.forEach((s,k)=>{if(s.done)return;const dx=(parseFloat(s.el.style.left)||0)-x,dy=(parseFloat(s.el.style.top)||0)-y;if(dx*dx+dy*dy<34*34){s.done=true;s.el.classList.add('ok');if(ASM.ctl)ASM.ctl.addGlue(s.p);any=true;}});
+  if(any){sfx('glue');const left=ASM.spots.filter(s=>!s.done);if(left.length<=2){left.forEach(s=>{s.done=true;s.el.classList.add('ok');if(ASM.ctl)ASM.ctl.addGlue(s.p);});ASM.busy=true;floatTxt('🧴 쭈욱~ 완벽!','good');setTimeout(()=>{ASM.busy=false;ASM.i++;asmStep();},450);}}}
 function floatTxt(t,k){const f=$('#asmFloat');if(!f)return;f.textContent=t;f.className='asmFloat show '+k;clearTimeout(floatTxt.t);floatTxt.t=setTimeout(()=>{f.className='asmFloat';},900);}
-function asmFinish(){ASM.done=true;const q=asmQuality();const pr=S.proj;pr.asmQ=q;pr.d.asmQ=q;save();if(ASM.ctl)setTimeout(()=>ASM.ctl.finish(),700);
-  $('#asmTray').innerHTML='';$('#asmHint').innerHTML='';$('#asmCnt').textContent=`${ASM.steps.length}/${ASM.steps.length}`;$('#asmQ').textContent=`품질 ${q}%`;
-  const stars=q>=95?'⭐⭐⭐':q>=80?'⭐⭐':q>=60?'⭐':'💥';
-  const dn=$('#asmDone');dn.hidden=false;dn.innerHTML=`<div style="text-align:center"><div style="font-size:40px">${stars}</div><div class="score" style="font-size:40px;color:${q>=85?'var(--good)':q>=65?'var(--warn)':'var(--bad)'}">조립 품질 ${q}%</div>
-    <p class="muted" style="margin:6px 0">${q>=95?'완벽해요! 공장 직원들이 감탄해요':q>=80?'잘 만들었어요':q>=60?'조금 덜컹거려요… 리콜 조심':'불량이 많을 것 같아요 😱 내구성 · 평점이 떨어져요'}</p>
+function asmFinish(){ASM.done=true;const q=asmQuality();const pr=S.proj;pr.asmQ=q;pr.d.asmQ=q;save();$('#asmOv').innerHTML='';if(ASM.ctl)setTimeout(()=>ASM.ctl.finish(),700);
+  $('#asmHint').innerHTML='🎉 완성! 전원이 켜졌어요';$('#asmTools').hidden=true;$('#asmBar').style.width='100%';$('#asmCnt').textContent=`${ASM_SEQ.length}/${ASM_SEQ.length}`;
+  const stars=q>=95?'⭐⭐⭐':q>=80?'⭐⭐':'⭐';
+  const dn=$('#asmDone');dn.hidden=false;dn.innerHTML=`<div style="text-align:center"><div style="font-size:40px">${stars}</div><div class="score" style="font-size:38px;color:${q>=90?'var(--good)':'var(--warn)'}">조립 품질 ${q}%</div>
+    <p class="muted" style="margin:6px 0">${q>=95?'완벽해요! 공장 직원들이 감탄해요':q>=80?'잘 만들었어요':'도구를 몇 번 잘못 썼지만 괜찮아요'}</p>
     <div class="row" style="justify-content:center"><button class="btn alt" id="bReAsm">🔁 다시 조립</button><button class="btn good" id="bToDev">🧪 개발하러 가기</button></div></div>`;
   $('#bReAsm').onclick=()=>renderAssembly();$('#bToDev').onclick=()=>{S.proj.step=3;save();render();scrollTo(0,0);};}
 
