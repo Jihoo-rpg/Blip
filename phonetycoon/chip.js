@@ -156,7 +156,7 @@ function renderChipEditor(){const c=CE.chip;const gen=nodeGen(c.node),N=gridN(ge
       <div class="field" style="margin:0"><label>클럭 속도 <b id="ghzV">${st.ghz.toFixed(2)}GHz</b></label><input type="range" id="ceGhz" min="0.1" max="${maxGhz(gen)}" step="0.01" value="${Math.min(c.ghz,maxGhz(gen))}"><small class="muted">높이면 빨라지지만 전기를 엄청 먹고 뜨거워져요</small></div>
      </div>
      <div class="card grid" style="gap:6px" id="ceStats">${chipStatsHTML(st,fc)}</div>
-     <button class="btn good" id="ceMake" style="font-size:16px;padding:13px" ${!st.ok||S.money<st.design?'disabled':''}>🏭 칩 만들기 · ${won(st.design)} · ${st.weeks}주</button>
+     <button class="btn good" id="ceMake" style="font-size:16px;padding:13px" ${!st.ok||S.money<st.design?'disabled':''}>🏭 칩 만들기 · ${won(st.design)}</button>
      ${!st.ok?'<p class="muted" style="margin:0;color:var(--warn)">⚠️ CPU 코어(P 또는 E)와 메모리 컨트롤러가 꼭 1개씩 있어야 해요</p>':S.money<st.design?'<p class="muted" style="margin:0;color:var(--bad)">돈이 부족해요</p>':''}
     </div></div>`;
   drawGrid();bindChipEditor();}
@@ -191,16 +191,16 @@ function bindChipEditor(){const c=CE.chip;
     gh.hidden=false;gh.style.cssText=`left:calc(${cell.dataset.x}*100%/${N});top:calc(${cell.dataset.y}*100%/${N});width:calc(${w}*100%/${N});height:calc(${h}*100%/${N});--c:${B.col}`;gh.classList.toggle('bad',!canPlace(c,{t:CE.sel,x:+cell.dataset.x,y:+cell.dataset.y,r}));};
   grid.onpointerleave=()=>{const gh=grid.querySelector('.ghost');if(gh)gh.hidden=true;};
   $('#ceMake').onclick=()=>makeChip();}
-function updMake(){const st=chipStats(CE.chip);const b=$('#ceMake');if(b){b.disabled=!st.ok||S.money<st.design;b.textContent=`🏭 칩 만들기 · ${won(st.design)} · ${st.weeks}주`;}}
+function updMake(){const st=chipStats(CE.chip);const b=$('#ceMake');if(b){b.disabled=!st.ok||S.money<st.design;b.textContent=`🏭 칩 만들기 · ${won(st.design)}`;}}
 function refreshCE(){drawGrid();const st=chipStats(CE.chip);$('#ceStats').innerHTML=chipStatsHTML(st,frontierChip(S.year));$$('[data-blk]').forEach(b=>{const t=b.dataset.blk;const B=BLK[t];b.querySelector('.cnt').textContent=CE.chip.blocks.filter(x=>x.t===t).length+(B.max?'/'+B.max:'');});
   const N=gridN(st.gen);const tier=st.cells>=N*N*.75?'Ultra':st.cells>=N*N*.5?'Max':st.cells>=N*N*.3?'Pro':'';$('#ceTier').textContent=tier?'+ '+tier:'등급';updMake();}
 function buzz(){try{navigator.vibrate&&navigator.vibrate(8);}catch(e){}}
 function makeChip(){const c=CE.chip;const st=chipStats(c);if(!st.ok||S.money<st.design)return;c.name=(c.name||'').trim()||nextChipName();
   openModal(`<h2>🏭 「${esc(c.name)}」 생산 준비</h2><div style="display:flex;gap:12px;justify-content:center"><img src="${chipImg(c,'die',150)}" style="border-radius:12px"><img src="${chipImg(c,'pkg',150)}"></div>
-   <p class="muted" style="line-height:1.6">공장에서 칩 설계를 굽는(테이프아웃) 데 <b>${st.weeks}주</b>가 걸려요. 그동안 시간이 흐르고, 팔고 있는 폰은 계속 팔려요.</p>
+   <p class="muted" style="line-height:1.6">공장에서 칩 설계를 구워서(테이프아웃) 바로 만들어요!</p>
    <button class="btn good" id="bTape">${won(st.design)} 내고 만들기</button><button class="btn alt" onclick="closeModal()">취소</button>`);
   $('#bTape').onclick=()=>{S.money-=st.design;const chip=Object.assign(JSON.parse(JSON.stringify(c)),{id:S.seq++,y:S.year});closeModal();
-    advance(st.weeks,`🧠 칩 「${chip.name}」 만드는 중`,()=>{S.chips.unshift(chip);news(`🧠 새 칩 <b>「${esc(chip.name)}」</b> 완성! (${NODES[st.gen].n})`);CE=null;
+    (()=>{S.chips.unshift(chip);news(`🧠 새 칩 <b>「${esc(chip.name)}」</b> 완성! (${NODES[st.gen].n})`);CE=null;
       if(S.proj&&S.proj.step===0){pickChip(chip.id);}
       openModal(`<h2>🎉 칩 완성!</h2><div style="display:flex;justify-content:center"><img class="pop" src="${chipImg(chip,'pkg',200)}"></div><p style="text-align:center;font-size:18px"><b>${esc(chip.name)}</b> · ${S.year}년 최고 칩 대비 <b>${Math.round(st.raw/frontierChip(S.year).raw*100)}%</b></p><button class="btn" id="bGoProj">${S.proj?'📱 폰 만들러 가기':'확인'}</button>`);
-      $('#bGoProj').onclick=()=>{closeModal();setTab(S.proj?'home':'chips');};save();});};}
+      $('#bGoProj').onclick=()=>{closeModal();setTab(S.proj?'home':'chips');};save();})();};}

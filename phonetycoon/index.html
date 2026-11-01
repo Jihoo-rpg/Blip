@@ -800,7 +800,7 @@ function renderLobby(){const on=S.prods.filter(p=>p.on);const wk=on.reduce((a,p)
   $('#main').innerHTML=`<div class="hero card"><div><h2 style="font-size:26px">📱 새 폰 만들기</h2><p class="muted" style="margin:6px 0 0;line-height:1.6">칩 고르기 → 부품 설계 → 시제품 조립 → 개발 → 광고 영상 → 출시!</p></div><button class="btn" id="bNewProj" style="font-size:17px;padding:13px 18px">🛠️ 시작하기</button></div>
    <div class="grid g2" style="margin-top:12px">
     <div class="card grid" style="gap:8px"><b>📈 판매 중 ${on.length}종</b>${on.slice(0,4).map(p=>`<div class="row" style="justify-content:space-between"><span>${esc(p.d.name)} <small class="muted">⭐${p.rt}</small></span><b>${units(p.last||0)}/주</b></div>`).join('')||'<span class="muted">아직 없어요</span>'}
-     <button class="btn alt" id="bSeason" ${on.length?'':'disabled'}>📈 13주 동안 팔기</button><small class="muted">시간은 내가 무언가를 할 때만 흘러요</small></div>
+     <button class="btn alt" id="bSeason" ${on.length?'':'disabled'}>📈 13주 동안 팔기</button><small class="muted">시간은 폰을 팔 때만 흘러요</small></div>
     <div class="card grid" style="gap:6px"><b>🏁 경쟁사</b>${S.rivals.map(r=>`<div class="row" style="justify-content:space-between"><span><i class="dot" style="background:${r.c}"></i>${esc(r.n)}</span><small class="muted">${r.ph?esc(r.ph.n)+' ⭐'+r.ph.rt:'준비 중'}</small></div>`).join('')}</div>
     <div class="card"><b>📰 뉴스</b><div id="news" style="margin-top:8px">${S.news.slice(0,6).map(n=>`<div><small class="muted">${n.y}.${Math.ceil(n.w/4.34)}월</small> ${n.t}</div>`).join('')}</div></div></div>`;
   $('#bNewProj').onclick=newProject;$('#bSeason').onclick=()=>runSeason(13);}
@@ -902,18 +902,18 @@ function renderDev(){const pr=S.proj,d=pr.d;const ap=appeal(d);const c=devCost(d
   $('#main').innerHTML=`${projHeader()}<div class="grid g2"><div class="card" style="display:flex;justify-content:center;gap:6px">${phoneImg(d,'front',150)}${phoneImg(d,'back',150)}</div>
    <div class="card grid" style="gap:8px"><b style="font-size:18px">🧪 「${esc(d.name)}」 개발</b>
     <div class="kv"><div><small>예상 평점</small><b>${rating(ap.a)}</b></div><div><small>조립 품질</small><b>${pr.asmQ}%</b></div><div><small>개당 원가</small><b>${won(unitCost(d))}</b></div><div><small>적정 가격</small><b>${won(fairPrice(d,ap.a))}</b></div></div>
-    <p class="muted" style="margin:0;line-height:1.6">시제품을 바탕으로 공장 라인을 만들고 테스트해요. <b>${w}주</b> 동안 시간이 흐르고, 그동안 팔던 폰은 계속 팔려요.</p>
-    <button class="btn good" id="bDev" style="font-size:17px;padding:14px" ${S.money<c?'disabled':''}>🧪 개발 시작 · ${won(c)} · ${w}주</button>${S.money<c?'<p class="muted" style="color:var(--bad);margin:0">돈이 부족해요. 팔던 폰을 더 팔면서 기다려 보세요</p>':''}
+    <p class="muted" style="margin:0;line-height:1.6">시제품을 바탕으로 공장 라인을 만들고 테스트해요. 바로 끝나요!</p>
+    <button class="btn good" id="bDev" style="font-size:17px;padding:14px" ${S.money<c?'disabled':''}>🧪 개발하기 · ${won(c)}</button>${S.money<c?'<p class="muted" style="color:var(--bad);margin:0">돈이 부족해요. 팔던 폰을 더 팔면서 기다려 보세요</p>':''}
     <div class="row"><button class="btn alt sm" id="bBackD">◀ 부품 다시 고치기</button><button class="btn alt sm" id="bWait" ${S.prods.some(p=>p.on)?'':'disabled'}>📈 8주 팔면서 기다리기</button></div></div></div>`;
   $('#bBackD').onclick=()=>{S.proj.step=1;dStep=0;render();};
   $('#bWait').onclick=()=>runSeason(8);
   $('#bDev').onclick=()=>{if(S.money<c)return;S.money-=c;news(`🧪 「${esc(d.name)}」 개발 시작`);
-    advance(w,`🧪 「${d.name}」 개발 중`,()=>{const ap2=appeal(d);const rt=rating(ap2.a+rand(-.025,.025));pr.rt=rt;pr.step=4;save();
+    (()=>{const ap2=appeal(d);const rt=rating(ap2.a+rand(-.025,.025));pr.rt=rt;pr.step=4;save();
       const lines=reviewLines(d,ap2,rt);
       openModal(`<h2>🎉 「${esc(d.name)}」 완성! 리뷰가 나왔어요</h2><div style="display:flex;justify-content:center">${phoneImg(d,'front',140)}${phoneImg(d,'back',140)}</div>
        <div style="text-align:center"><div class="score" style="font-size:48px;color:${rt>=8?'var(--good)':rt>=6?'var(--warn)':'var(--bad)'}">${rt}</div><small class="muted">평균 평점 · 경쟁사 최고 ⭐${Math.max(...S.rivals.map(r=>r.ph?r.ph.rt:0))}</small></div>
        <div class="grid">${lines.map(l=>`<div class="review"><div class="s" style="color:${l.s>=8?'var(--good)':l.s>=6?'var(--warn)':'var(--bad)'}">${l.s}</div><div><b>${l.who}</b><div class="muted" style="font-size:13px">${l.t}</div></div></div>`).join('')}</div>
-       <button class="btn good" id="bToAd">🎬 광고 영상 만들러 가기</button>`);$('#bToAd').onclick=()=>{closeModal();render();scrollTo(0,0);};});};}
+       <button class="btn good" id="bToAd">🎬 광고 영상 만들러 가기</button>`);$('#bToAd').onclick=()=>{closeModal();render();scrollTo(0,0);};})();};}
 
 /* ----- 6단계: 출시 ----- */
 function renderLaunch(){const pr=S.proj,d=pr.d;const ap=appeal(d);const drE=defectRate({d,rt:pr.rt});const fair=fairPrice(d,ap.a);const uc=unitCost(d);if(!pr.price)pr.price=Math.round(fair/1000)*1000;
@@ -954,7 +954,7 @@ function runSeason(weeks,focus){const m0=S.money,s0=S.totalSold,n0=S.news[0];con
     const w=S.prods.filter(p=>p.on).reduce((a,p)=>a+(p.last||0),0);hist.push(w);draw();if(!$('#seaD'))return;
     $('#seaD').textContent=`${S.year}년 ${month()}월`;$('#seaW').textContent=units(w);$('#seaS').textContent=units(S.totalSold-s0);const dm=S.money-m0;$('#seaP').innerHTML=`<span style="color:${dm>=0?'var(--good)':'var(--bad)'}">${dm>=0?'+':''}${won(dm)}</span>`;
     const sh=S.shares||[];const tot=sh.reduce((a,x)=>a+x.v,0)||1;$('#seaShare').innerHTML=sh.map(x=>`<i style="width:${x.v/tot*100}%;background:${x.c}"></i>`).join('');$('#seaL').innerHTML=sh.map(x=>`<span><i class="dot" style="background:${x.c}"></i>${esc(x.me?'나':x.n.split(' ')[0])} ${Math.round(x.v/tot*100)}%</span>`).join('');
-    const k=S.news.indexOf(n0);$('#seaN').innerHTML=(k<0?S.news.slice(0,3):S.news.slice(0,Math.min(k,3))).map(n=>`<div>${n.t}</div>`).join('');updTop();setTimeout(tick,280);};
+    const k=S.news.indexOf(n0);$('#seaN').innerHTML=(k<0?S.news.slice(0,3):S.news.slice(0,Math.min(k,3))).map(n=>`<div>${n.t}</div>`).join('');updTop();setTimeout(tick,110);};
   const end=()=>{save();const dm=S.money-m0;const lost=S.prods.filter(p=>p.on).reduce((a,p)=>a+Math.max(0,(p.wantLast||0)-(p.last||0)),0);
     $('#seaEnd').innerHTML=`<div class="card" style="text-align:center;margin-top:8px"><b style="font-size:18px">${dm>=0?'🎉 이번 시즌 흑자!':'😢 이번 시즌 적자…'}</b><div class="score" style="color:${dm>=0?'var(--good)':'var(--bad)'}">${dm>=0?'+':''}${won(dm)}</div>
       <div style="text-align:left;margin-top:8px">${S.prods.filter(p=>p.on||p0[p.id]!==(p.profit||0)).slice(0,5).map(p=>{const v=(p.profit||0)-(p0[p.id]||0);return `<div class="row" style="justify-content:space-between;font-size:13px"><span>${esc(p.d.name)} <small class="muted">반품 ${((p.dr||0)*100).toFixed(1)}%</small></span><b style="color:${v>=0?'var(--good)':'var(--bad)'}">${v>=0?'+':''}${won(v)}</b></div>`;}).join('')}</div>
@@ -977,7 +977,7 @@ window.__pt={get S(){return S;},weekTick,appeal,unitCost,fairPrice,frontier,blan
 {const o=load();if(o){$('#bCont').hidden=false;$('#bCont').textContent=`이어서 하기 · ${o.name} (${o.year}년)`;}
  $('#bCont').onclick=()=>{S=load();$('#start').hidden=true;updTop();render();};
  $('#bNew').onclick=()=>{if(load()&&!confirm('새 회사를 세우면 저장된 회사가 사라져요. 계속할까요?'))return;newGame(($('#nameIn').value||'').trim()||'우주전자');$('#start').hidden=true;updTop();render();
-   setTimeout(()=>openModal(`<h2>👋 ${esc(S.name)} 사장님, 환영해요!</h2><p style="line-height:1.7">지금은 <b>2000년</b>. 돈은 6억뿐이고, 경쟁사 4곳은 이미 유명해요. 시간은 <b>내가 무언가를 할 때만</b> 흘러요.</p>
+   setTimeout(()=>openModal(`<h2>👋 ${esc(S.name)} 사장님, 환영해요!</h2><p style="line-height:1.7">지금은 <b>2000년</b>. 돈은 6억뿐이고, 경쟁사 4곳은 이미 유명해요. 시간은 <b>폰을 팔 때만</b> 흘러요.</p>
     <ol style="line-height:1.9;padding-left:20px;margin:0"><li><b>🧠 칩 연구소</b>에서 블록을 하나하나 배치해 칩을 설계해요</li><li><b>🛠️ 부품</b>을 고르고, <b>🔧 시제품</b>을 직접 조립해요</li><li><b>🎬 광고 영상</b>을 만들고 출시! 영상은 파일로 저장도 돼요</li><li>2007년엔 스마트폰, 2019년엔 폴더블이 나와요</li></ol><button class="btn" id="bW1">🧠 첫 칩 만들러 가기</button>`),300);
    setTimeout(()=>{const b=$('#bW1');if(b)b.onclick=()=>{closeModal();newProject();openChipEditor();};},320);};
  $('#nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#bNew').click();});}
