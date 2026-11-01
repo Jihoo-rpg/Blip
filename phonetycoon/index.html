@@ -1,0 +1,684 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>폰 공장 타이쿤</title>
+<meta name="description" content="부품 하나하나 골라 휴대폰을 설계하고, 연구로 더 좋은 부품을 열고, 폴더폰부터 폴더블까지 만들어 파는 휴대폰 회사 경영 시뮬레이션">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;600;700&display=swap">
+<style>
+:root{--bg:#0f1218;--bg2:#161b24;--card:#1b212c;--card2:#222a37;--line:rgba(255,255,255,.1);--fg:#eef1f6;--muted:#97a1b3;--accent:#4ea8ff;--accent2:#7c5cff;--good:#3ddc84;--warn:#ffb020;--bad:#ff5a5f;--gold:#ffd35a;--display:"Black Han Sans",sans-serif;--body:"IBM Plex Sans KR",system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px}
+body{min-height:100vh;padding-bottom:calc(74px + env(safe-area-inset-bottom))}
+button{font:inherit;color:inherit;cursor:pointer}
+[hidden]{display:none!important}
+h1,h2,h3{margin:0;font-weight:400;font-family:var(--display);letter-spacing:.01em}
+/* 상단 */
+#top{position:sticky;top:0;z-index:20;background:rgba(15,18,24,.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);padding:calc(8px + env(safe-area-inset-top)) 12px 8px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#co{display:flex;align-items:center;gap:8px;min-width:0}
+#logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-family:var(--display);font-size:18px;background:linear-gradient(135deg,var(--accent),var(--accent2))}
+#coName{font-family:var(--display);font-size:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:140px}
+#money{font-family:var(--display);font-size:20px;color:var(--gold);margin-left:auto;white-space:nowrap}
+#money small{display:block;font-family:var(--body);font-size:11px;color:var(--muted);text-align:right;font-weight:600}
+#date{font-weight:700;font-size:13px;color:var(--muted);white-space:nowrap}
+#date b{color:var(--fg);font-size:15px}
+#speed{display:flex;gap:4px}
+#speed button{background:var(--card);border:1px solid var(--line);border-radius:9px;padding:6px 9px;font-size:13px;font-weight:700}
+#speed button.on{background:var(--accent);border-color:var(--accent);color:#06121f}
+/* 탭 */
+#tabs{position:fixed;left:0;right:0;bottom:0;z-index:20;background:rgba(15,18,24,.95);backdrop-filter:blur(10px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(5,1fr);padding:6px 6px calc(6px + env(safe-area-inset-bottom))}
+#tabs button{background:none;border:0;display:grid;justify-items:center;gap:2px;padding:6px 2px;border-radius:12px;color:var(--muted);font-size:12px;font-weight:700}
+#tabs button i{font-style:normal;font-size:22px}
+#tabs button.on{color:var(--fg);background:var(--card)}
+#tabs button .dot{position:absolute}
+main{max-width:1100px;margin:0 auto;padding:12px}
+.sect{margin:18px 0 8px;font-family:var(--display);font-size:20px;display:flex;align-items:center;gap:8px}
+.sect small{font-family:var(--body);font-size:12px;color:var(--muted);font-weight:600}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px}
+.grid{display:grid;gap:10px}
+.g2{grid-template-columns:repeat(auto-fill,minmax(240px,1fr))}
+.btn{background:var(--accent);color:#06121f;border:0;border-radius:12px;padding:11px 16px;font-weight:700;font-size:15px;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn.alt{background:var(--card2);color:var(--fg);border:1px solid var(--line)}
+.btn.good{background:var(--good);color:#04210f}
+.btn.warn{background:var(--warn);color:#2a1900}
+.btn.bad{background:var(--bad);color:#2a0507}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.sm{padding:7px 11px;font-size:13px;border-radius:10px}
+.muted{color:var(--muted)}
+.pill{display:inline-flex;align-items:center;gap:4px;background:var(--card2);border:1px solid var(--line);border-radius:999px;padding:3px 9px;font-size:12px;font-weight:700}
+.bar{height:8px;background:rgba(255,255,255,.08);border-radius:6px;overflow:hidden}
+.bar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:6px}
+/* 설계 */
+#designWrap{display:grid;gap:12px;grid-template-columns:1fr}
+@media (min-width:900px){#designWrap{grid-template-columns:360px 1fr}#preview{position:sticky;top:76px;align-self:start}}
+#preview{background:radial-gradient(circle at 50% 30%,#26324a,#141924);border:1px solid var(--line);border-radius:18px;padding:12px}
+#pv{display:flex;justify-content:center;gap:14px;align-items:flex-end;min-height:230px}
+#pv svg{filter:drop-shadow(0 12px 18px rgba(0,0,0,.45))}
+#pvStats{display:grid;gap:5px;margin-top:10px}
+.st{display:grid;grid-template-columns:62px 1fr 34px;gap:8px;align-items:center;font-size:12px;font-weight:700}
+.st span:last-child{text-align:right;color:var(--muted)}
+#pvSum{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:10px}
+#pvSum div{background:rgba(0,0,0,.25);border-radius:10px;padding:7px;text-align:center}
+#pvSum b{display:block;font-size:16px}#pvSum small{color:var(--muted);font-size:11px;font-weight:700}
+.steps{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.steps button{flex:0 0 auto;background:var(--card);border:1px solid var(--line);border-radius:999px;padding:8px 13px;font-weight:700;font-size:13px}
+.steps button.on{background:var(--fg);color:#0f1218}
+.opts{display:grid;gap:8px;grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}
+.opt{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:10px;text-align:left;display:grid;gap:3px;position:relative}
+.opt b{font-size:14px}.opt small{color:var(--muted);font-size:11.5px;line-height:1.35}
+.opt .cost{font-size:12px;font-weight:700;color:var(--gold)}
+.opt.on{border-color:var(--accent);background:#1b2a40}
+.opt.lock{opacity:.45}
+.opt .tag{position:absolute;top:8px;right:8px;font-size:10px;font-weight:700;background:var(--card2);border-radius:6px;padding:1px 6px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.field{display:grid;gap:6px;margin:10px 0}
+.field label{font-weight:700;font-size:13px;display:flex;justify-content:space-between}
+input[type=range]{width:100%;accent-color:var(--accent);height:28px}
+input[type=text],input[type=number]{background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--fg);padding:10px 12px;font:inherit;width:100%}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:34px;height:34px;border-radius:50%;border:3px solid transparent;box-shadow:0 0 0 1px var(--line)}
+.sw.on{border-color:#fff}
+.cam{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:10px;display:grid;gap:8px}
+.cam .hd{display:flex;align-items:center;gap:8px;font-weight:700}
+.cam .hd .x{margin-left:auto;background:none;border:0;color:var(--bad);font-size:18px}
+select{background:var(--bg2);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:9px 10px;font:inherit;width:100%}
+.chk{display:flex;align-items:center;gap:10px;background:var(--card);border:2px solid var(--line);border-radius:12px;padding:10px;text-align:left}
+.chk.on{border-color:var(--good);background:#16301f}
+.chk.lock{opacity:.45}
+.chk b{font-size:13.5px}.chk small{display:block;color:var(--muted);font-size:11.5px}
+.chk .cost{margin-left:auto;font-size:12px;font-weight:700;color:var(--gold);white-space:nowrap}
+/* 제품 */
+.prod{display:grid;grid-template-columns:86px 1fr;gap:12px;align-items:start}
+.prod .meta{display:grid;gap:6px}
+.prod h3{font-size:19px}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:6px}
+.kv div{background:var(--bg2);border-radius:10px;padding:7px 9px}
+.kv small{display:block;color:var(--muted);font-size:11px;font-weight:700}
+.kv b{font-size:14px}
+.score{font-family:var(--display);font-size:26px;line-height:1}
+canvas.chart{width:100%;height:120px;background:var(--bg2);border-radius:12px}
+/* 연구 */
+.rs{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px}
+.ri{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:11px;display:grid;gap:5px}
+.ri.done{opacity:.5}.ri.cur{border-color:var(--accent2);box-shadow:0 0 0 1px var(--accent2) inset}
+.ri b{font-size:14px}.ri small{color:var(--muted);font-size:12px}
+/* 모달 */
+.modal{position:fixed;inset:0;z-index:50;background:rgba(5,7,10,.7);display:grid;place-items:center;padding:12px}
+.mbox{background:var(--bg2);border:1px solid var(--line);border-radius:20px;width:min(560px,100%);max-height:92vh;overflow:auto;padding:18px;display:grid;gap:12px}
+.mbox h2{font-size:26px}
+.review{background:var(--card);border-radius:12px;padding:10px 12px;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:center}
+.review .s{font-family:var(--display);font-size:24px;width:48px;text-align:center}
+#toast{position:fixed;left:50%;top:calc(70px + env(safe-area-inset-top));transform:translateX(-50%);z-index:60;background:var(--card2);border:1px solid var(--line);border-radius:12px;padding:10px 16px;font-weight:700;box-shadow:0 10px 30px rgba(0,0,0,.4);max-width:90vw;text-align:center}
+#news{display:grid;gap:6px}
+#news div{background:var(--card);border-radius:10px;padding:8px 10px;font-size:13px}
+#news div b{color:var(--accent)}
+.empty{text-align:center;padding:28px 12px;color:var(--muted)}
+.big{font-family:var(--display);font-size:clamp(34px,9vw,64px);line-height:1}
+#start{position:fixed;inset:0;z-index:70;background:radial-gradient(900px 500px at 50% 0%,rgba(78,168,255,.25),transparent),var(--bg);display:grid;place-items:center;padding:20px;overflow:auto}
+#start .in{max-width:520px;width:100%;display:grid;gap:14px;text-align:center}
+.hb{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:6px 8px;text-decoration:none;font-size:15px}
+</style>
+</head>
+<body>
+<header id="top">
+  <a class="hb" href="../hub/" aria-label="허브로 돌아가기">🏠</a><div id="co"><div id="logo">P</div><div id="coName">내 회사</div></div>
+  <div id="date"><b id="yr">2000</b>년 <span id="wk">1</span>주</div>
+  <div id="speed"><button data-sp="0">⏸</button><button data-sp="1" class="on">▶</button><button data-sp="2">▶▶</button><button data-sp="4">▶▶▶</button></div>
+  <div id="money">₩0<small id="wkProfit">이번 주 +0</small></div>
+</header>
+<main id="main"></main>
+<nav id="tabs">
+  <button data-tab="design" class="on"><i>🛠️</i>설계</button>
+  <button data-tab="prods"><i>📱</i>내 제품</button>
+  <button data-tab="research"><i>🔬</i>연구</button>
+  <button data-tab="market"><i>📈</i>시장</button>
+  <button data-tab="company"><i>🏢</i>회사</button>
+</nav>
+<div id="toast" hidden></div>
+<div class="modal" id="modal" hidden><div class="mbox" id="mbox"></div></div>
+<div id="start">
+  <div class="in">
+    <div style="font-size:64px">📱</div>
+    <h1 class="big">폰 공장 타이쿤</h1>
+    <p class="muted" style="margin:0;line-height:1.7">2000년, 5억 원으로 작은 휴대폰 회사를 세웠어요. 화면·칩·카메라 렌즈 하나하나 골라 폰을 설계하고, 연구로 더 좋은 부품을 열고, 폴더폰부터 폴더블까지 만들어 세계 1등 회사가 되세요.</p>
+    <input type="text" id="nameIn" maxlength="10" placeholder="회사 이름 (예: 우주전자)" style="text-align:center;font-size:17px">
+    <button class="btn" id="bNew" style="font-size:18px;padding:14px">회사 세우기 ▶</button>
+    <button class="btn alt" id="bCont" hidden>이어서 하기</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s),$$=s=>[...document.querySelectorAll(s)];
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const rand=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[(Math.random()*a.length)|0];
+const esc=t=>String(t).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function won(n){n=Math.round(n);const s=n<0?'-':'';n=Math.abs(n);if(n>=1e12)return s+'₩'+(n/1e12).toFixed(n>=1e13?0:1)+'조';if(n>=1e8)return s+'₩'+(n/1e8).toFixed(n>=1e9?0:1)+'억';if(n>=1e4)return s+'₩'+Math.round(n/1e4).toLocaleString('ko-KR')+'만';return s+'₩'+n.toLocaleString('ko-KR');}
+const units=n=>n>=1e8?(n/1e8).toFixed(1)+'억대':n>=1e4?(n/1e4).toFixed(n>=1e5?0:1)+'만대':Math.round(n).toLocaleString('ko-KR')+'대';
+function toast(t,ms=2400){const d=$('#toast');d.textContent=t;d.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>d.hidden=true,ms);}
+
+/* ======================= 부품 데이터 =======================
+   y: 나오는 해(그 해부터 연구 가능), q: 품질, c: 개당 원가(원), rp: 연구 비용 */
+const FORMS=[
+ {id:'bar',n:'바형 피처폰',y:2000,des:18,c:6000,prem:1,smart:0,keypad:1,sz:[1.5,2.6],desc:'키패드가 달린 기본 휴대폰',rp:0},
+ {id:'folder',n:'폴더폰',y:2000,des:34,c:16000,prem:1.15,smart:0,keypad:1,fold:1,sz:[1.8,3.2],desc:'열고 닫는 감성. 바깥 화면도 달 수 있어요',rp:0},
+ {id:'slide',n:'슬라이드폰',y:2004,des:40,c:18000,prem:1.15,smart:0,keypad:1,sz:[2,3.2],desc:'화면을 밀어 올리면 키패드가 나와요',rp:60},
+ {id:'rugged',n:'러기드폰',y:2005,des:22,c:22000,prem:1.05,smart:0,keypad:1,dur:40,sz:[1.8,2.8],desc:'떨어뜨려도 멀쩡한 튼튼한 폰',rp:80},
+ {id:'smart',n:'스마트폰',y:2007,des:50,c:15000,prem:1.25,smart:1,sz:[3.2,6.9],desc:'큰 터치 화면, 앱이 돌아가는 폰',rp:200},
+ {id:'gaming',n:'게이밍폰',y:2018,des:46,c:40000,prem:1.3,smart:1,perf:8,sz:[6.3,7],desc:'쿨링 · 숄더 트리거 · 성능 보너스',rp:700},
+ {id:'fold',n:'폴더블(책처럼)',y:2019,des:86,c:180000,prem:1.6,smart:1,novel:.18,sz:[7,8.2],desc:'펼치면 태블릿만 한 화면',rp:1400},
+ {id:'flip',n:'플립(반으로 접힘)',y:2020,des:80,c:120000,prem:1.35,smart:1,novel:.14,sz:[6.5,6.9],desc:'접으면 손바닥만 한 스마트폰',rp:1300},
+ {id:'tri',n:'트리폴드(3단)',y:2025,des:94,c:320000,prem:1.9,smart:1,novel:.22,sz:[9.5,10.5],desc:'두 번 접는 초대형 화면',rp:2600},
+ {id:'roll',n:'롤러블',y:2027,des:100,c:400000,prem:2.1,smart:1,novel:.25,sz:[7,8.5],desc:'화면이 말려서 늘어나요',rp:3200},
+];
+const MATS=[
+ {id:'plastic',n:'플라스틱',y:2000,des:8,dur:40,c:4000,rp:0,desc:'싸고 가벼워요'},
+ {id:'metal',n:'메탈 프레임',y:2004,des:28,dur:58,c:18000,rp:70,desc:'테두리가 금속'},
+ {id:'alu',n:'알루미늄 유니바디',y:2010,des:44,dur:64,c:32000,rp:240,desc:'통 알루미늄 깎아 만들기'},
+ {id:'glass',n:'강화유리 + 메탈',y:2012,des:52,dur:48,c:30000,rp:280,desc:'반짝이는 유리 뒷면'},
+ {id:'ceramic',n:'세라믹',y:2017,des:64,dur:56,c:68000,rp:600,desc:'고급스럽고 흠집에 강해요'},
+ {id:'ti',n:'티타늄',y:2023,des:76,dur:86,c:105000,rp:1300,desc:'가볍고 엄청 튼튼'},
+ {id:'carbon',n:'탄소섬유',y:2026,des:84,dur:92,c:140000,rp:2000,desc:'레이싱카 소재'},
+];
+const COLORS=['#1c1f26','#e9ecef','#c0c6cf','#2a4d8f','#d7263d','#f4c95d','#3aa17e','#8e6cdb','#f28fb1','#d9a066','#5fd3e8','#ff7f11'];
+const PANELS=[
+ {id:'mono',n:'흑백 LCD',y:2000,q:5,c:4000,rp:0,pw:.3},
+ {id:'stn',n:'컬러 STN',y:2000,q:14,c:9000,rp:20,pw:.5},
+ {id:'tft',n:'TFT LCD',y:2003,q:28,c:18000,rp:60,pw:.7},
+ {id:'ips',n:'IPS LCD',y:2008,q:44,c:32000,rp:180,pw:.9},
+ {id:'oled',n:'OLED',y:2009,q:58,c:55000,rp:260,pw:.8},
+ {id:'doled',n:'다이내믹 OLED',y:2016,q:74,c:85000,rp:520,pw:.8},
+ {id:'ltpo',n:'LTPO OLED',y:2021,q:88,c:115000,rp:900,pw:.6},
+ {id:'mled',n:'마이크로 LED',y:2028,q:100,c:190000,rp:2200,pw:.5},
+];
+const RES=[
+ {id:'qqvga',n:'128×160',y:2000,q:4,c:0,rp:0},{id:'qvga',n:'240×320',y:2003,q:12,c:3000,rp:40},{id:'wvga',n:'480×800',y:2008,q:26,c:8000,rp:150},
+ {id:'hd',n:'HD 720p',y:2011,q:40,c:14000,rp:260},{id:'fhd',n:'FHD 1080p',y:2013,q:58,c:22000,rp:380},{id:'qhd',n:'QHD 1440p',y:2015,q:74,c:34000,rp:560},{id:'uhd',n:'4K',y:2019,q:88,c:52000,rp:900},
+];
+const HZ=[{id:'60',n:'60Hz',y:2000,q:0,c:0,rp:0,pw:0},{id:'90',n:'90Hz',y:2019,q:8,c:6000,rp:400,pw:.15},{id:'120',n:'120Hz',y:2020,q:14,c:10000,rp:600,pw:.25},{id:'144',n:'144Hz',y:2021,q:17,c:14000,rp:800,pw:.32},{id:'165',n:'165Hz',y:2024,q:19,c:18000,rp:1100,pw:.38}];
+const CUTS=[{id:'bezel',n:'두꺼운 베젤',y:2000,q:0,c:0,rp:0},{id:'notch',n:'노치',y:2017,q:6,c:4000,rp:300},{id:'drop',n:'물방울',y:2018,q:8,c:5000,rp:350},{id:'punch',n:'펀치홀',y:2019,q:11,c:7000,rp:450},{id:'island',n:'다이내믹 섬',y:2022,q:14,c:12000,rp:800},{id:'udc',n:'카메라 숨김(언더디스플레이)',y:2023,q:18,c:30000,rp:1200}];
+const CHIPS=[
+ {id:'mx1',n:'MX-1',y:2000,q:4,c:9000,rp:0,pw:.3,feat:1},{id:'mx2',n:'MX-2',y:2003,q:9,c:14000,rp:50,pw:.35,feat:1},{id:'mx3',n:'MX-3 멀티미디어',y:2005,q:14,c:22000,rp:110,pw:.45,feat:1},
+ {id:'nova1',n:'Nova 1',y:2007,q:20,c:30000,rp:200,pw:.6},{id:'nova2',n:'Nova 2',y:2010,q:30,c:40000,rp:300,pw:.7},{id:'nova4',n:'Nova 4 쿼드',y:2012,q:40,c:52000,rp:420,pw:.8},
+ {id:'helix6',n:'Helix 6',y:2014,q:50,c:65000,rp:560,pw:.8},{id:'helix8',n:'Helix 8',y:2016,q:60,c:80000,rp:700,pw:.85},{id:'helixx',n:'Helix X AI',y:2018,q:70,c:98000,rp:900,pw:.85},
+ {id:'q1',n:'Quanta 1',y:2020,q:79,c:120000,rp:1100,pw:.8},{id:'q2',n:'Quanta 2',y:2022,q:87,c:140000,rp:1350,pw:.75},{id:'q3',n:'Quanta 3',y:2024,q:94,c:165000,rp:1600,pw:.7},
+ {id:'qu',n:'Quanta Ultra',y:2026,q:102,c:190000,rp:2000,pw:.7},{id:'nq',n:'Neural Q',y:2029,q:115,c:230000,rp:2600,pw:.65},
+];
+const RAM=[{id:'r4',n:'4MB',y:2000,q:2,c:1000,rp:0},{id:'r32',n:'32MB',y:2004,q:6,c:3000,rp:40},{id:'r256',n:'256MB',y:2007,q:12,c:6000,rp:120},{id:'r1',n:'1GB',y:2011,q:20,c:10000,rp:250},{id:'r2',n:'2GB',y:2013,q:28,c:14000,rp:330},{id:'r4g',n:'4GB',y:2015,q:36,c:19000,rp:450},{id:'r8',n:'8GB',y:2018,q:44,c:26000,rp:650},{id:'r12',n:'12GB',y:2020,q:50,c:34000,rp:850},{id:'r16',n:'16GB',y:2023,q:55,c:44000,rp:1100},{id:'r24',n:'24GB',y:2026,q:60,c:56000,rp:1500}];
+const STOR=[{id:'s16',n:'16MB',y:2000,q:2,c:1000,rp:0},{id:'s128',n:'128MB',y:2004,q:5,c:3000,rp:40},{id:'s4',n:'4GB',y:2007,q:10,c:6000,rp:120},{id:'s16g',n:'16GB',y:2010,q:16,c:10000,rp:230},{id:'s64',n:'64GB',y:2014,q:24,c:15000,rp:400},{id:'s128g',n:'128GB',y:2017,q:30,c:20000,rp:550},{id:'s256',n:'256GB',y:2019,q:36,c:28000,rp:750},{id:'s512',n:'512GB',y:2021,q:41,c:40000,rp:950},{id:'s1t',n:'1TB',y:2023,q:46,c:58000,rp:1200},{id:'s2t',n:'2TB',y:2027,q:50,c:80000,rp:1700}];
+// 카메라
+const SENSORS=[
+ {id:'vga',n:'0.3MP VGA',mp:.3,sz:.14,y:2002,q:5,c:5000,rp:40},{id:'s13',n:'1.3MP',mp:1.3,sz:.16,y:2004,q:10,c:8000,rp:70},{id:'s3',n:'3MP',mp:3,sz:.2,y:2006,q:17,c:11000,rp:110},
+ {id:'s5',n:'5MP',mp:5,sz:.25,y:2008,q:24,c:14000,rp:160},{id:'s8',n:'8MP',mp:8,sz:.3,y:2010,q:33,c:18000,rp:220},{id:'s12',n:'12MP 1/2.5"',mp:12,sz:.4,y:2012,q:42,c:23000,rp:300},
+ {id:'s16',n:'16MP',mp:16,sz:.45,y:2014,q:50,c:28000,rp:400},{id:'s12l',n:'12MP 큰 픽셀 1/1.7"',mp:12,sz:.59,y:2016,q:60,c:36000,rp:520},{id:'s48',n:'48MP 1/2"',mp:48,sz:.5,y:2019,q:68,c:42000,rp:650},
+ {id:'s108',n:'108MP 1/1.33"',mp:108,sz:.75,y:2020,q:78,c:58000,rp:800},{id:'s50',n:'50MP 1인치',mp:50,sz:1,y:2022,q:90,c:85000,rp:1050},{id:'s200',n:'200MP 1/1.3"',mp:200,sz:.77,y:2023,q:93,c:90000,rp:1200},
+ {id:'s1x',n:'100MP 1.5인치',mp:100,sz:1.5,y:2027,q:108,c:140000,rp:1900},
+];
+const ROLES=[
+ {id:'main',n:'메인',y:2002,v:0,c:0,rp:0,desc:'기본 카메라'},
+ {id:'wide',n:'초광각',y:2016,v:10,c:8000,rp:400,desc:'넓게 찍기'},
+ {id:'tele',n:'망원 2~3배',y:2016,v:12,c:12000,rp:450,desc:'멀리 확대'},
+ {id:'depth',n:'심도(인물)',y:2017,v:3,c:3000,rp:200,desc:'배경 흐림'},
+ {id:'macro',n:'매크로',y:2019,v:3,c:3000,rp:250,desc:'아주 가까이'},
+ {id:'peri',n:'잠망경 5~10배',y:2019,v:22,c:30000,rp:800,desc:'엄청 멀리 확대'},
+ {id:'tof',n:'ToF 3D',y:2019,v:4,c:9000,rp:350,desc:'거리 측정'},
+];
+const LAYOUTS=[{id:'col',n:'세로 줄'},{id:'row',n:'가로 줄'},{id:'sq',n:'사각 섬'},{id:'circle',n:'원형 섬'},{id:'diag',n:'대각선'},{id:'free',n:'따로따로'}];
+const FLASH=[{id:'none',n:'없음',y:2000,q:0,c:0,rp:0},{id:'led',n:'LED',y:2005,q:4,c:2000,rp:60},{id:'dual',n:'듀얼톤 LED',y:2013,q:7,c:4000,rp:300},{id:'ring',n:'링 LED',y:2020,q:9,c:7000,rp:700}];
+const FRONT=[{id:'none',n:'없음',y:2000,q:0,c:0,rp:0},{id:'fvga',n:'VGA 영상통화',y:2004,q:4,c:3000,rp:60},{id:'f2',n:'2MP',y:2010,q:10,c:6000,rp:200},{id:'f8',n:'8MP',y:2014,q:18,c:9000,rp:380},{id:'f12',n:'12MP 자동초점',y:2018,q:26,c:14000,rp:600},{id:'f32',n:'32MP',y:2020,q:32,c:18000,rp:800},{id:'f50',n:'50MP 4K 셀카',y:2024,q:40,c:26000,rp:1200}];
+const VIDEO=[{id:'v240',n:'240p',y:2004,q:2,c:0,rp:0},{id:'v720',n:'720p HD',y:2010,q:8,c:2000,rp:200},{id:'v1080',n:'1080p FHD',y:2012,q:14,c:4000,rp:320},{id:'v4k',n:'4K',y:2015,q:22,c:8000,rp:550},{id:'v8k',n:'8K',y:2020,q:28,c:14000,rp:900},{id:'v12k',n:'12K 시네마',y:2027,q:34,c:24000,rp:1800}];
+const BATT=[{id:'nimh',n:'니켈수소',y:2000,e:.7,c:1.5,rp:0},{id:'liion',n:'리튬이온',y:2002,e:1,c:2,rp:50},{id:'lipo',n:'리튬폴리머',y:2008,e:1.08,c:2.4,rp:200},{id:'sic',n:'실리콘-카본',y:2024,e:1.22,c:3.2,rp:1200},{id:'ss',n:'전고체',y:2028,e:1.45,c:4.6,rp:2200}];
+const CHG=[{id:'c5',n:'5W',y:2000,q:2,c:0,rp:0},{id:'c10',n:'10W',y:2011,q:6,c:2000,rp:200},{id:'c18',n:'18W 고속',y:2015,q:10,c:4000,rp:380},{id:'c25',n:'25W',y:2018,q:13,c:5000,rp:550},{id:'c45',n:'45W',y:2020,q:17,c:8000,rp:750},{id:'c65',n:'65W',y:2021,q:20,c:10000,rp:900},{id:'c120',n:'120W',y:2022,q:24,c:15000,rp:1100},{id:'c240',n:'240W',y:2025,q:28,c:22000,rp:1500}];
+const FEATS=[
+ {id:'mp3',n:'MP3 플레이어',y:2003,s:5,c:5000,rp:60,feat:1},{id:'bt',n:'블루투스',y:2002,s:4,c:3000,rp:50},{id:'outer',n:'바깥 화면',y:2000,s:6,c:9000,rp:20,need:'fold'},
+ {id:'dmb',n:'TV 시청(DMB)',y:2005,s:6,c:8000,rp:120,feat:1},{id:'wifi',n:'와이파이',y:2007,s:6,c:4000,rp:120,smart:1},{id:'gps',n:'GPS 지도',y:2008,s:6,c:5000,rp:160},
+ {id:'lte',n:'4G LTE',y:2011,s:10,c:12000,rp:300},{id:'wchg',n:'무선 충전',y:2012,s:7,c:8000,rp:300},{id:'pen',n:'스타일러스 펜',y:2011,s:8,c:9000,rp:300,smart:1},
+ {id:'fp',n:'지문 인식',y:2013,s:7,c:6000,rp:300},{id:'nfc',n:'NFC 결제',y:2014,s:6,c:4000,rp:300},{id:'ip67',n:'방수 IP67',y:2014,s:7,c:7000,rp:350,dur:12},
+ {id:'ip68',n:'방수 IP68',y:2016,s:10,c:11000,rp:500,dur:18},{id:'stereo',n:'스테레오 스피커',y:2016,s:6,c:6000,rp:350},{id:'face3d',n:'3D 얼굴 인식',y:2017,s:9,c:16000,rp:600,smart:1},
+ {id:'ufp',n:'화면 지문 인식',y:2019,s:8,c:10000,rp:600,smart:1},{id:'g5',n:'5G',y:2019,s:12,c:22000,rp:800},{id:'rwchg',n:'역무선 충전',y:2019,s:4,c:6000,rp:400},
+ {id:'fan',n:'쿨링 팬',y:2018,s:6,c:9000,rp:500,need:'gaming',perf:6},{id:'trig',n:'게임 트리거',y:2018,s:5,c:6000,rp:400},{id:'sat',n:'위성 문자',y:2022,s:9,c:18000,rp:900},
+ {id:'ai',n:'AI 비서',y:2023,s:12,c:12000,rp:1000,smart:1},{id:'odai',n:'온디바이스 AI',y:2024,s:14,c:20000,rp:1300,smart:1},{id:'shutter',n:'카메라 셔터 버튼',y:2024,s:5,c:4000,rp:600},
+ {id:'holo',n:'홀로그램 화면',y:2029,s:18,c:60000,rp:2500,smart:1},
+];
+const CATS=[['des','디자인'],['scr','화면'],['perf','성능'],['cam','카메라'],['bat','배터리'],['fea','기능'],['dur','내구성']];
+const W0={des:.15,scr:.16,perf:.16,cam:.2,bat:.13,fea:.13,dur:.07};
+const ALL_LISTS={form:FORMS,mat:MATS,panel:PANELS,res:RES,hz:HZ,cut:CUTS,chip:CHIPS,ram:RAM,stor:STOR,sensor:SENSORS,role:ROLES,flash:FLASH,front:FRONT,video:VIDEO,batt:BATT,chg:CHG,feat:FEATS};
+const GROUP_NAME={form:'폼팩터',mat:'소재',panel:'화면 패널',res:'해상도',hz:'주사율',cut:'화면 구멍',chip:'칩셋',ram:'램',stor:'저장공간',sensor:'카메라 센서',role:'카메라 렌즈 종류',flash:'플래시',front:'전면 카메라',video:'동영상',batt:'배터리',chg:'충전',feat:'기능'};
+
+/* ======================= 상태 ======================= */
+const SK='phonetycoon_v1';
+let S=null;
+function newGame(name){
+  S={name:name||'우주전자',money:5e8,week:1,year:2000,rep:12,fans:0,lab:1,fac:1,rp:0,unlocked:{},research:null,
+    prods:[],devs:[],news:[],hist:[],totalSold:0,totalRev:0,trend:null,ach:{},rivals:makeRivals(),seq:1,draft:null,lastWeek:0};
+  for(const k in ALL_LISTS)for(const it of ALL_LISTS[k])if(!it.rp||it.rp<=20&&it.y<=2000)S.unlocked[k+':'+it.id]=1;
+  S.unlocked['role:main']=1;
+  pickTrend();save();}
+function save(){try{localStorage.setItem(SK,JSON.stringify(S));}catch(e){}}
+function load(){try{const o=JSON.parse(localStorage.getItem(SK)||'null');if(o&&o.name)return o;}catch(e){}return null;}
+const has=(k,id)=>!!S.unlocked[k+':'+id];
+const avail=(it)=>S.year>=it.y;
+function makeRivals(){return [{n:'블루베리 모바일',c:'#3b6fd8',str:.9,ph:null},{n:'오렌지텍',c:'#ff8a2a',str:.8,ph:null},{n:'제타폰',c:'#9b59ff',str:.85,ph:null},{n:'한빛통신',c:'#2ec4a6',str:.7,ph:null}];}
+
+/* ======================= 점수 계산 =======================
+   각 분야 점수 → 그 해 시장 최고 수준 대비 비율 → 매력도 */
+const L=(k,id)=>ALL_LISTS[k].find(x=>x.id===id)||ALL_LISTS[k][0];
+function camScore(d){
+  let s=0;const mods=d.cams||[];const used={};
+  mods.forEach((m,i)=>{const se=L('sensor',m.sensor),ro=L('role',m.role);let q=se.q*(1+(m.ois?.12:0))*(1+(2.4-(m.ap||2.2))*.12);
+    if(ro.id==='main'&&!used.main){s+=q;used.main=1;}else{const first=!used[ro.id];used[ro.id]=1;s+=first?ro.v*(.5+se.q/100)+q*.12:q*.04;}});
+  s+=L('flash',d.flash).q+L('front',d.front).q*.5+L('video',d.video).q*.5;
+  if(d.feats&&(d.feats.includes('ai')||d.feats.includes('odai')))s*=1.08;
+  s*=1+L('chip',d.chip).q/400;
+  return s;}
+function scores(d){
+  const f=L('form',d.form),m=L('mat',d.mat),p=L('panel',d.panel),r=L('res',d.res),h=L('hz',d.hz),cu=L('cut',d.cut),ch=L('chip',d.chip),ra=L('ram',d.ram),st=L('stor',d.stor),b=L('batt',d.batt),cg=L('chg',d.chg);
+  const feats=(d.feats||[]).map(id=>L('feat',id));
+  const size=d.size||f.sz[0];
+  const des=f.des*.55+m.des*.35+(d.thin?(10-d.thin)*2:0)+(cu.q*.6);
+  const scr=p.q*.55+r.q*.35+h.q*.9+size*4+cu.q*.4;
+  const perf=ch.q*.75+ra.q*.35+st.q*.25+(f.perf||0)+feats.reduce((a,x)=>a+(x.perf||0),0);
+  const cam=camScore(d);
+  const draw=(p.pw+h.pw)*size*.35+ch.pw*1.2+(d.feats||[]).length*.03+(f.id==='fold'||f.id==='tri'||f.id==='roll'?.8:0);
+  const bat=(d.mah||900)*b.e/(draw*80+60)*10+cg.q*.9+((d.feats||[]).includes('wchg')?4:0);
+  const fea=feats.reduce((a,x)=>a+x.s,0);
+  const dur=m.dur*.7+(f.dur||0)+feats.reduce((a,x)=>a+(x.dur||0),0)-(f.id==='fold'||f.id==='tri'||f.id==='roll'?14:0);
+  return {des,scr,perf,cam,bat,fea,dur};}
+// 그 해 시장 최고 수준 (해마다 기준이 올라가요)
+const FRONTIER={};
+function frontier(year){if(FRONTIER[year])return FRONTIER[year];
+  const best=(list)=>list.filter(x=>x.y<=year).reduce((a,x)=>(x.q??x.des??0)>(a.q??a.des??0)?x:a,list[0]);
+  const forms=FORMS.filter(x=>x.y<=year);const fb=forms.reduce((a,x)=>x.des>a.des?x:a,forms[0]);
+  const matB=MATS.filter(x=>x.y<=year).reduce((a,x)=>x.des>a.des?x:a,MATS[0]);
+  const sens=best(SENSORS);const roles=ROLES.filter(r=>r.y<=year&&r.id!=='main');
+  const d={form:fb.id,mat:matB.id,panel:best(PANELS).id,res:best(RES).id,hz:best(HZ).id,cut:best(CUTS).id,chip:best(CHIPS).id,ram:best(RAM).id,stor:best(STOR).id,
+    batt:(BATT.filter(x=>x.y<=year).slice(-1)[0]||BATT[0]).id,chg:best(CHG).id,flash:best(FLASH).id,front:best(FRONT).id,video:(VIDEO.filter(x=>x.y<=year).slice(-1)[0]||VIDEO[0]).id,
+    mah:maxMah(year)*.85,size:6.4,thin:6,cams:year>=2002?[{role:'main',sensor:sens.id,ois:year>=2015,ap:apMin(year)},...roles.slice(0,3).map(r=>({role:r.id,sensor:sens.id,ois:false,ap:2.2}))]:[],
+    feats:FEATS.filter(x=>x.y<=year).sort((a,b)=>b.s-a.s).slice(0,9).map(x=>x.id)};
+  if(year<2007){d.size=2.4;}
+  const s=scores(d);for(const k in s)s[k]=Math.max(8,s[k]*.97);
+  s._cost=rawCost(Object.assign({},d,{form:year>=2007?'smart':'bar',size:year>=2007?6.4:2.4}));FRONTIER[year]=s;return s;}
+const maxMah=y=>Math.round(900+Math.max(0,y-2000)*190+Math.max(0,y-2015)*60);
+const apMin=y=>y>=2020?1.4:y>=2016?1.7:y>=2012?2:2.4;
+function appeal(d,year=S.year){
+  const s=scores(d),fr=frontier(year);const w=Object.assign({},W0);if(S.trend&&S.trend.y===year)w[S.trend.k]*=1.6;
+  let tw=0,a=0;const norm={};for(const k in w){norm[k]=clamp(s[k]/fr[k],0,1.35);a+=w[k]*norm[k];tw+=w[k];}a/=tw;
+  const f=L('form',d.form);const nov=f.novel?f.novel*Math.max(0,1-(year-f.y)/6):0;
+  // 스마트폰 시대에 피처폰은 매력 감소
+  const featAge=!f.smart&&year>=2009?clamp((year-2009)*.07,0,.55):0;
+  return {a:clamp(a+nov-featAge,0,1.6),norm,s};}
+function unitCost(d){return Math.round(rawCost(d)+asm());}
+function rawCost(d){
+  let c=0;const g=(k,id)=>L(k,id).c||0;
+  c+=g('form',d.form)+g('mat',d.mat)+g('panel',d.panel)*(d.size||2)/5+g('res',d.res)+g('hz',d.hz)+g('cut',d.cut)+g('chip',d.chip)+g('ram',d.ram)+g('stor',d.stor)+g('chg',d.chg)+g('flash',d.flash)+g('front',d.front)+g('video',d.video);
+  c+=(d.mah||900)*L('batt',d.batt).c;
+  for(const m of d.cams||[])c+=L('sensor',m.sensor).c+L('role',m.role).c+(m.ois?6000:0)+Math.max(0,(2.4-(m.ap||2.4)))*12000;
+  for(const id of d.feats||[])c+=g('feat',id);
+  c+=(d.thin?(10-d.thin)*2500:0);
+  c*=1.2;
+  return c;}
+const asm=()=>[0,9000,7000,5500,4500,3500,2500][S.fac]||5000;
+const FAC=[null,{cap:15000,cost:0},{cap:50000,cost:1e10},{cap:150000,cost:5e10},{cap:400000,cost:2e11},{cap:1e6,cost:8e11},{cap:3e6,cost:3e12}];
+const LAB=[null,{rp:12,cost:0},{rp:30,cost:5e9},{rp:70,cost:3e10},{rp:150,cost:1.5e11},{rp:300,cost:6e11},{rp:600,cost:2.5e12}];
+const baseFlag=y=>(380000+Math.max(0,y-2000)*38000)*(y>=2017?1.15:1);
+function fairPrice(d,a){const f=L('form',d.form);const fc=frontier(S.year)._cost*.6+40000;return Math.round(Math.max(20000,fc*(.9+1.8*Math.pow(clamp(a,0,1.4),2))*f.prem)/1000)*1000;}
+const rating=a=>clamp(Math.round((2.5+7*Math.pow(clamp(a,0,1.3)/1.02,1.5))*10)/10,1,10);
+const marketWeek=y=>Math.round(22000*(1+Math.max(0,y-2000)*.3)*(y>=2008?1.5:1));
+
+/* ======================= 새 설계 ======================= */
+function blankDesign(){
+  const best=(k)=>{const l=ALL_LISTS[k].filter(x=>has(k,x.id)&&avail(x));return l.length?l[l.length-1].id:ALL_LISTS[k][0].id;};
+  const smartOK=has('form','smart')&&S.year>=2007;
+  const d={name:'',form:smartOK?'smart':'folder',mat:best('mat'),color:pick(COLORS),panel:best('panel'),res:best('res'),hz:'60',cut:'bezel',chip:best('chip'),ram:best('ram'),stor:best('stor'),
+    batt:best('batt'),chg:best('chg'),mah:Math.round(maxMah(S.year)*.6/50)*50,size:0,thin:5,flash:'none',front:'none',video:best('video'),cams:[],layout:'col',feats:[],price:0};
+  const f=L('form',d.form);d.size=+(f.sz[0]+(f.sz[1]-f.sz[0])*.5).toFixed(1);
+  if(has('sensor','vga')&&S.year>=2002)d.cams=[{role:'main',sensor:best('sensor'),ois:false,ap:2.4}];
+  fixDesign(d);return d;}
+function fixDesign(d){
+  const f=L('form',d.form);d.size=clamp(d.size||f.sz[0],f.sz[0],f.sz[1]);
+  if(!f.smart){d.chip=CHIPS.find(c=>c.id===d.chip&&c.feat)?d.chip:(CHIPS.filter(c=>c.feat&&has('chip',c.id)&&avail(c)).slice(-1)[0]||CHIPS[0]).id;d.cut='bezel';d.hz='60';}
+  d.feats=(d.feats||[]).filter(id=>{const x=L('feat',id);if(x.need==='fold'&&!(f.fold||f.id==='flip'))return false;if(x.need==='gaming'&&f.id!=='gaming')return false;if(x.smart&&!f.smart)return false;if(x.feat&&f.smart)return false;return true;});
+  d.mah=clamp(d.mah,300,maxMah(S.year));
+  if(d.cams.length&&d.cams[0].role!=='main'){d.cams[0].role='main';}
+  return d;}
+function devWeeks(d){const c=unitCost(d);return Math.round(clamp(4+c/60000+(d.cams||[]).length+(L('form',d.form).novel?4:0),4,20));}
+function devCost(d){return Math.round((2e7+unitCost(d)*400)*(1+(S.year-2000)*.06)/1e6)*1e6;}
+
+/* ======================= 게임 진행 (1주) ======================= */
+let speed=1,tickT=0;
+function weekTick(){
+  const y=S.year;let rev=0,cost=0;
+  // 연구
+  const rpw=LAB[S.lab].rp*(1+S.rep/200);S.rp+=rpw;
+  if(S.research){const it=ALL_LISTS[S.research.k].find(x=>x.id===S.research.id);S.research.p+=rpw;S.rp-=rpw;if(S.research.p>=it.rp){S.unlocked[S.research.k+':'+it.id]=1;news(`🔬 연구 완료: <b>${esc(GROUP_NAME[S.research.k])} · ${esc(it.n)}</b>`);toast('🔬 연구 완료! '+it.n);S.research=null;renderIfTab('research');}}
+  // 개발
+  for(const dv of S.devs){dv.left--;if(dv.left<=0&&!dv.done){dv.done=1;launchReady(dv);}}
+  S.devs=S.devs.filter(d=>!d.launched);
+  // 판매
+  const active=S.prods.filter(p=>p.on);
+  const M=marketWeek(y);const rivals=S.rivals.reduce((a,r)=>a+Math.pow(r.ph?r.ph.a:r.str*.8,3)*r.str,0);
+  let mine=0;for(const p of active){p.app=appeal(p.d).a;p.fair=fairPrice(p.d,p.app);
+    const pf=p.d.price/p.fair;p.pfac=pf<=1?1+.6*(1-pf):Math.exp(-2.6*(pf-1));const age=(S.week+(y-p.y)*52-p.w)/52;
+    p.hype=Math.max(0,(p.hype||0)*.93);p.wt=Math.pow(p.app,3)*(.2+S.rep/60)*(1+p.hype)*p.pfac*Math.max(.25,1-age*.12);mine+=p.wt;}
+  const tot=mine+rivals;
+  for(const p of active){let u=Math.round(M*p.wt/tot*rand(.9,1.1));p.queue=p.queue||[];p.queue.forEach(q=>q.wk--);p.stock+=p.queue.filter(q=>q.wk<=0).reduce((a,q)=>a+q.n,0);p.queue=p.queue.filter(q=>q.wk>0);
+    const sold=Math.min(u,p.stock);p.lost=(p.lost||0)+(u-sold);p.stock-=sold;p.sold+=sold;p.rev+=sold*p.d.price;rev+=sold*p.d.price;p.last=sold;p.wantLast=u;
+    p.hist.push(sold);if(p.hist.length>104)p.hist.shift();S.totalSold+=sold;
+    if(p.auto){const need=Math.max(u,500)*3-p.stock-p.queue.reduce((a,q)=>a+q.n,0);const n=Math.floor(Math.min(need,FAC[S.fac].cap*2-queued(),S.money*.6/p.uc)/100)*100;if(n>=100)order(p,n,true);}
+    // 팬 · 평판
+    S.fans+=sold*.02*(p.rt/10);
+    if(sold>0&&p.rt>=8)S.rep=Math.min(100,S.rep+sold/1.5e6*(p.rt-7));}
+  S.rep=Math.max(0,S.rep-.01);
+  // 고정비 (월급 · 유지비)
+  const fixed=(2e6+Math.pow(S.lab,2.5)*2e6+Math.pow(S.fac,2.5)*3e6)*(1+(y-2000)*.05);cost+=fixed;
+  S.money+=rev-cost;S.totalRev+=rev;S.lastProfit=rev-cost;S.lastRev=rev;
+  S.hist.push({rev,cost});if(S.hist.length>104)S.hist.shift();
+  // 경쟁사 신제품
+  for(const r of S.rivals){if(!r.ph||Math.random()<1/52*1.2){const a=clamp(rand(.62,.9)*r.str+.08,0,1.05);r.ph={n:`${r.n.split(' ')[0]} ${pick(['S','X','Z','Pro','Max','Ultra','Neo','Air'])}${y%100}`,a,rt:rating(a),y};if(S.week>2)news(`📢 <b>${esc(r.n)}</b>가 새 폰 「${esc(r.ph.n)}」 출시 · 평점 ${r.ph.rt}`);}}
+  // 시간
+  S.week++;if(S.week>52){S.week=1;S.year++;yearStart();}
+  if(S.money<0&&!S.warned){S.warned=1;news('⚠️ <b>돈이 마이너스예요!</b> 빨리 폰을 팔거나 비용을 줄이세요');toast('⚠️ 적자! 돈이 마이너스예요',3000);}
+  if(S.money>=0)S.warned=0;
+  if(S.money<-(5e8+S.totalRev*.05)){bankrupt();return;}
+  checkAch();save();updTop();renderLive();}
+function bankrupt(){speed=0;$$('#speed button').forEach(x=>x.classList.toggle('on',x.dataset.sp==='0'));save();
+  openModal(`<h2>💸 파산했어요…</h2><p style="line-height:1.7">${esc(S.name)}의 빚이 너무 많아졌어요. 은행이 한 번만 도와준대요.</p><button class="btn good" id="bBail">🏦 구조 자금 받기 (평판 −20, 공장·연구소 1단계)</button><button class="btn alt" id="bOver">처음부터 다시</button>`);
+  $('#bBail').onclick=()=>{S.money=2e8;S.rep=Math.max(0,S.rep-20);S.fac=1;S.lab=1;S.warned=0;news('🏦 구조 자금으로 다시 시작했어요');closeModal();updTop();render();save();};
+  $('#bOver').onclick=()=>{localStorage.removeItem(SK);location.reload();};}
+function yearStart(){pickTrend();const nw=[...Object.values(ALL_LISTS).flat()].filter(x=>x.y===S.year&&x.rp);if(nw.length)news(`🆕 ${S.year}년 새 기술 ${nw.length}개 연구 가능: ${nw.slice(0,4).map(x=>esc(x.n)).join(', ')}${nw.length>4?' …':''}`);
+  if(S.year===2007)news('🚀 <b>스마트폰 시대 시작!</b> 연구 탭에서 「스마트폰」을 연구하세요. 피처폰 인기가 점점 떨어져요');
+  toast(`🎉 ${S.year}년이 되었어요`);}
+function pickTrend(){const k=pick(CATS)[0];S.trend={k,y:S.year};news(`🔥 ${S.year}년 유행: 사람들이 <b>${CATS.find(c=>c[0]===k)[1]}</b>을(를) 특히 중요하게 봐요`);}
+function news(t){S.news.unshift({t,y:S.year,w:S.week});if(S.news.length>40)S.news.pop();}
+function queued(){return S.prods.filter(p=>p.on).reduce((a,p)=>a+(p.queue||[]).reduce((b,q)=>b+q.n,0),0);}
+function order(p,n,auto){n=Math.round(Math.min(n,FAC[S.fac].cap*2-queued()));if(n<100){if(!auto)toast('🏭 공장이 꽉 찼어요. 공장을 확장하세요');return false;}const c=n*p.uc;if(S.money<c){if(!auto)toast('돈이 부족해요');return false;}S.money-=c;(p.queue=p.queue||[]).push({n,wk:2});if(!auto)toast(`🏭 ${units(n)} 생산 주문 (2주 뒤 입고)`);updTop();return true;}
+
+/* ======================= 출시 ======================= */
+function launchReady(dv){const d=dv.d;const ap=appeal(d);const rt=rating(ap.a+rand(-.03,.03));dv.rt=rt;dv.ap=ap;
+  const lines=reviewLines(d,ap,rt);const fair=fairPrice(d,ap.a);
+  openModal(`<h2>🎉 「${esc(d.name)}」 개발 완료!</h2>
+   <div style="display:flex;justify-content:center">${phoneSVG(d,'front',110)}${phoneSVG(d,'back',110)}</div>
+   <div class="row" style="justify-content:center;gap:16px"><div style="text-align:center"><div class="score" style="color:${rt>=8?'var(--good)':rt>=6?'var(--warn)':'var(--bad)'}">${rt}</div><small class="muted">평균 평점</small></div>
+   <div style="text-align:center"><div class="score">${won(fair)}</div><small class="muted">사람들이 생각하는 적정 가격</small></div></div>
+   <div class="grid">${lines.map(l=>`<div class="review"><div class="s" style="color:${l.s>=8?'var(--good)':l.s>=6?'var(--warn)':'var(--bad)'}">${l.s}</div><div><b>${l.who}</b><div class="muted" style="font-size:13px">${l.t}</div></div></div>`).join('')}</div>
+   <div class="field"><label>판매 가격 <b id="lpV"></b></label><input type="range" id="lp" min="${Math.round(dv.uc*.8/1000)}" max="${Math.round(Math.max(fair*2.2,dv.uc*3)/1000)}" value="${Math.round((d.price||fair)/1000)}"><small class="muted" id="lpHint"></small></div>
+   <div class="field"><label>첫 생산 수량 <b id="lqV"></b></label><input type="range" id="lq" min="0" max="100" value="70"><small class="muted">개당 원가 ${won(dv.uc)} · 공장 한 주 최대 ${units(FAC[S.fac].cap)}</small></div>
+   <label class="chk on" id="autoChk"><input type="checkbox" id="lauto" checked hidden><span>🔁</span><div><b>재고 자동 보충</b><small>팔리는 만큼 알아서 더 만들어요</small></div></label>
+   <div class="field"><label>출시 이벤트</label><div class="row">${[['없음',0,0],['SNS 광고',.6,2e7],['TV 광고',1.4,1.5e8],['대형 런칭쇼',2.6,6e8]].map((m,i)=>`<button class="btn sm ${i===1?'':'alt'}" data-mk="${i}">${m[0]}${m[2]?' '+won(m[2]*(1+(S.year-2000)*.05)):''}</button>`).join('')}</div></div>
+   <button class="btn good" id="bLaunch" style="font-size:17px;padding:14px">🚀 출시하기</button>`);
+  let mk=1;const MK=[[0,0],[.6,2e7],[1.4,1.5e8],[2.6,6e8]];
+  $$('[data-mk]').forEach(b=>b.onclick=()=>{mk=+b.dataset.mk;$$('[data-mk]').forEach(x=>x.classList.toggle('alt',x!==b));});
+  $('#autoChk').onclick=()=>{const c=$('#lauto');c.checked=!c.checked;$('#autoChk').classList.toggle('on',c.checked);};
+  const maxQ=()=>Math.max(1000,Math.min(FAC[S.fac].cap*2,Math.floor(S.money*.8/dv.uc)));
+  const upd=()=>{const pr=+$('#lp').value*1000;$('#lpV').textContent=won(pr);const r=pr/fair;$('#lpHint').textContent=`개당 이익 ${won(pr-dv.uc)} · ${r<.85?'싸다! 많이 팔려요':r<1.05?'적당해요':r<1.3?'조금 비싸요':'너무 비싸요 · 거의 안 팔려요'}`;
+    const q=Math.round(maxQ()*(+$('#lq').value/100)/100)*100;$('#lqV').textContent=units(q)+' · '+won(q*dv.uc);};
+  $('#lp').oninput=upd;$('#lq').oninput=upd;upd();
+  $('#bLaunch').onclick=()=>{const pr=+$('#lp').value*1000;const q=Math.round(maxQ()*(+$('#lq').value/100)/100)*100;const m=MK[mk];const mc=m[1]*(1+(S.year-2000)*.05);
+    if(S.money<q*dv.uc+mc){toast('돈이 부족해요. 수량이나 이벤트를 줄여 보세요');return;}
+    S.money-=q*dv.uc+mc;d.price=pr;
+    const p={id:S.seq++,d,rt,uc:dv.uc,on:1,stock:q,sold:0,rev:0,hist:[],y:S.year,w:S.week,hype:.6+m[0],auto:$('#lauto').checked,queue:[]};
+    S.prods.unshift(p);dv.launched=1;S.devs=S.devs.filter(x=>x!==dv);
+    if(rt>=8)S.rep=Math.min(100,S.rep+(rt-7)*1.5);else if(rt<5)S.rep=Math.max(0,S.rep-3);
+    news(`🚀 <b>${esc(S.name)}</b> 「${esc(d.name)}」 출시! 평점 ${rt} · ${won(pr)}`);closeModal();toast('🚀 출시!');updTop();setTab('prods');save();};
+}
+function reviewLines(d,ap,rt){
+  const n=ap.norm,best=Object.entries(n).sort((a,b)=>b[1]-a[1]),worst=best.slice().reverse();const nm=k=>CATS.find(c=>c[0]===k)[1];
+  const good={des:'디자인이 정말 예뻐요',scr:'화면이 선명하고 시원해요',perf:'엄청 빨라요. 게임도 쌩쌩',cam:'카메라가 미쳤어요. 사진이 작품',bat:'배터리가 하루 종일 가요',fea:'기능이 꽉 차 있어요',dur:'떨어뜨려도 끄떡없어요'};
+  const bad={des:'디자인이 좀 촌스러워요',scr:'화면이 아쉬워요',perf:'좀 버벅여요',cam:'카메라가 별로예요',bat:'배터리가 금방 닳아요',fea:'있어야 할 기능이 없어요',dur:'쉽게 깨질 것 같아요'};
+  const f=L('form',d.form);const who=['폰 리뷰 채널 「테크박스」','IT 매거진 「모바일위크」','유튜버 「언박싱킹」','신문 「경제일보」'];
+  return who.map((w,i)=>{const s=clamp(Math.round((rt+rand(-.8,.8))*10)/10,1,10);const g=best[i%2][0],b=worst[i%2][0];
+    let t=(i<2?good[g]+'. ':'')+(n[b]<.75?bad[b]+'.':'')+(f.novel&&i===2?' 접히는 화면이 신기해요!':'')+(i===3?` ${nm(g)} 점수 최고.`:'');return {who:w,s,t:t.trim()||'무난한 폰이에요.'};});}
+
+/* ======================= 휴대폰 그림 (SVG) ======================= */
+function shade(hex,k){const c=parseInt(hex.slice(1),16);let r=c>>16,g=c>>8&255,b=c&255;const f=v=>clamp(Math.round(k<0?v*(1+k):v+(255-v)*k),0,255);return '#'+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,'0')).join('');}
+let svgN=0;
+function phoneSVG(d,view,H=200){const U='u'+(++svgN);
+  const f=L('form',d.form),col=d.color||'#1c1f26',dark=shade(col,-.35),light=shade(col,.25);const mat=d.mat;
+  const metal=['metal','alu','ti'].includes(mat),glass=['glass','ceramic'].includes(mat);
+  const sz=d.size||3;let w,h,r;const feature=!f.smart;
+  if(feature){w=58;h=f.id==='folder'?92:f.id==='slide'?108:118;r=f.id==='rugged'?6:12;}else if(f.id==='fold'||f.id==='tri'){w=f.id==='tri'?150:118;h=128;r=10;}else if(f.id==='roll'){w=92;h=132;r=10;}else{w=58+sz*1.5;h=104+sz*6.5;r=12+(S?Math.min(6,(S.year-2007)*.6):6);}
+  const thin=d.thin||5;const pad=6;const vw=(view==='front'&&f.id==='folder'?w:w)+pad*2,vh=(view==='front'&&f.id==='folder'?h*2+6:h)+pad*2;
+  const sc=H/vh;let s=`<svg width="${vw*sc}" height="${vh*sc}" viewBox="0 0 ${vw} ${vh}" xmlns="http://www.w3.org/2000/svg">`;
+  const grad=`<defs><linearGradient id="g${U}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="${light}"/><stop offset=".55" stop-color="${col}"/><stop offset="1" stop-color="${dark}"/></linearGradient>
+   <linearGradient id="scr${U}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#2b5876"/><stop offset=".6" stop-color="#4e4376"/><stop offset="1" stop-color="#16222a"/></linearGradient></defs>`;
+  s+=grad;const X=pad,Y=pad;const body=(x,y,ww,hh,rr)=>`<rect x="${x}" y="${y}" width="${ww}" height="${hh}" rx="${rr}" fill="url(#g${U})" stroke="${metal?'#d9dde3':dark}" stroke-width="${metal?1.6:1}"/>`+(glass?`<rect x="${x+2}" y="${y+2}" width="${ww*.45}" height="${hh-4}" rx="${rr}" fill="#fff" opacity=".08"/>`:'')+(mat==='carbon'?`<rect x="${x}" y="${y}" width="${ww}" height="${hh}" rx="${rr}" fill="url(#cb${U})" opacity=".25"/>`:'');
+  if(mat==='carbon')s+=`<defs><pattern id="cb${U}" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="2" height="2" fill="#000"/><rect x="2" y="2" width="2" height="2" fill="#000"/></pattern></defs>`;
+  const screenCol=L('panel',d.panel);const scrFill=screenCol.id==='mono'?'#9fb08a':screenCol.id==='stn'?'#5f7ea3':'url(#scr'+U+')';
+  const keypad=(x,y,ww,hh)=>{let k=`<rect x="${x}" y="${y}" width="${ww}" height="${hh}" rx="6" fill="${dark}" opacity=".35"/>`;const cw=ww/3,ch=hh/5;for(let i=0;i<15;i++){const cx=x+(i%3)*cw+cw/2,cy=y+Math.floor(i/3)*ch+ch/2;k+=`<rect x="${cx-cw*.36}" y="${cy-ch*.32}" width="${cw*.72}" height="${ch*.64}" rx="3" fill="${light}" opacity=".85"/>`;}return k;};
+  if(view==='front'){
+    if(f.id==='folder'){s+=body(X,Y,w,h,r)+body(X,Y+h+6,w,h,r)+`<rect x="${X+4}" y="${Y+h-1}" width="${w-8}" height="8" rx="3" fill="${dark}"/>`;
+      s+=`<rect x="${X+7}" y="${Y+9}" width="${w-14}" height="${h-20}" rx="4" fill="#0b0d10"/><rect x="${X+10}" y="${Y+12}" width="${w-20}" height="${h-26}" rx="2" fill="${scrFill}"/>`+keypad(X+6,Y+h+14,w-12,h-26);}
+    else if(feature){s+=body(X,Y,w,h,r);const sh=h*.42;s+=`<rect x="${X+6}" y="${Y+10}" width="${w-12}" height="${sh}" rx="3" fill="#0b0d10"/><rect x="${X+9}" y="${Y+13}" width="${w-18}" height="${sh-6}" rx="2" fill="${scrFill}"/>`+keypad(X+6,Y+sh+16,w-12,h-sh-22);
+      if(f.id==='rugged')s+=`<rect x="${X-2}" y="${Y+4}" width="6" height="${h-8}" rx="3" fill="#333"/><rect x="${X+w-4}" y="${Y+4}" width="6" height="${h-8}" rx="3" fill="#333"/>`;}
+    else{s+=body(X,Y,w,h,r);const cu=d.cut;const bz=cu==='bezel'?Math.max(4,10-(S.year-2007)*.6):2.4;
+      s+=`<rect x="${X+2}" y="${Y+2}" width="${w-4}" height="${h-4}" rx="${r-1.5}" fill="#07080b"/><rect x="${X+bz}" y="${Y+(cu==='bezel'?bz*1.6:bz)}" width="${w-bz*2}" height="${h-(cu==='bezel'?bz*3.2:bz*2)}" rx="${Math.max(2,r-bz)}" fill="url(#scr${U})"/>`;
+      const cx=X+w/2;if(cu==='notch')s+=`<rect x="${cx-w*.2}" y="${Y+2}" width="${w*.4}" height="6" rx="3" fill="#07080b"/>`;if(cu==='drop')s+=`<circle cx="${cx}" cy="${Y+4}" r="3" fill="#07080b"/>`;if(cu==='punch')s+=`<circle cx="${cx}" cy="${Y+7}" r="2" fill="#07080b"/>`;if(cu==='island')s+=`<rect x="${cx-9}" y="${Y+5}" width="18" height="5" rx="2.5" fill="#07080b"/>`;
+      if(f.id==='fold'||f.id==='tri'){const n=f.id==='tri'?3:2;for(let i=1;i<n;i++)s+=`<line x1="${X+w*i/n}" y1="${Y+3}" x2="${X+w*i/n}" y2="${Y+h-3}" stroke="#fff" stroke-opacity=".15" stroke-width="1"/>`;}
+      if(f.id==='flip')s+=`<line x1="${X+3}" y1="${Y+h/2}" x2="${X+w-3}" y2="${Y+h/2}" stroke="#fff" stroke-opacity=".15"/>`;
+      s+=`<text x="${cx}" y="${Y+h*.42}" fill="#fff" font-size="${w*.2}" text-anchor="middle" font-family="sans-serif" font-weight="700" opacity=".9">12:00</text>`;
+      for(let i=0;i<8;i++){const ix=X+bz+6+(i%4)*((w-bz*2-12)/3.2),iy=Y+h*.55+Math.floor(i/4)*12;s+=`<rect x="${ix-3.5}" y="${iy-3.5}" width="7" height="7" rx="2" fill="${pick(['#ff8a5b','#5bc0ff','#7dff9b','#ffd35b','#c48bff'])}" opacity=".85"/>`;}}
+  }else{
+    s+=body(X,Y,w,h,r);
+    s+=`<text x="${X+w/2}" y="${Y+h*.72}" fill="${light}" font-size="${Math.max(6,w*.11)}" text-anchor="middle" font-family="sans-serif" font-weight="800" opacity=".75">${esc((S&&S.name||'P').slice(0,6))}</text>`;
+    if(f.id==='flip'||(f.id==='folder'&&(d.feats||[]).includes('outer')))s+=`<rect x="${X+6}" y="${Y+8}" width="${w-12}" height="${h*.3}" rx="5" fill="#07080b"/><rect x="${X+8}" y="${Y+10}" width="${w-16}" height="${h*.3-4}" rx="4" fill="url(#scr${U})" opacity=".8"/>`;
+    const cams=d.cams||[];if(cams.length){const big=Math.max(...cams.map(m=>L('sensor',m.sensor).sz));
+      const rad=m=>2.6+L('sensor',m.sensor).sz*4.2;const lay=d.layout||'col';const n=cams.length;const pts=[];
+      let ox=X+(feature?w/2:w*.3),oy=Y+(f.id==='flip'?h*.45:feature?14:h*.17);
+      const gap=Math.max(...cams.map(rad))*2.3;
+      for(let i=0;i<n;i++){let px=0,py=0;if(lay==='col'){py=(i-(n-1)/2)*gap;}else if(lay==='row'){px=(i-(n-1)/2)*gap;}else if(lay==='sq'){px=(i%2-.5)*gap;py=(Math.floor(i/2)-(Math.ceil(n/2)-1)/2)*gap;}
+        else if(lay==='circle'){const a=i/n*Math.PI*2-Math.PI/2;px=n>1?Math.cos(a)*gap*.62:0;py=n>1?Math.sin(a)*gap*.62:0;}else if(lay==='diag'){px=(i-(n-1)/2)*gap*.7;py=(i-(n-1)/2)*gap*.7;}else{px=(i%2)*gap*1.1-gap*.55;py=Math.floor(i/2)*gap*1.15-gap*.5;}
+        pts.push([px,py]);}
+      if(lay==='col'||lay==='row'||lay==='diag')ox=X+(lay==='row'?w/2:feature?w/2:w*.27);
+      if(lay==='row')oy=Y+h*.14;
+      {const ys0=pts.map(p=>p[1]);const top=oy+Math.min(...ys0)-Math.max(...cams.map(rad))-5;if(top<Y+4)oy+=Y+4-top;}
+      const xs=pts.map(p=>p[0]),ys=pts.map(p=>p[1]);const mr=Math.max(...cams.map(rad));
+      if(lay!=='free'){if(lay==='circle')s+=`<circle cx="${ox}" cy="${oy}" r="${(n>1?gap*.62:0)+mr+4}" fill="${dark}" stroke="${metal?'#ccc':'#000'}" stroke-opacity=".4"/>`;
+        else s+=`<rect x="${ox+Math.min(...xs)-mr-4}" y="${oy+Math.min(...ys)-mr-4}" width="${Math.max(...xs)-Math.min(...xs)+mr*2+8}" height="${Math.max(...ys)-Math.min(...ys)+mr*2+8}" rx="${mr+3}" fill="${dark}" stroke="#000" stroke-opacity=".35"/>`;}
+      cams.forEach((m,i)=>{const R=rad(m),cx=ox+pts[i][0],cy=oy+pts[i][1];const peri=m.role==='peri';
+        if(peri)s+=`<rect x="${cx-R}" y="${cy-R}" width="${R*2}" height="${R*2}" rx="2" fill="#111" stroke="#666" stroke-width="1.2"/><rect x="${cx-R*.55}" y="${cy-R*.55}" width="${R*1.1}" height="${R*1.1}" fill="#1b2a4a"/>`;
+        else s+=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#0c0d10" stroke="${m.ois?'#c9a227':'#777'}" stroke-width="1.3"/><circle cx="${cx}" cy="${cy}" r="${R*.62}" fill="#1b2a4a"/><circle cx="${cx-R*.25}" cy="${cy-R*.25}" r="${R*.2}" fill="#fff" opacity=".55"/>`;});
+      if(d.flash!=='none'){const fx=ox+Math.max(...xs)+mr+(lay==='row'?6:2),fy=oy+Math.min(...ys)-(lay==='row'?0:0);s+=d.flash==='ring'?`<circle cx="${fx+2}" cy="${fy}" r="3" fill="none" stroke="#ffe9a8" stroke-width="1.6"/>`:`<circle cx="${fx+2}" cy="${fy}" r="${d.flash==='dual'?2.6:2.2}" fill="#ffe9a8"/>`;}}
+    if(f.id==='gaming')s+=`<path d="M${X+w*.62} ${Y+h*.35} l6 4 l-6 4z" fill="#ff3b5c"/><rect x="${X+w*.55}" y="${Y+h*.48}" width="${w*.3}" height="3" rx="1.5" fill="#3bf0ff" opacity=".8"/>`;
+  }
+  return s+'</svg>';}
+
+/* ======================= 화면: 설계 ======================= */
+let tab='design',dStep=0;
+const STEPS=['형태·소재','화면','성능','카메라','배터리','기능','이름·출시'];
+function opt(k,it,on,extra=''){const lock=!has(k,it.id),fut=!avail(it);return `<button class="opt ${on?'on':''} ${lock||fut?'lock':''}" data-k="${k}" data-id="${it.id}" ${lock||fut?'data-locked="1"':''}>
+  ${fut?`<span class="tag">${it.y}년</span>`:lock?'<span class="tag">🔒 연구</span>':''}<b>${esc(it.n)}</b>${it.desc?`<small>${esc(it.desc)}</small>`:''}${extra}<span class="cost">${it.c?'+'+won(it.c):'기본'}</span></button>`;}
+function renderDesign(){
+  if(!S.draft)S.draft=blankDesign();const d=fixDesign(S.draft);const f=L('form',d.form);
+  const devList=S.devs.map(dv=>`<div class="card row" style="justify-content:space-between"><div><b>🛠️ 「${esc(dv.d.name)}」 개발 중</b><div class="muted" style="font-size:13px">${dv.done?'완료! 출시 대기':dv.left+'주 남음'}</div><div class="bar" style="margin-top:6px;width:200px"><i style="width:${(1-dv.left/dv.tot)*100}%"></i></div></div>${dv.done?`<button class="btn good sm" data-launch="${dv.id}">출시하기</button>`:''}</div>`).join('');
+  let body='';
+  if(dStep===0){
+    body=`<div class="sect">📐 폼팩터 <small>모양이 특별할수록 비싸게 팔려요</small></div><div class="opts">${FORMS.map(x=>opt('form',x,d.form===x.id,`<small>디자인 ${x.des} · 가격 ×${x.prem}</small>`)).join('')}</div>
+     <div class="sect">🧱 소재</div><div class="opts">${MATS.map(x=>opt('mat',x,d.mat===x.id,`<small>디자인 ${x.des} · 내구성 ${x.dur}</small>`)).join('')}</div>
+     <div class="sect">🎨 색상</div><div class="swatches">${COLORS.map(c=>`<button class="sw ${d.color===c?'on':''}" style="background:${c}" data-color="${c}"></button>`).join('')}</div>
+     <div class="field"><label>두께 <b>${(5+d.thin*.9).toFixed(1)}mm</b></label><input type="range" min="1" max="10" value="${11-d.thin}" data-num="thin" data-inv="1"><small class="muted">얇을수록 예쁘지만 비싸져요</small></div>`;
+  }else if(dStep===1){
+    body=`<div class="field"><label>화면 크기 <b>${d.size.toFixed(1)}인치</b></label><input type="range" min="${f.sz[0]}" max="${f.sz[1]}" step=".1" value="${d.size}" data-num="size"><small class="muted">${esc(f.n)}: ${f.sz[0]}~${f.sz[1]}인치</small></div>
+     <div class="sect">🖥️ 패널</div><div class="opts">${PANELS.map(x=>opt('panel',x,d.panel===x.id,`<small>품질 ${x.q}</small>`)).join('')}</div>
+     <div class="sect">🔍 해상도</div><div class="opts">${RES.map(x=>opt('res',x,d.res===x.id)).join('')}</div>
+     ${f.smart?`<div class="sect">⚡ 주사율</div><div class="opts">${HZ.map(x=>opt('hz',x,d.hz===x.id)).join('')}</div>
+     <div class="sect">📷 화면 구멍(전면 카메라 자리)</div><div class="opts">${CUTS.map(x=>opt('cut',x,d.cut===x.id)).join('')}</div>`:'<p class="muted">스마트폰부터 주사율 · 화면 구멍을 고를 수 있어요</p>'}`;
+  }else if(dStep===2){
+    body=`<div class="sect">🧠 칩셋</div><div class="opts">${CHIPS.filter(c=>f.smart?!c.feat||c.id==='mx3':c.feat).map(x=>opt('chip',x,d.chip===x.id,`<small>성능 ${x.q}</small>`)).join('')}</div>
+     <div class="sect">💾 램</div><div class="opts">${RAM.map(x=>opt('ram',x,d.ram===x.id)).join('')}</div>
+     <div class="sect">🗄️ 저장공간</div><div class="opts">${STOR.map(x=>opt('stor',x,d.stor===x.id)).join('')}</div>`;
+  }else if(dStep===3){
+    const sensOpts=m=>SENSORS.filter(x=>has('sensor',x.id)&&avail(x)).map(x=>`<option value="${x.id}" ${m.sensor===x.id?'selected':''}>${esc(x.n)} (+${won(x.c)})</option>`).join('');
+    const roleOpts=(m,i)=>ROLES.filter(x=>(i===0?x.id==='main':x.id!=='main')&&has('role',x.id)&&avail(x)).map(x=>`<option value="${x.id}" ${m.role===x.id?'selected':''}>${esc(x.n)}</option>`).join('');
+    const canCam=SENSORS.some(x=>has('sensor',x.id)&&avail(x));
+    body=`<div class="sect">📸 뒷면 카메라 <small>렌즈 하나하나 설정해요</small></div>
+     ${!canCam?'<p class="muted">카메라 센서를 먼저 연구하세요 (2002년부터)</p>':''}
+     <div class="grid">${d.cams.map((m,i)=>`<div class="cam"><div class="hd">📷 ${i+1}번 렌즈 · ${esc(L('role',m.role).n)}${i>0?`<button class="x" data-delcam="${i}">✕</button>`:''}</div>
+       <div class="row" style="flex-wrap:nowrap"><select data-cam="${i}" data-f="role" ${i===0?'disabled':''}>${roleOpts(m,i)}</select><select data-cam="${i}" data-f="sensor">${sensOpts(m)}</select></div>
+       <div class="field" style="margin:0"><label>조리개 <b>f/${(m.ap||2.4).toFixed(1)}</b> <small class="muted">숫자가 작을수록 밝아요</small></label><input type="range" min="${apMin(S.year)}" max="2.8" step=".1" value="${m.ap||2.4}" data-cam="${i}" data-f="ap"></div>
+       ${S.year>=2015?`<label class="chk ${m.ois?'on':''}" data-ois="${i}"><span>🎯</span><div><b>손떨림 방지(OIS)</b><small>흔들려도 선명 · +${won(6000)}</small></div></label>`:''}</div>`).join('')}</div>
+     ${canCam&&d.cams.length<(S.year>=2019?5:S.year>=2016?3:S.year>=2012?2:1)?`<button class="btn alt" data-addcam="1" style="margin-top:8px">＋ 렌즈 추가</button>`:''}
+     ${d.cams.length?`<div class="sect">🧩 카메라 배치</div><div class="opts">${LAYOUTS.map(x=>`<button class="opt ${d.layout===x.id?'on':''}" data-layout="${x.id}"><b>${x.n}</b></button>`).join('')}</div>`:''}
+     <div class="sect">💡 플래시</div><div class="opts">${FLASH.map(x=>opt('flash',x,d.flash===x.id)).join('')}</div>
+     <div class="sect">🤳 전면 카메라</div><div class="opts">${FRONT.map(x=>opt('front',x,d.front===x.id)).join('')}</div>
+     <div class="sect">🎬 동영상</div><div class="opts">${VIDEO.map(x=>opt('video',x,d.video===x.id)).join('')}</div>`;
+  }else if(dStep===4){
+    body=`<div class="field"><label>배터리 용량 <b>${d.mah}mAh</b></label><input type="range" min="300" max="${maxMah(S.year)}" step="50" value="${d.mah}" data-num="mah"><small class="muted">${S.year}년 최대 ${maxMah(S.year)}mAh · 크면 오래가지만 비싸요</small></div>
+     <div class="sect">🔋 배터리 종류</div><div class="opts">${BATT.map(x=>opt('batt',x,d.batt===x.id,`<small>효율 ×${x.e}</small>`)).join('')}</div>
+     <div class="sect">⚡ 충전 속도</div><div class="opts">${CHG.map(x=>opt('chg',x,d.chg===x.id)).join('')}</div>`;
+  }else if(dStep===5){
+    const fl=FEATS.filter(x=>!(x.need==='fold'&&!(f.fold||f.id==='flip'))&&!(x.need==='gaming'&&f.id!=='gaming')&&!(x.smart&&!f.smart)&&!(x.feat&&f.smart));
+    body=`<div class="sect">✨ 기능 <small>많을수록 좋지만 원가가 올라가요</small></div><div class="grid g2">${fl.map(x=>{const lock=!has('feat',x.id),fut=!avail(x),on=d.feats.includes(x.id);
+      return `<button class="chk ${on?'on':''} ${lock||fut?'lock':''}" data-feat="${x.id}" ${lock||fut?'data-locked="1"':''}><span>${on?'✅':'⬜'}</span><div><b>${esc(x.n)}</b><small>${fut?x.y+'년부터':lock?'🔒 연구 필요':'기능 +'+x.s}</small></div><span class="cost">+${won(x.c)}</span></button>`;}).join('')}</div>`;
+  }else{
+    const ap=appeal(d),fair=fairPrice(d,ap.a),uc=unitCost(d);if(!d.price)d.price=Math.round(fair/1000)*1000;
+    body=`<div class="field"><label>폰 이름</label><input type="text" id="pname" maxlength="16" value="${esc(d.name)}" placeholder="예: ${esc(S.name.slice(0,4))} ${pick(['S1','Air','Pro','Neo','X','Flip'])}"></div>
+     <div class="card grid" style="gap:8px"><div class="row" style="justify-content:space-between"><span class="muted">예상 평점</span><b class="score" style="font-size:22px">${rating(ap.a)}</b></div>
+      <div class="row" style="justify-content:space-between"><span class="muted">개당 원가</span><b>${won(uc)}</b></div>
+      <div class="row" style="justify-content:space-between"><span class="muted">예상 적정 가격</span><b>${won(fair)}</b></div>
+      <div class="row" style="justify-content:space-between"><span class="muted">개발 기간 · 비용</span><b>${devWeeks(d)}주 · ${won(devCost(d))}</b></div></div>
+     <p class="muted" style="font-size:13px">개발이 끝나면 리뷰가 나오고, 가격과 첫 생산 수량을 정해서 출시해요.</p>
+     <button class="btn good" id="bDev" style="width:100%;font-size:17px;padding:14px" ${S.money<devCost(d)?'disabled':''}>🛠️ 개발 시작 (${won(devCost(d))})</button>
+     ${S.money<devCost(d)?'<p class="muted" style="color:var(--bad)">돈이 부족해요</p>':''}`;
+  }
+  $('#main').innerHTML=`${devList?`<div class="grid" style="margin-bottom:12px">${devList}</div>`:''}<div id="designWrap"><div id="preview"></div><div><div class="steps">${STEPS.map((t,i)=>`<button class="${i===dStep?'on':''}" data-step="${i}">${i+1}. ${t}</button>`).join('')}</div>${body}
+   <div class="row" style="justify-content:space-between;margin-top:16px">${dStep>0?`<button class="btn alt" data-step="${dStep-1}">◀ 이전</button>`:'<span></span>'}${dStep<STEPS.length-1?`<button class="btn" data-step="${dStep+1}">다음 ▶</button>`:''}</div></div></div>`;
+  renderPreview();bindDesign();}
+function renderPreview(){const d=S.draft;if(!d||!$('#preview'))return;const ap=appeal(d),uc=unitCost(d),fair=fairPrice(d,ap.a);
+  $('#preview').innerHTML=`<div id="pv">${phoneSVG(d,'front',220)}${phoneSVG(d,'back',220)}</div>
+   <div id="pvSum"><div><b style="color:${rating(ap.a)>=8?'var(--good)':rating(ap.a)>=6?'var(--warn)':'var(--bad)'}">${rating(ap.a)}</b><small>예상 평점</small></div><div><b>${won(uc)}</b><small>개당 원가</small></div><div><b>${won(fair)}</b><small>적정 가격</small></div></div>
+   <div id="pvStats">${CATS.map(([k,n])=>`<div class="st"><span>${n}${S.trend&&S.trend.k===k?' 🔥':''}</span><div class="bar"><i style="width:${Math.min(100,ap.norm[k]/1.2*100)}%;${ap.norm[k]>=1?'background:linear-gradient(90deg,#3ddc84,#b6ff6a)':ap.norm[k]<.5?'background:linear-gradient(90deg,#ff5a5f,#ffb020)':''}"></i></div><span>${Math.round(ap.norm[k]*100)}</span></div>`).join('')}</div>
+   <p class="muted" style="font-size:11.5px;margin:8px 0 0">막대 100 = ${S.year}년 시장 최고 수준</p>`;}
+function bindDesign(){const d=S.draft;
+  $$('[data-step]').forEach(b=>b.onclick=()=>{if(dStep===6&&$('#pname'))d.name=$('#pname').value;dStep=+b.dataset.step;renderDesign();scrollTo(0,0);});
+  $$('.opt[data-k]').forEach(b=>b.onclick=()=>{if(b.dataset.locked){const it=L(b.dataset.k,b.dataset.id);toast(avail(it)?'🔒 연구 탭에서 먼저 연구하세요':`${it.y}년에 나오는 기술이에요`);return;}d[b.dataset.k]=b.dataset.id;if(b.dataset.k==='form'){const f=L('form',d.form);d.size=+(f.sz[0]+(f.sz[1]-f.sz[0])*.5).toFixed(1);}fixDesign(d);renderDesign();save();});
+  $$('[data-color]').forEach(b=>b.onclick=()=>{d.color=b.dataset.color;renderDesign();});
+  $$('[data-num]').forEach(r=>r.oninput=()=>{let v=+r.value;if(r.dataset.inv)v=11-v;d[r.dataset.num]=v;const lab=r.parentElement.querySelector('label b');if(lab)lab.textContent=r.dataset.num==='size'?v.toFixed(1)+'인치':r.dataset.num==='mah'?v+'mAh':(5+v*.9).toFixed(1)+'mm';renderPreview();});
+  $$('[data-cam]').forEach(el=>{const h=()=>{const m=d.cams[+el.dataset.cam];m[el.dataset.f]=el.dataset.f==='ap'?+el.value:el.value;if(el.dataset.f==='ap'){el.parentElement.querySelector('label b').textContent='f/'+(+el.value).toFixed(1);renderPreview();}else renderDesign();};el.oninput=h;el.onchange=h;});
+  $$('[data-ois]').forEach(b=>b.onclick=()=>{const m=d.cams[+b.dataset.ois];m.ois=!m.ois;renderDesign();});
+  $$('[data-delcam]').forEach(b=>b.onclick=()=>{d.cams.splice(+b.dataset.delcam,1);renderDesign();});
+  $$('[data-addcam]').forEach(b=>b.onclick=()=>{const roles=ROLES.filter(x=>x.id!=='main'&&has('role',x.id)&&avail(x)&&!d.cams.some(m=>m.role===x.id));if(!roles.length&&d.cams.length){toast('렌즈 종류(초광각·망원…)를 연구하면 더 달 수 있어요');return;}
+    const sens=SENSORS.filter(x=>has('sensor',x.id)&&avail(x));const s=sens.length>1?sens[sens.length-2]:sens[0];d.cams.push({role:d.cams.length?roles[0].id:'main',sensor:(d.cams.length?s:sens[sens.length-1]).id,ois:false,ap:2.2});renderDesign();});
+  $$('[data-layout]').forEach(b=>b.onclick=()=>{d.layout=b.dataset.layout;renderDesign();});
+  $$('[data-feat]').forEach(b=>b.onclick=()=>{if(b.dataset.locked){const it=L('feat',b.dataset.feat);toast(avail(it)?'🔒 연구 탭에서 먼저 연구하세요':`${it.y}년에 나오는 기술이에요`);return;}const id=b.dataset.feat;const i=d.feats.indexOf(id);if(i>=0)d.feats.splice(i,1);else d.feats.push(id);renderDesign();});
+  $$('[data-launch]').forEach(b=>b.onclick=()=>{const dv=S.devs.find(x=>x.id==b.dataset.launch);if(dv)launchReady(dv);});
+  const pn=$('#pname');if(pn)pn.oninput=()=>{d.name=pn.value;};
+  const bd=$('#bDev');if(bd)bd.onclick=()=>{d.name=($('#pname').value||'').trim()||$('#pname').placeholder.replace('예: ','');const c=devCost(d);if(S.money<c)return;
+    if(!d.cams.length&&S.year>=2005)toast('카메라 없는 폰은 인기가 없어요…',2000);
+    S.money-=c;const wks=devWeeks(d);S.devs.push({id:S.seq++,d:JSON.parse(JSON.stringify(d)),left:wks,tot:wks,uc:unitCost(d)});S.draft=null;dStep=0;news(`🛠️ 「${esc(d.name)}」 개발 시작 (${wks}주)`);toast(`🛠️ 개발 시작! ${wks}주 뒤에 완성돼요`);updTop();renderDesign();save();};}
+
+/* ======================= 화면: 내 제품 ======================= */
+function renderProds(){
+  const on=S.prods.filter(p=>p.on),off=S.prods.filter(p=>!p.on);
+  if(!S.prods.length){$('#main').innerHTML=`<div class="empty"><div style="font-size:48px">📱</div><p>아직 출시한 폰이 없어요.<br>설계 탭에서 첫 폰을 만들어 보세요!</p><button class="btn" onclick="setTab('design')">🛠️ 설계하러 가기</button></div>`;return;}
+  const card=p=>{const pf=p.fair?p.d.price/p.fair:1;return `<div class="card prod" data-pid="${p.id}"><div>${phoneSVG(p.d,'back',120)}</div><div class="meta">
+    <div class="row" style="justify-content:space-between"><h3>${esc(p.d.name)}</h3><span class="pill" style="color:${p.rt>=8?'var(--good)':p.rt>=6?'var(--warn)':'var(--bad)'}">⭐ ${p.rt}</span></div>
+    <div class="muted" style="font-size:12px">${esc(L('form',p.d.form).n)} · ${p.y}년 출시 · ${p.on?(p.stock<=0&&!(p.queue||[]).length?'<b style="color:var(--bad)">품절!</b>':'판매 중'):'단종'}</div>
+    <div class="kv"><div><small>가격</small><b>${won(p.d.price)}</b></div><div><small>적정가</small><b style="color:${pf>1.15?'var(--bad)':pf<.9?'var(--good)':'inherit'}">${won(p.fair||0)}</b></div><div><small>이번 주 판매</small><b>${units(p.last||0)}</b></div><div><small>재고</small><b>${units(p.stock)}${(p.queue||[]).length?` <small style="display:inline">+${units(p.queue.reduce((a,q)=>a+q.n,0))}</small>`:''}</b></div><div><small>총 판매</small><b>${units(p.sold)}</b></div><div><small>총 매출</small><b>${won(p.rev)}</b></div></div>
+    ${p.on&&(p.wantLast||0)>(p.last||0)?`<div class="pill" style="color:var(--warn)">⚠️ 재고 부족으로 ${units(p.wantLast-p.last)} 못 팔았어요</div>`:''}
+    <canvas class="chart" data-chart="${p.id}"></canvas>
+    ${p.on?`<div class="row"><button class="btn sm" data-ord="${p.id}">🏭 생산</button><button class="btn sm alt" data-pr="${p.id}">💰 가격</button><button class="btn sm alt" data-ad="${p.id}">📣 광고</button><button class="btn sm alt" data-auto="${p.id}">${p.auto?'🔁 자동 보충 켜짐':'🔁 자동 보충 꺼짐'}</button><button class="btn sm bad" data-end="${p.id}">단종</button></div>`:''}
+   </div></div>`;};
+  $('#main').innerHTML=`<div class="sect">📱 판매 중 <small>${on.length}종</small></div><div class="grid">${on.map(card).join('')||'<p class="muted">판매 중인 폰이 없어요</p>'}</div>${off.length?`<div class="sect">📦 단종된 폰</div><div class="grid">${off.slice(0,8).map(card).join('')}</div>`:''}`;
+  drawCharts();bindProds();}
+function drawCharts(){$$('canvas[data-chart]').forEach(cv=>{const p=S.prods.find(x=>x.id==cv.dataset.chart);if(!p)return;const r=cv.getBoundingClientRect();cv.width=r.width*devicePixelRatio;cv.height=r.height*devicePixelRatio;const c=cv.getContext('2d');c.scale(devicePixelRatio,devicePixelRatio);
+  const h=p.hist,W=r.width,H=r.height;if(h.length<2){c.fillStyle='#97a1b3';c.font='12px sans-serif';c.fillText('판매 그래프는 몇 주 뒤에 나와요',10,H/2);return;}const mx=Math.max(...h,1);
+  c.strokeStyle='rgba(255,255,255,.08)';for(let i=1;i<4;i++){c.beginPath();c.moveTo(0,H*i/4);c.lineTo(W,H*i/4);c.stroke();}
+  const g=c.createLinearGradient(0,0,0,H);g.addColorStop(0,'rgba(78,168,255,.45)');g.addColorStop(1,'rgba(78,168,255,0)');c.beginPath();h.forEach((v,i)=>{const x=i/(h.length-1)*W,y=H-6-v/mx*(H-20);i?c.lineTo(x,y):c.moveTo(x,y);});
+  c.lineTo(W,H);c.lineTo(0,H);c.fillStyle=g;c.fill();c.beginPath();h.forEach((v,i)=>{const x=i/(h.length-1)*W,y=H-6-v/mx*(H-20);i?c.lineTo(x,y):c.moveTo(x,y);});c.strokeStyle='#4ea8ff';c.lineWidth=2;c.stroke();
+  c.fillStyle='#97a1b3';c.font='11px sans-serif';c.fillText('주간 판매 최고 '+units(mx),8,14);});}
+function bindProds(){
+  $$('[data-ord]').forEach(b=>b.onclick=()=>{const p=S.prods.find(x=>x.id==b.dataset.ord);const cap=FAC[S.fac].cap;const maxN=Math.max(100,Math.min(cap*2,Math.floor(S.money/p.uc)));
+    openModal(`<h2>🏭 「${esc(p.d.name)}」 생산</h2><p class="muted">개당 원가 ${won(p.uc)} · 2주 뒤에 창고로 들어와요 · 공장 한 주 최대 ${units(cap)}</p><div class="field"><label>수량 <b id="oqV"></b></label><input type="range" id="oq" min="1" max="100" value="30"></div><button class="btn good" id="bOrd">생산 주문</button><button class="btn alt" onclick="closeModal()">취소</button>`);
+    const q=()=>Math.max(100,Math.round(maxN*(+$('#oq').value/100)/100)*100);const u=()=>{$('#oqV').textContent=units(q())+' · '+won(q()*p.uc);};$('#oq').oninput=u;u();$('#bOrd').onclick=()=>{if(order(p,q())){closeModal();renderProds();}};});
+  $$('[data-pr]').forEach(b=>b.onclick=()=>{const p=S.prods.find(x=>x.id==b.dataset.pr);const fair=p.fair||fairPrice(p.d,appeal(p.d).a);
+    openModal(`<h2>💰 가격 바꾸기</h2><p class="muted">지금 사람들이 생각하는 적정가: <b>${won(fair)}</b> · 개당 원가 ${won(p.uc)}</p><div class="field"><label>가격 <b id="npV"></b></label><input type="range" id="np" min="${Math.round(p.uc*.5/1000)}" max="${Math.round(Math.max(fair*2.2,p.uc*3)/1000)}" value="${Math.round(p.d.price/1000)}"><small class="muted" id="npH"></small></div><button class="btn good" id="bNp">적용</button>`);
+    const u=()=>{const v=+$('#np').value*1000;$('#npV').textContent=won(v);const r=v/fair;$('#npH').textContent=`개당 이익 ${won(v-p.uc)} · ${r<.85?'싸요 · 잘 팔려요':r<1.05?'적당해요':r<1.3?'조금 비싸요':'너무 비싸요'}`;};$('#np').oninput=u;u();
+    $('#bNp').onclick=()=>{p.d.price=+$('#np').value*1000;closeModal();renderProds();save();};});
+  $$('[data-ad]').forEach(b=>b.onclick=()=>{const p=S.prods.find(x=>x.id==b.dataset.ad);const k=1+(S.year-2000)*.05;const AD=[['📱 SNS 광고',.5,2e7],['📺 TV 광고',1.2,1.5e8],['🌟 아이돌 모델',2.2,6e8],['🏟️ 월드 투어 광고',3.5,2e9]];
+    openModal(`<h2>📣 「${esc(p.d.name)}」 광고</h2><p class="muted">광고하면 몇 주 동안 판매가 늘어나요 (지금 열기 ×${(1+p.hype).toFixed(1)})</p><div class="grid">${AD.map((a,i)=>`<button class="btn ${S.money<a[2]*k?'alt':''}" data-adi="${i}" ${S.money<a[2]*k?'disabled':''}>${a[0]} · ${won(a[2]*k)} · 판매 +${Math.round(a[1]*100)}%</button>`).join('')}</div><button class="btn alt" onclick="closeModal()">닫기</button>`);
+    $$('[data-adi]').forEach(x=>x.onclick=()=>{const a=AD[+x.dataset.adi];S.money-=a[2]*k;p.hype=(p.hype||0)+a[1];closeModal();toast(a[0]+' 시작!');updTop();renderProds();save();});});
+  $$('[data-auto]').forEach(b=>b.onclick=()=>{const p=S.prods.find(x=>x.id==b.dataset.auto);p.auto=!p.auto;renderProds();save();});
+  $$('[data-end]').forEach(b=>b.onclick=()=>{const p=S.prods.find(x=>x.id==b.dataset.end);if(!confirm(`「${p.d.name}」을 단종할까요? 남은 재고는 반값에 정리돼요`))return;S.money+=p.stock*p.uc*.5;p.stock=0;p.queue=[];p.on=0;renderProds();updTop();save();});}
+
+/* ======================= 화면: 연구 ======================= */
+function renderResearch(){
+  const groups=Object.keys(ALL_LISTS);const rpw=LAB[S.lab].rp*(1+S.rep/200);
+  const cur=S.research?ALL_LISTS[S.research.k].find(x=>x.id===S.research.id):null;
+  let html=`<div class="card"><div class="row" style="justify-content:space-between"><div><b>🔬 연구소 Lv.${S.lab}</b><div class="muted" style="font-size:13px">한 주에 연구 점수 ${rpw.toFixed(0)} · 모아둔 점수 ${Math.floor(S.rp)}</div></div>
+   ${cur?`<div style="min-width:180px"><b>연구 중: ${esc(cur.n)}</b><div class="bar" style="margin-top:6px"><i style="width:${S.research.p/cur.rp*100}%"></i></div><small class="muted">${Math.max(0,Math.ceil((cur.rp-S.research.p)/rpw))}주 남음</small></div>`:'<b class="muted">연구 쉬는 중 · 아래에서 골라요</b>'}</div></div>`;
+  const avNow=[];for(const k of groups)for(const it of ALL_LISTS[k])if(!has(k,it.id)&&avail(it))avNow.push([k,it]);
+  html+=`<div class="sect">✨ 지금 연구할 수 있어요 <small>${avNow.length}개</small></div><div class="rs">${avNow.sort((a,b)=>a[1].rp-b[1].rp).map(([k,it])=>{const isCur=S.research&&S.research.k===k&&S.research.id===it.id;
+    return `<div class="ri ${isCur?'cur':''}"><small>${esc(GROUP_NAME[k])}</small><b>${esc(it.n)}</b><small>${it.rp}점 · 약 ${Math.ceil(it.rp/rpw)}주</small>${isCur?'<span class="pill">연구 중</span>':`<button class="btn sm" data-rs="${k}:${it.id}">연구 시작</button>`}</div>`;}).join('')||'<p class="muted">지금은 연구할 게 없어요. 해가 바뀌면 새 기술이 나와요</p>'}</div>`;
+  const soon=[];for(const k of groups)for(const it of ALL_LISTS[k])if(it.y>S.year&&it.y<=S.year+3)soon.push([k,it]);
+  html+=`<div class="sect">🔮 곧 나와요</div><div class="rs">${soon.sort((a,b)=>a[1].y-b[1].y).slice(0,12).map(([k,it])=>`<div class="ri" style="opacity:.6"><small>${esc(GROUP_NAME[k])} · ${it.y}년</small><b>${esc(it.n)}</b></div>`).join('')||'<p class="muted">-</p>'}</div>`;
+  $('#main').innerHTML=html;
+  $$('[data-rs]').forEach(b=>b.onclick=()=>{const [k,id]=b.dataset.rs.split(':');S.research={k,id,p:Math.min(S.rp,ALL_LISTS[k].find(x=>x.id===id).rp)};S.rp-=S.research.p;toast('🔬 연구 시작');renderResearch();save();});}
+
+/* ======================= 화면: 시장 ======================= */
+function renderMarket(){
+  const mine=S.prods.filter(p=>p.on);const M=marketWeek(S.year);const totMine=mine.reduce((a,p)=>a+(p.last||0),0);
+  const share=Math.min(100,totMine/M*100);
+  const rows=[...S.rivals.map(r=>({n:r.n,c:r.c,ph:r.ph})),...mine.slice(0,3).map(p=>({n:S.name,c:'#4ea8ff',ph:{n:p.d.name,rt:p.rt,a:p.app||0},me:1}))];
+  $('#main').innerHTML=`<div class="grid g2"><div class="card"><small class="muted">${S.year}년 한 주 휴대폰 시장</small><div class="score">${units(M)}</div></div><div class="card"><small class="muted">내 점유율 (이번 주)</small><div class="score">${share.toFixed(1)}%</div></div>
+    <div class="card"><small class="muted">브랜드 평판</small><div class="score">${S.rep.toFixed(0)}<small class="muted" style="font-size:14px"> / 100</small></div><div class="bar" style="margin-top:6px"><i style="width:${S.rep}%"></i></div></div><div class="card"><small class="muted">올해 유행</small><div class="score" style="font-size:22px">🔥 ${S.trend?CATS.find(c=>c[0]===S.trend.k)[1]:'-'}</div><small class="muted">이 분야가 좋은 폰이 더 잘 팔려요</small></div></div>
+   <div class="sect">🏁 경쟁 폰</div><div class="grid">${rows.map(r=>`<div class="card row" style="justify-content:space-between"><div class="row"><span style="width:12px;height:12px;border-radius:50%;background:${r.c}"></span><b>${esc(r.n)}</b>${r.me?'<span class="pill">나</span>':''}</div><div class="muted">${r.ph?esc(r.ph.n)+' · ⭐ '+r.ph.rt:'준비 중'}</div></div>`).join('')}</div>
+   <div class="sect">📰 뉴스</div><div id="news">${S.news.slice(0,20).map(n=>`<div><small class="muted">${n.y}.${n.w}주</small> ${n.t}</div>`).join('')}</div>`;}
+
+/* ======================= 화면: 회사 ======================= */
+function renderCompany(){
+  const fc=FAC[S.fac+1],lc=LAB[S.lab+1];
+  const ACH=achList();
+  $('#main').innerHTML=`<div class="grid g2">
+   <div class="card grid"><b style="font-size:17px">🏭 공장 Lv.${S.fac}</b><div class="muted" style="font-size:13px">한 주 생산 ${units(FAC[S.fac].cap)} · 조립비 개당 ${won(asm())}</div>${fc?`<button class="btn" data-up="fac" ${S.money<fc.cost?'disabled':''}>Lv.${S.fac+1}로 확장 · ${won(fc.cost)}</button><small class="muted">→ 한 주 ${units(fc.cap)} · 조립비 ${won([0,9000,7000,5500,4500,3500,2500][S.fac+1])}</small>`:'<b>최고 레벨!</b>'}</div>
+   <div class="card grid"><b style="font-size:17px">🔬 연구소 Lv.${S.lab}</b><div class="muted" style="font-size:13px">한 주 연구 점수 ${LAB[S.lab].rp}</div>${lc?`<button class="btn" data-up="lab" ${S.money<lc.cost?'disabled':''}>Lv.${S.lab+1}로 확장 · ${won(lc.cost)}</button><small class="muted">→ 한 주 ${lc.rp}점</small>`:'<b>최고 레벨!</b>'}</div>
+   <div class="card grid"><b style="font-size:17px">📊 회사 기록</b><div class="kv"><div><small>총 판매</small><b>${units(S.totalSold)}</b></div><div><small>총 매출</small><b>${won(S.totalRev)}</b></div><div><small>팬</small><b>${Math.floor(S.fans).toLocaleString('ko-KR')}명</b></div><div><small>지난주 이익</small><b style="color:${(S.lastProfit||0)>=0?'var(--good)':'var(--bad)'}">${won(S.lastProfit||0)}</b></div></div></div>
+   <div class="card grid"><b style="font-size:17px">🏆 업적 ${Object.keys(S.ach).length}/${ACH.length}</b>${ACH.map(a=>`<div class="row" style="opacity:${S.ach[a.id]?1:.45}"><span>${S.ach[a.id]?'🏆':'🔒'}</span><div><b style="font-size:13px">${a.n}</b><div class="muted" style="font-size:12px">${a.d}</div></div></div>`).join('')}</div>
+   <div class="card grid"><b>⚙️ 게임</b><button class="btn alt" id="bReset">처음부터 다시 하기</button></div></div>`;
+  $$('[data-up]').forEach(b=>b.onclick=()=>{const k=b.dataset.up;const T=k==='fac'?FAC:LAB;const nx=T[S[k]+1];if(!nx||S.money<nx.cost)return;S.money-=nx.cost;S[k]++;toast(k==='fac'?'🏭 공장 확장!':'🔬 연구소 확장!');updTop();renderCompany();save();});
+  $('#bReset').onclick=()=>{if(confirm('정말 처음부터 다시 할까요? 지금 회사가 사라져요')){localStorage.removeItem(SK);location.reload();}};}
+function achList(){return [
+ {id:'first',n:'첫 출시',d:'처음으로 폰을 출시해요',t:()=>S.prods.length>0},
+ {id:'m1',n:'100만 대',d:'총 100만 대 판매',t:()=>S.totalSold>=1e6},
+ {id:'m10',n:'1000만 대',d:'총 1000만 대 판매',t:()=>S.totalSold>=1e7},
+ {id:'m100',n:'1억 대',d:'총 1억 대 판매',t:()=>S.totalSold>=1e8},
+ {id:'b1',n:'억만장자 회사',d:'돈 100억 모으기',t:()=>S.money>=1e10},
+ {id:'b2',n:'조 단위 회사',d:'돈 1조 모으기',t:()=>S.money>=1e12},
+ {id:'r9',n:'명작',d:'평점 9.0 이상 폰 출시',t:()=>S.prods.some(p=>p.rt>=9)},
+ {id:'smart',n:'스마트폰 시대',d:'스마트폰 출시',t:()=>S.prods.some(p=>L('form',p.d.form).smart)},
+ {id:'fold',n:'접히는 미래',d:'폴더블이나 플립 출시',t:()=>S.prods.some(p=>['fold','flip','tri'].includes(p.d.form))},
+ {id:'cam5',n:'카메라 괴물',d:'렌즈 5개짜리 폰 출시',t:()=>S.prods.some(p=>(p.d.cams||[]).length>=5)},
+ {id:'rep90',n:'국민 브랜드',d:'평판 90 이상',t:()=>S.rep>=90},
+ {id:'roll',n:'끝판왕',d:'롤러블 폰 출시',t:()=>S.prods.some(p=>p.d.form==='roll')},
+];}
+function checkAch(){for(const a of achList())if(!S.ach[a.id]&&a.t()){S.ach[a.id]=1;toast('🏆 업적: '+a.n,2800);news(`🏆 업적 달성: <b>${a.n}</b>`);}}
+
+/* ======================= 공통 UI ======================= */
+function openModal(h){$('#mbox').innerHTML=h;$('#modal').hidden=false;}
+function closeModal(){$('#modal').hidden=true;}
+$('#modal').addEventListener('click',e=>{if(e.target.id==='modal')closeModal();});
+function updTop(){$('#coName').textContent=S.name;$('#logo').textContent=S.name[0]||'P';$('#money').firstChild.nodeValue=won(S.money);$('#yr').textContent=S.year;$('#wk').textContent=S.week;
+  const pr=S.lastProfit||0;$('#wkProfit').textContent='이번 주 '+(pr>=0?'+':'')+won(pr);$('#wkProfit').style.color=pr>=0?'var(--good)':'var(--bad)';}
+function setTab(t){tab=t;$$('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));render();scrollTo(0,0);}
+function render(){({design:renderDesign,prods:renderProds,research:renderResearch,market:renderMarket,company:renderCompany})[tab]();}
+function renderIfTab(t){if(tab===t&&$('#modal').hidden)render();}
+let liveT=0;function renderLive(){if(!$('#modal').hidden)return;if(tab==='prods'||tab==='market'||tab==='research'||tab==='company')render();else if(tab==='design'&&S.devs.length&&!document.activeElement.matches('input'))render();}
+$$('#tabs button').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+$$('#speed button').forEach(b=>b.onclick=()=>{speed=+b.dataset.sp;$$('#speed button').forEach(x=>x.classList.toggle('on',x===b));});
+let last=performance.now();
+function loop(now){requestAnimationFrame(loop);const dt=Math.min(.25,(now-last)/1000);last=now;if(!S||!$('#start').hidden)return;if(!$('#modal').hidden)return;
+  tickT+=dt*speed;if(tickT>=1.6){tickT=0;weekTick();}}
+requestAnimationFrame(loop);
+window.__pt={get S(){return S;},weekTick,appeal,unitCost,fairPrice,frontier,blankDesign,scores};
+// 시작
+{const o=load();if(o){$('#bCont').hidden=false;$('#bCont').textContent=`이어서 하기 · ${o.name} (${o.year}년)`;}
+ $('#bCont').onclick=()=>{S=load();$('#start').hidden=true;updTop();render();};
+ $('#bNew').onclick=()=>{if(load()&&!confirm('새 회사를 세우면 저장된 회사가 사라져요. 계속할까요?'))return;newGame(($('#nameIn').value||'').trim()||'우주전자');$('#start').hidden=true;updTop();render();
+   setTimeout(()=>openModal(`<h2>👋 ${esc(S.name)} 사장님, 환영해요!</h2><p style="line-height:1.7">지금은 <b>2000년</b>. 휴대폰은 아직 키패드 달린 폰이에요.</p><ol style="line-height:1.9;padding-left:20px;margin:0"><li><b>🛠️ 설계</b>에서 모양·화면·칩·카메라·배터리를 골라 폰을 만들어요</li><li>개발이 끝나면 <b>가격</b>과 <b>생산 수량</b>을 정해 출시해요</li><li><b>🔬 연구</b>로 더 좋은 부품을 열어요. 해가 지날수록 새 기술이 나와요</li><li>2007년엔 <b>스마트폰</b>, 2019년엔 <b>폴더블</b>! 특별한 폰일수록 비싸게 팔려요</li></ol><button class="btn" onclick="closeModal()">시작하기</button>`),300);};
+ $('#nameIn').addEventListener('keydown',e=>{if(e.key==='Enter')$('#bNew').click();});}
+</script>
+<script src="../common/blip.js" data-game="phonetycoon"></script>
+</body>
+</html>
