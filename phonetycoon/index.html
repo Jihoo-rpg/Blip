@@ -734,28 +734,19 @@ function bindProds(){
   $$('[data-end]').forEach(b=>b.onclick=()=>{const p=S.prods.find(x=>x.id==b.dataset.end);if(!confirm(`「${p.d.name}」을 단종할까요? 남은 재고는 원가의 30%에 정리돼요`))return;S.money+=p.stock*p.uc*.3;p.stock=0;p.queue=[];p.on=0;renderProds();updTop();save();});}
 
 /* ======================= 화면: 연구 ======================= */
-/* 연구: 돈을 내면 10초 만에 끝나요 · 연구소 레벨만큼 동시에 */
-const RS_SEC=10;
-function rsCost(it){return Math.round(it.rp*3e5*(1+(S.year-2000)*.04)*(1-(S.lab-1)*.08)/1e5)*1e5;}
-function rsList(){if(!S.rs)S.rs=[];return S.rs;}
-function rsTick(){if(!S)return;const L0=rsList();if(!L0.length)return;const now=Date.now();let done=false;
-  S.rs=L0.filter(r=>{if(now<r.end)return true;const it=ALL_LISTS[r.k].find(x=>x.id===r.id);S.unlocked[r.k+':'+r.id]=1;news(`🔬 연구 완료: <b>${esc(GROUP_NAME[r.k])} · ${esc(it.n)}</b>`);toast('🔬 연구 완료! '+it.n);done=true;return false;});
-  if(done){save();if(tab==='research'&&$('#modal').hidden)renderResearch();}
-  else if(tab==='research')$$('[data-rsbar]').forEach(el=>{const r=S.rs.find(x=>x.k+':'+x.id===el.dataset.rsbar);if(r){const left=Math.max(0,(r.end-Date.now())/1000);el.querySelector('i').style.width=((1-left/RS_SEC)*100)+'%';const t=el.parentElement.querySelector('.rsLeft');if(t)t.textContent=Math.ceil(left)+'초';}});}
-setInterval(rsTick,250);
+/* 연구: 연구비를 내면 바로 끝나요 · 연구소 레벨이 높을수록 싸져요 */
+function rsCost(it){return Math.round(it.rp*3e5*(1+(S.year-2000)*.04)*(1-(S.lab-1)*.1)/1e5)*1e5;}
 function renderResearch(){
-  const groups=Object.keys(ALL_LISTS);const run=rsList();const slots=S.lab;
-  let html=`<div class="card"><div class="row" style="justify-content:space-between"><div><b>🔬 연구소 Lv.${S.lab}</b><div class="muted" style="font-size:13px">연구 하나에 ${RS_SEC}초 · 동시에 ${slots}개까지 · 연구비 ${S.lab>1?`${(S.lab-1)*8}% 할인`:'할인 없음'}</div></div><b>${run.length}/${slots} 연구 중</b></div>
-   ${run.map(r=>{const it=ALL_LISTS[r.k].find(x=>x.id===r.id);return `<div style="margin-top:10px"><div class="row" style="justify-content:space-between"><b>🔬 ${esc(it.n)}</b><small class="muted rsLeft">${Math.ceil(Math.max(0,(r.end-Date.now())/1000))}초</small></div><div class="bar big" data-rsbar="${r.k}:${r.id}" style="margin-top:6px"><i style="width:${(1-Math.max(0,(r.end-Date.now())/1000)/RS_SEC)*100}%"></i></div></div>`;}).join('')}</div>`;
+  const groups=Object.keys(ALL_LISTS);
+  let html=`<div class="card"><b>🔬 연구소 Lv.${S.lab}</b><div class="muted" style="font-size:13px;margin-top:4px">연구비를 내면 바로 개발돼요 · 연구비 ${S.lab>1?`${(S.lab-1)*10}% 할인`:'할인 없음'} (회사 탭에서 연구소를 키우면 더 싸져요)</div></div>`;
   const avNow=[];for(const k of groups)for(const it of ALL_LISTS[k])if(!has(k,it.id)&&avail(it))avNow.push([k,it]);
-  html+=`<div class="sect">✨ 지금 연구할 수 있어요 <small>${avNow.length}개</small></div><div class="rs">${avNow.sort((a,b)=>a[1].rp-b[1].rp).map(([k,it])=>{const isCur=run.some(r=>r.k===k&&r.id===it.id);const c=rsCost(it);
-    return `<div class="ri ${isCur?'cur':''}"><small>${esc(GROUP_NAME[k])}</small><b>${esc(it.n)}</b><small>연구비 ${won(c)} · ${RS_SEC}초</small>${isCur?'<span class="pill">연구 중</span>':`<button class="btn sm" data-rs="${k}:${it.id}" ${S.money<c||run.length>=slots?'disabled':''}>연구 시작</button>`}</div>`;}).join('')||'<p class="muted">지금은 연구할 게 없어요. 해가 바뀌면 새 기술이 나와요</p>'}</div>`;
+  html+=`<div class="sect">✨ 지금 연구할 수 있어요 <small>${avNow.length}개</small></div><div class="rs">${avNow.sort((a,b)=>a[1].rp-b[1].rp).map(([k,it])=>{const c=rsCost(it);
+    return `<div class="ri"><small>${esc(GROUP_NAME[k])}</small><b>${esc(it.n)}</b><small>연구비 ${won(c)}</small><button class="btn sm" data-rs="${k}:${it.id}" ${S.money<c?'disabled':''}>💰 ${won(c)} 내고 연구</button></div>`;}).join('')||'<p class="muted">지금은 연구할 게 없어요. 해가 바뀌면 새 기술이 나와요</p>'}</div>`;
   const soon=[];for(const k of groups)for(const it of ALL_LISTS[k])if(it.y>S.year&&it.y<=S.year+3)soon.push([k,it]);
   html+=`<div class="sect">🔮 곧 나와요</div><div class="rs">${soon.sort((a,b)=>a[1].y-b[1].y).slice(0,12).map(([k,it])=>`<div class="ri" style="opacity:.6"><small>${esc(GROUP_NAME[k])} · ${it.y}년</small><b>${esc(it.n)}</b></div>`).join('')||'<p class="muted">-</p>'}</div>`;
   $('#main').innerHTML=html;
-  $$('[data-rs]').forEach(b=>b.onclick=()=>{const [k,id]=b.dataset.rs.split(':');const it=ALL_LISTS[k].find(x=>x.id===id);const c=rsCost(it);const run=rsList();
-    if(run.length>=S.lab){toast(`연구소 Lv.${S.lab}은 동시에 ${S.lab}개까지만! 연구소를 키우세요`);return;}if(S.money<c){toast('돈이 부족해요');return;}
-    S.money-=c;run.push({k,id,end:Date.now()+RS_SEC*1000});toast(`🔬 ${it.n} 연구 시작! ${RS_SEC}초`);updTop();renderResearch();save();});}
+  $$('[data-rs]').forEach(b=>b.onclick=()=>{const [k,id]=b.dataset.rs.split(':');const it=ALL_LISTS[k].find(x=>x.id===id);const c=rsCost(it);if(S.money<c){toast('돈이 부족해요');return;}
+    S.money-=c;S.unlocked[k+':'+id]=1;news(`🔬 연구 완료: <b>${esc(GROUP_NAME[k])} · ${esc(it.n)}</b>`);toast('🔬 연구 완료! '+it.n);updTop();renderResearch();save();});}
 
 /* ======================= 화면: 회사 ======================= */
 function renderCompany(){
@@ -769,7 +760,7 @@ function renderCompany(){
    <div class="sect">📰 뉴스</div><div id="news">${S.news.slice(0,20).map(n=>`<div><small class="muted">${n.y}.${n.w}주</small> ${n.t}</div>`).join('')}</div>
    <div class="sect">🏢 회사</div><div class="grid g2">
    <div class="card grid"><b style="font-size:17px">🏭 공장 Lv.${S.fac}</b><div class="muted" style="font-size:13px">한 주 생산 ${units(FAC[S.fac].cap)} · 조립비 개당 ${won(asm())}</div>${fc?`<button class="btn" data-up="fac" ${S.money<fc.cost?'disabled':''}>Lv.${S.fac+1}로 확장 · ${won(fc.cost)}</button><small class="muted">→ 한 주 ${units(fc.cap)} · 조립비 ${won([0,9000,7000,5500,4500,3500,2500][S.fac+1])}</small>`:'<b>최고 레벨!</b>'}</div>
-   <div class="card grid"><b style="font-size:17px">🔬 연구소 Lv.${S.lab}</b><div class="muted" style="font-size:13px">동시에 연구 ${S.lab}개 · 연구비 ${(S.lab-1)*8}% 할인</div>${lc?`<button class="btn" data-up="lab" ${S.money<lc.cost?'disabled':''}>Lv.${S.lab+1}로 확장 · ${won(lc.cost)}</button><small class="muted">→ 동시에 ${S.lab+1}개 · ${S.lab*8}% 할인</small>`:'<b>최고 레벨!</b>'}</div>
+   <div class="card grid"><b style="font-size:17px">🔬 연구소 Lv.${S.lab}</b><div class="muted" style="font-size:13px">연구비 ${(S.lab-1)*10}% 할인</div>${lc?`<button class="btn" data-up="lab" ${S.money<lc.cost?'disabled':''}>Lv.${S.lab+1}로 확장 · ${won(lc.cost)}</button><small class="muted">→ 연구비 ${S.lab*10}% 할인</small>`:'<b>최고 레벨!</b>'}</div>
    <div class="card grid"><b style="font-size:17px">📊 회사 기록</b><div class="kv"><div><small>총 판매</small><b>${units(S.totalSold)}</b></div><div><small>총 매출</small><b>${won(S.totalRev)}</b></div><div><small>팬</small><b>${Math.floor(S.fans).toLocaleString('ko-KR')}명</b></div><div><small>지난주 이익</small><b style="color:${(S.lastProfit||0)>=0?'var(--good)':'var(--bad)'}">${won(S.lastProfit||0)}</b></div></div></div>
    <div class="card grid"><b style="font-size:17px">🏆 업적 ${Object.keys(S.ach).length}/${ACH.length}</b>${ACH.map(a=>`<div class="row" style="opacity:${S.ach[a.id]?1:.45}"><span>${S.ach[a.id]?'🏆':'🔒'}</span><div><b style="font-size:13px">${a.n}</b><div class="muted" style="font-size:12px">${a.d}</div></div></div>`).join('')}</div>
    <div class="card grid"><b>⚙️ 게임</b><button class="btn alt" id="bReset">처음부터 다시 하기</button></div></div>`;
