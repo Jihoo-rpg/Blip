@@ -125,7 +125,7 @@ function cameraBlock(d,M,W,H,opts={}){const g=new T.Group();const cams=d.cams||[
   // 놓을 위치 (뒤에서 봤을 때 왼쪽 위 = 로컬 +x)
   let ax,ay;if(opts.center){ax=0;ay=H/2-Math.max(ih/2+.35,H*.18);}else if(lay==='row'){ax=0;ay=H/2-ih/2-.4;}else{ax=W/2-Math.max(iw/2+.32,W*.24);ay=H/2-ih/2-.35;}
   if(opts.center||lay==='row')ax=0;
-  const isl=new T.Group();isl.position.set(ax,ay,0);g.add(isl);
+  const isl=new T.Group();isl.name='island';isl.position.set(ax,ay,0);g.add(isl);
   if(n&&lay!=='free'){let m;if(lay==='circle'){const R=(n>1?gap*.62:0)+mr+.18;m=new T.Mesh(cyl(R,.14,48),M.island);}else m=new T.Mesh(rbox(iw,ih,.14,Math.min(mr+.16,Math.min(iw,ih)/2),.05),M.island);
     m.position.set(lay==='circle'?0:0,0,-.07);isl.add(m);}
   cams.forEach((cm,i)=>{const R=rad(cm);const px=-(pts[i][0]-cxs),py=-(pts[i][1]-cys);const L=new T.Group();L.position.set(lay==='circle'?-pts[i][0]:px,lay==='circle'?-pts[i][1]:py,-.14);
@@ -243,14 +243,16 @@ function ensure(){if(ren)return;canvas=document.createElement('canvas');canvas.c
   canvas.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-px,dy=e.clientY-py;px=e.clientX;py=e.clientY;yaw+=dx*.012;vy=dx*.012;pitch=cl(pitch+dy*.006,-.6,.6);idleT=0;});
   const up=()=>{dragging=false;canvas.style.cursor='grab';};canvas.addEventListener('pointerup',up);canvas.addEventListener('pointercancel',up);
   loop(0);}
-function loop(t){raf=requestAnimationFrame(loop);if(!host||!host.isConnected||!phone||document.hidden)return;const dt=Math.min(.05,(t-lastT)/1000||0);lastT=t;
+let mode=null;
+function loop(t){raf=requestAnimationFrame(loop);if(!host||!host.isConnected||document.hidden)return;if(!mode&&!phone)return;const dt=Math.min(.05,(t-lastT)/1000||0);lastT=t;
   const r=host.getBoundingClientRect();if(r.width<10)return;const W=Math.round(r.width),H=Math.round(r.height);if(canvas.width!==Math.round(W*ren.getPixelRatio())||canvas.height!==Math.round(H*ren.getPixelRatio()))ren.setSize(W,H,false);
+  if(mode){mode(dt,t,W,H);return;}
   if(!dragging){yaw+=vy;vy*=.92;idleT+=dt;if(idleT>2.5)auto=true;if(auto)yaw+=dt*.45;}
   openA+=(openT-openA)*Math.min(1,dt*4);const an=phone.userData.anim;if(an&&an.set)an.set(openA);
   frame(st,phone,yaw,pitch+Math.sin(t/1600)*.03,W/H);phone.position.y=Math.sin(t/900)*.12;ren.render(st.scene,st.cam);}
 const P3={
   ok:true,
-  mount(el){ensure();host=el;if(canvas.parentNode!==el)el.appendChild(canvas);},
+  mount(el){ensure();mode=null;host=el;if(canvas.parentNode!==el)el.appendChild(canvas);},
   show(d,brand){ensure();const key=JSON.stringify([d.form,d.mat,d.color,d.panel,d.cut,d.size,d.thin,d.cams,d.layout,d.flash,d.feats,brand]);if(key===lastKey&&phone)return;lastKey=key;
     if(phone){st.scene.remove(phone);dispose(phone);}phone=buildPhone(d,brand);st.scene.add(phone);const an=phone.userData.anim;if(an&&an.set)an.set(openA);},
   canOpen(d){return ['folder','slide','fold','tri','flip','roll'].includes(d.form);},
@@ -264,5 +266,102 @@ const P3={
     frame(tSt,ph,view==='back'?Math.PI-.45:view==='closed'?-.5:-.45,-.1,1);tRen.render(tSt.scene,tSt.cam);const url=tCan.toDataURL('image/png');tSt.scene.remove(ph);dispose(ph);thumbCache[k]=url;return url;},
 };
 let tRen=null,tCan=null,tSt=null;const thumbCache={};
+
+/* ---------- 시제품 조립 (작업대) ---------- */
+function ringGeo(w,h,r,wall,t){const o=rrShape(w,h,r);const hole=rrShape(w-wall*2,h-wall*2,Math.max(.05,r-wall));o.holes.push(hole);
+  const g=new T.ExtrudeGeometry(o,{depth:t-.1,bevelEnabled:true,bevelSize:.05,bevelThickness:.05,bevelSegments:3,curveSegments:10});g.translate(0,0,-(t-.1)/2);g.computeVertexNormals();return g;}
+function pcbTex(){return canvasTex('pcb',256,128,(g,W,H)=>{g.fillStyle='#0f5132';g.fillRect(0,0,W,H);g.strokeStyle='#c9a227';g.globalAlpha=.55;g.lineWidth=1.4;
+  for(let i=0;i<40;i++){g.beginPath();let x=Math.random()*W,y=Math.random()*H;g.moveTo(x,y);for(let k=0;k<4;k++){if(Math.random()<.5)x+=(Math.random()-.5)*80;else y+=(Math.random()-.5)*50;g.lineTo(x,y);}g.stroke();}
+  g.globalAlpha=1;g.fillStyle='#d4af37';for(let i=0;i<60;i++){g.beginPath();g.arc(Math.random()*W,Math.random()*H,1.6,0,7);g.fill();}});}
+function battTex(mah){return canvasTex('batt'+mah,256,192,(g,W,H)=>{const gr=g.createLinearGradient(0,0,W,H);gr.addColorStop(0,'#2b2f36');gr.addColorStop(1,'#16191e');g.fillStyle=gr;g.fillRect(0,0,W,H);
+  g.fillStyle='#ffd43b';g.font='900 46px Arial';g.textAlign='center';g.fillText('⚡',W/2,H*.38);g.fillStyle='#fff';g.font='800 34px Arial';g.fillText(mah+'mAh',W/2,H*.62);g.font='600 16px Arial';g.fillStyle='#9aa4b5';g.fillText('Li-ion · 3.85V',W/2,H*.8);});}
+function tableTex(){return canvasTex('table',256,256,(g,W,H)=>{g.fillStyle='#1b2433';g.fillRect(0,0,W,H);g.strokeStyle='rgba(120,170,255,.16)';g.lineWidth=1;for(let i=0;i<=16;i++){g.beginPath();g.moveTo(i*16,0);g.lineTo(i*16,H);g.stroke();g.beginPath();g.moveTo(0,i*16);g.lineTo(W,i*16);g.stroke();}});}
+const ASM_STEPS=[
+ {id:'frame',n:'프레임',i:'🔲'},{id:'board',n:'메인보드',i:'🟩'},{id:'chip',n:'칩',i:'🧠'},{id:'ram',n:'램 · 저장',i:'💾'},{id:'batt',n:'배터리',i:'🔋'},
+ {id:'cam',n:'카메라 모듈',i:'📸'},{id:'spk',n:'스피커 · 진동',i:'🔊'},{id:'back',n:'뒷판',i:'🎨'},{id:'screen',n:'화면',i:'🖥️'}];
+P3.ASM_STEPS=ASM_STEPS;
+P3.assembly=function(el,d,chip,brand){ensure();host=el;if(canvas.parentNode!==el)el.appendChild(canvas);
+  const sc=stage(ren);sc.sh.visible=false;const M=mats(d);
+  const FEAT=!['smart','gaming','fold','flip','tri','roll'].includes(d.form);const size=d.size||6.4;
+  const h=FEAT?10:9+Math.min(size,7)*.95,w=FEAT?4.8:h*.47,t=FEAT?1:.62,r=FEAT?.8:.55+Math.min(.65,size*.08);
+  const table=new T.Mesh(new T.PlaneGeometry(80,80),new T.MeshStandardMaterial({map:(()=>{const x=tableTex();x.wrapS=x.wrapT=T.RepeatWrapping;x.repeat.set(10,10);return x;})(),roughness:.85}));table.rotation.x=-Math.PI/2;table.position.y=-t/2-.02;sc.scene.add(table);
+  const outer=new T.Group();outer.rotation.x=Math.PI/2;sc.scene.add(outer);const inner=new T.Group();inner.rotation.z=Math.PI;outer.add(inner);
+  const parts={};
+  const mk=(id,obj,target)=>{obj.userData.target=target.clone();parts[id]=obj;inner.add(obj);};
+  // 프레임
+  const fr=new T.Group();fr.add(new T.Mesh(ringGeo(w,h,r,.22,t),M.frame));const mid=new T.Mesh(rplane(w-.3,h-.3,Math.max(.05,r-.15)),new T.MeshStandardMaterial({color:'#3a3f47',metalness:.7,roughness:.45,side:T.DoubleSide}));mid.position.z=t*.15;fr.add(mid);
+  mk('frame',fr,new T.Vector3(0,0,0));
+  // 메인보드
+  const bw=w*.82,bh=h*.34;const bd=new T.Mesh(rbox(bw,bh,.08,.2,.02),new T.MeshStandardMaterial({map:pcbTex(),roughness:.6}));mk('board',bd,new T.Vector3(0,h*.27,-t*.05));
+  // 칩 (내 칩 이름이 찍힌 패키지)
+  const pc=document.createElement('canvas');pc.width=pc.height=256;try{drawPackage(pc.getContext('2d'),chip||{name:'X1',node:'n180'},256,256,brand);}catch(e){}
+  const ptx=new T.CanvasTexture(pc);ptx.encoding=T.sRGBEncoding;const chipG=new T.Group();const cb=new T.Mesh(new T.BoxGeometry(1.5,1.5,.14),new T.MeshStandardMaterial({color:'#15181d',roughness:.5}));chipG.add(cb);
+  const ctop=new T.Mesh(new T.PlaneGeometry(1.5,1.5),new T.MeshStandardMaterial({map:ptx,metalness:.5,roughness:.35}));ctop.rotation.y=Math.PI;ctop.position.z=-.075;chipG.add(ctop);
+  mk('chip',chipG,new T.Vector3(-bw*.14,h*.27,-t*.05-.11));
+  // 램
+  const ramG=new T.Group();for(const k of [0,1]){const m=new T.Mesh(rbox(.9,.55,.1,.05,.02),new T.MeshStandardMaterial({color:'#111',roughness:.4,metalness:.3}));m.position.set(.2,k*.75-.35,0);ramG.add(m);}
+  mk('ram',ramG,new T.Vector3(bw*.24,h*.27,-t*.05-.09));
+  // 배터리
+  const bt=new T.Group();const bb=new T.Mesh(rbox(w*.76,h*.44,t*.5,.15,.05),new T.MeshStandardMaterial({color:'#c0c6cf',metalness:.8,roughness:.35}));bt.add(bb);
+  const bl=new T.Mesh(new T.PlaneGeometry(w*.66,h*.36),new T.MeshStandardMaterial({map:battTex(d.mah||3000),roughness:.6}));bl.rotation.y=Math.PI;bl.position.z=-t*.25-.01;bt.add(bl);
+  mk('batt',bt,new T.Vector3(0,-h*.14,-t*.05));
+  // 카메라 모듈 (뒷면 렌즈 개수만큼)
+  const camG=new T.Group();const nC=Math.max(1,(d.cams||[]).length);for(let i=0;i<nC;i++){const m=new T.Group();const box=new T.Mesh(rbox(.95,.95,.45,.12,.04),new T.MeshStandardMaterial({color:'#1a1d22',roughness:.5}));m.add(box);
+    const ln=new T.Mesh(cyl(.32,.2),M.lensRing(i===0));ln.position.z=-.3;m.add(ln);const gl=new T.Mesh(new T.CircleGeometry(.26,24),M.lensGlass);gl.rotation.y=Math.PI;gl.position.z=-.41;m.add(gl);
+    m.position.set((i%2)*1.05,-Math.floor(i/2)*1.05,0);camG.add(m);}
+  mk('cam',camG,new T.Vector3(w/2-1.25,h/2-1.1,-t*.1));
+  // 스피커 · 진동
+  const spG=new T.Group();const sp=new T.Mesh(rbox(1.6,.6,.3,.1,.03),new T.MeshStandardMaterial({color:'#222',roughness:.7}));sp.position.x=-w*.18;spG.add(sp);
+  const vib=new T.Mesh(cyl(.32,.25),new T.MeshStandardMaterial({color:'#b9bec5',metalness:.9,roughness:.3}));vib.position.x=w*.22;spG.add(vib);
+  mk('spk',spG,new T.Vector3(0,-h*.42,-t*.05));
+  // 뒷판 (색 · 카메라 섬 · 로고)
+  const backG=new T.Group();const bp=new T.Mesh(rbox(w-.08,h-.08,.08,Math.max(.05,r-.04),.03),M.back);backG.add(bp);
+  const isl=cameraBlock(d,M,w,h,FEAT?{center:true,small:1}:{});isl.position.z=-.04;backG.add(isl);const lg=backLogo(brand,M,-h*.12,.08,.9);backG.add(lg);
+  mk('back',backG,new T.Vector3(0,0,-t/2-.02));
+  // 화면 (마지막에 앞으로 뒤집어서)
+  const scG=new T.Group();const gl=new T.Mesh(rplane(w-.1,h-.1,Math.max(.05,r-.05)),M.glassBlack);scG.add(gl);
+  const scrTex=FEAT?lcdScreen(d.panel):smartScreen(d.cut,d.panel,false,brand);const scr=new T.Mesh(FEAT?rplane(w*.78,h*.36,.12):rplane(w-.3,h-.3,Math.max(.05,r-.15)),new T.MeshBasicMaterial({map:scrTex,toneMapped:false,transparent:true,opacity:0}));scr.position.set(0,FEAT?h*.2:0,.005);scG.add(scr);
+  if(FEAT){const kp=keypad(M,w,h*.45);kp.position.set(0,-h*.12,.05);scG.add(kp);}
+  mk('screen',scG,new T.Vector3(0,0,t/2+.006));
+  // 처음엔 모두 작업대 둘레에 놓여 있어요
+  const spots=[[-1.55,.75],[1.55,.75],[-1.55,0],[1.55,0],[-1.55,-.75],[1.55,-.75],[0,1.25],[-1.5,1.35],[1.5,1.35]];
+  ASM_STEPS.forEach((s0,i)=>{const p=parts[s0.id];const [sx,sy]=spots[i%spots.length];p.userData.start=new T.Vector3(sx*w*1.05,sy*h*.6,-t*.6);p.position.copy(p.userData.start);p.rotation.z=(i%3-1)*.35;});
+  parts.screen.rotation.y=Math.PI;// 앞면이 위로 보이게 놓여 있어요
+  let flips=0,flipT=0;const anims=[];let fin=null,finT=0,spinY=0;
+  const camPos=new T.Vector3(0,h*2.15,h*1.25),look=new T.Vector3(0,0,-h*.05);
+  mode=(dt,tm,W,H)=>{
+    for(const a of anims){a.t=Math.min(1,a.t+dt/a.dur);const e=a.t<.5?2*a.t*a.t:1-Math.pow(-2*a.t+2,2)/2;const p=a.obj;p.position.lerpVectors(a.from,a.to,e);p.position.z+=-Math.sin(a.t*Math.PI)*h*.18;
+      p.rotation.z=a.r0+(a.r1-a.r0)*e;if(a.ry!=null)p.rotation.y=a.ry0+(a.ry-a.ry0)*e;if(a.t>=1&&!a.done){a.done=1;p.scale.setScalar(1.06);a.cb&&a.cb();}}
+    for(const k in parts){const p=parts[k];p.scale.lerp(new T.Vector3(1,1,1),Math.min(1,dt*10));}
+    if(flips){flipT=Math.min(1,flipT+dt*1.4);inner.rotation.y=Math.PI*(flipT<.5?2*flipT*flipT:1-Math.pow(-2*flipT+2,2)/2);}
+    if(fin){finT+=dt;spinY+=dt*.6;fin.rotation.set(-.08,-.5+spinY,0);fin.position.y=t*2+Math.sin(tm/700)*.15;const k=Math.min(1,finT*1.5);outer.scale.setScalar(1-k);
+      sc.cam.position.lerp(new T.Vector3(0,h*.35,h*2.3),Math.min(1,dt*2.5));look.lerp(new T.Vector3(0,t*2,0),Math.min(1,dt*2.5));}
+    const asp=W/H;sc.cam.aspect=asp;sc.cam.fov=40;sc.cam.updateProjectionMatrix();const kk=asp<1.3?Math.min(2.4,1.3/asp):1;if(!fin)sc.cam.position.copy(camPos).multiplyScalar(kk);sc.cam.lookAt(look);
+    if(scr.material.opacity<1&&ctl.lit)scr.material.opacity=Math.min(1,scr.material.opacity+dt*1.6);
+    ren.render(sc.scene,sc.cam);};
+  const ctl={lit:false,
+    place(id,acc){return new Promise(res=>{const p=parts[id];const to=p.userData.target.clone();const err=(1-acc);
+      if(err>.15){to.x+=(Math.random()-.5)*err*1.2;to.y+=(Math.random()-.5)*err*1.2;}
+      const go=()=>{anims.push({obj:p,from:p.position.clone(),to,t:0,dur:.75,r0:p.rotation.z,r1:err>.15?(Math.random()-.5)*err*.5:0,ry0:p.rotation.y,ry:id==='screen'?0:null,cb:()=>{if(id==='screen'){ctl.lit=true;}res();}});};
+      if(id==='screen'){flips=1;setTimeout(go,650);}else go();});},
+    finish(){const ph=buildPhone(d,brand);sc.scene.add(ph);fin=ph;const an=ph.userData.anim;if(an&&an.set)an.set(1);ph.scale.setScalar(.9);},
+    destroy(){mode=null;sc.scene.traverse(o=>{});}};
+  return ctl;};
+
+/* ---------- 광고 영상용 렌더러 ---------- */
+P3.adRenderer=function(W,H){const c=document.createElement('canvas');c.width=W;c.height=H;const r=mkRen(c,{keep:1,dpr:1});r.setSize(W,H,false);const s=stage(r);s.sh.visible=false;
+  s.scene.add(new T.PointLight('#ffffff',.6,60));
+  let models=[],cur=null,brandN='';const v=new T.Vector3(),look=new T.Vector3();
+  return {canvas:c,
+    set(d,brand,colors){models.forEach(m=>{s.scene.remove(m);dispose(m);});models=[];brandN=brand;const cs=colors&&colors.length?colors:[d.color];
+      for(const col of cs){const m=buildPhone(Object.assign({},d,{color:col}),brand);m.visible=false;s.scene.add(m);models.push(m);}},
+    frame(p){models.forEach((m,i)=>m.visible=i===(p.ci||0)%models.length);const m=models[(p.ci||0)%models.length];if(!m)return c;
+      const an=m.userData.anim;if(an&&an.set)an.set(p.open==null?1:p.open);
+      const sz=m.userData.size||12;m.rotation.set(p.pitch||0,p.yaw||0,p.roll||0);m.position.set(p.x||0,p.y||0,0);m.scale.setScalar(p.scale||1);
+      const asp=W/H;s.cam.aspect=asp;s.cam.fov=30;s.cam.updateProjectionMatrix();
+      let dist=sz/(2*Math.tan(T.MathUtils.degToRad(15)))*(asp<1?1.2/Math.max(.55,asp):1.1)/(p.zoom||1);
+      look.set(0,0,0);if(p.focus==='island'){m.updateMatrixWorld(true);const isl=m.getObjectByName('island');if(isl){isl.getWorldPosition(v);look.lerp(v,p.fk==null?1:p.fk);}}
+      s.cam.position.set(look.x,look.y+sz*.04,dist);s.cam.lookAt(look);r.render(s.scene,s.cam);return c;},
+    dispose(){models.forEach(m=>{s.scene.remove(m);dispose(m);});r.dispose();try{r.forceContextLoss();}catch(e){}}};};
 window.P3=P3;
 })();
