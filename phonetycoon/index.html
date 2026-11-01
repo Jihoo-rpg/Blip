@@ -449,7 +449,7 @@ const LAB=[null,{rp:10,cost:0},{rp:22,cost:1e9},{rp:45,cost:8e9},{rp:100,cost:5e
 const baseFlag=y=>(380000+Math.max(0,y-2000)*38000)*(y>=2017?1.15:1);
 function fairPrice(d,a){const f=L('form',d.form);const fc=frontier(S.year)._cost*.58+40000;return Math.round(Math.max(20000,fc*(.62+1.55*Math.pow(clamp(a,0,1.4),2.1))*f.prem)/1000)*1000;}
 const rating=a=>clamp(Math.round((2+7.6*Math.pow(clamp(a,0,1.3)/1.1,1.7))*10)/10,1,10);
-const marketWeek=y=>Math.round(22000*(1+Math.max(0,y-2000)*.3)*(y>=2008?1.5:1));
+const marketWeek=y=>Math.round(30000*(1+Math.max(0,y-2000)*.3)*(y>=2008?1.5:1));
 
 /* ======================= 새 설계 ======================= */
 function blankDesign(){
@@ -481,9 +481,11 @@ function weekTick(){
   // 판매
   const active=S.prods.filter(p=>p.on);
   const M=marketWeek(y)*(S.ev&&S.ev.k==='recess'?.7:1);const rivals=S.rivals.reduce((a,r)=>a+Math.pow(r.ph?r.ph.a:r.str*.8,3)*brandF(r.rep)*Math.max(.35,1-(((S.week+(y-(r.ph?r.ph.y:y))*52-(r.ph?r.ph.w||1:1))/52)*.25)),0);
-  let mine=0;for(const p of active){p.app=appeal(p.d).a;p.fair=fairPrice(p.d,p.app);
-    const pf=p.d.price/p.fair;p.pfac=pf<=1?1+.7*(1-pf):Math.exp(-4.2*(pf-1));const age=(S.week+(y-p.y)*52-p.w)/52;
-    p.hype=Math.max(0,(p.hype||0)*.88);p.wt=Math.pow(p.app,3)*brandF(S.rep)*(1+p.hype)*p.pfac*Math.max(.2,1-age*.3);mine+=p.wt;}
+  let mine=0;for(const p of active){const age=(S.week+(y-p.y)*52-p.w)/52;p.age=age;p.app=appeal(p.d).a;
+    // 오래될수록 경쟁사가 값을 내려서 내 폰의 '적정가'도 떨어져요
+    p.fair=Math.round(fairPrice(p.d,p.app)*Math.max(.45,1-age*.32)/1000)*1000;
+    const pf=p.d.price/p.fair;p.pfac=pf<=1?1+.7*(1-pf):Math.exp(-4.2*(pf-1));
+    p.hype=Math.max(0,(p.hype||0)*.88);p.wt=Math.pow(p.app,3)*brandF(S.rep)*(1+p.hype)*p.pfac*Math.max(.03,Math.exp(-age*1.5));mine+=p.wt;}
   const tot=mine+rivals;
   for(const p of active){let u=Math.round(M*p.wt/tot*rand(.9,1.1));p.queue=p.queue||[];p.queue.forEach(q=>q.wk--);p.stock+=p.queue.filter(q=>q.wk<=0).reduce((a,q)=>a+q.n,0);p.queue=p.queue.filter(q=>q.wk>0);
     if(S.ev&&S.ev.k==='viral'&&S.ev.pid===p.id)u=Math.round(u*1.8);const sold=Math.min(u,p.stock);p.lost=(p.lost||0)+(u-sold);p.stock-=sold;p.sold+=sold;p.rev+=sold*p.d.price;rev+=sold*p.d.price;p.last=sold;p.wantLast=u;
@@ -493,11 +495,21 @@ function weekTick(){
     S.fans+=sold*.02*(p.rt/10);
     if(sold>0&&p.rt>=6.5)S.rep=Math.min(100,S.rep+Math.min(.35,sold/2e5*(p.rt-6)));
     if(p.rt<6&&sold>0)S.rep=Math.max(0,S.rep-.05);
-    // 창고비: 안 팔린 재고는 매주 원가의 1.5%
-    cost+=p.stock*p.uc*.015;}
+    // 창고비: 안 팔린 재고는 매주 원가의 2%
+    const store=p.stock*p.uc*.02;
+    // 반품 · 수리비: 내구성 · 조립 품질 · 폼팩터에 따라 달라요
+    const dr=defectRate(p);const ret=sold*dr*p.d.price*.9;p.dr=dr;
+    // 생산 라인 · A/S 센터 유지비 (팔든 안 팔든 매주 나가요)
+    const line=lineCost(p);
+    const pp=sold*(p.d.price-p.uc)-ret-store-line;p.wkProfit=pp;p.profit=(p.profit||0)+pp;
+    p.lossWk=pp<0?(p.lossWk||0)+1:0;if(p.lossWk===4)news(`📉 <b>「${esc(p.d.name)}」 적자 중!</b> 4주째 손해 · 가격을 바꾸거나 단종을 생각해 보세요`);
+    if(dr>.08&&sold>0)S.rep=Math.max(0,S.rep-dr*.4);
+    cost+=store+ret+line;}
   if(S.rep>15)S.rep=Math.max(15,S.rep-.03);else S.rep=Math.min(15,S.rep+.02);S.rep=Math.max(3,S.rep);
   // 고정비 (월급 · 유지비)
   const fixed=(3e6+Math.pow(S.lab,2.4)*3e6+Math.pow(S.fac,2.4)*4e6)*(1+(y-2000)*.06);cost+=fixed;S.lastFixed=fixed;
+  // 분기마다 법인세 (이익의 22%)
+  if(S.qStart==null)S.qStart=S.money;if(S.week%13===0){const prof=S.money+rev-cost-S.qStart;if(prof>0){const tax=Math.round(prof*.22);cost+=tax;news(`🏛️ 분기 법인세 ${won(tax)} 냈어요 (이번 분기 이익의 22%)`);}S.qStart=S.money+rev-cost;}
   S.money+=rev-cost;S.totalRev+=rev;S.lastProfit=rev-cost;S.lastRev=rev;
   S.hist.push({rev,cost});if(S.hist.length>104)S.hist.shift();
   // 경쟁사 신제품
@@ -529,14 +541,17 @@ function events(active){
   else{S.ev={k,left:10};news('💸 <b>부품값 상승</b> · 10주 동안 생산 원가가 15% 올라요');}
 }
 function bankrupt(){S.dead=0;save();
-  openModal(`<h2>💸 파산했어요…</h2><p style="line-height:1.7">${esc(S.name)}의 빚이 너무 많아졌어요. 은행이 한 번만 도와준대요.</p><button class="btn good" id="bBail">🏦 구조 자금 받기 (평판 −20, 공장·연구소 1단계)</button><button class="btn alt" id="bOver">처음부터 다시</button>`);
-  $('#bBail').onclick=()=>{S.money=2e8;S.rep=Math.max(0,S.rep-20);S.fac=1;S.lab=1;S.warned=0;S.proj=null;news('🏦 구조 자금으로 다시 시작했어요');closeModal();updTop();render();save();};
+  openModal(`<h2>💸 파산했어요…</h2><p style="line-height:1.7">${esc(S.name)}의 빚이 너무 많아졌어요. 은행이 한 번만 도와준대요.</p><button class="btn good" id="bBail">🏦 구조 자금 받기 (평판 −10, 공장·연구소 1단계)</button><button class="btn alt" id="bOver">처음부터 다시</button>`);
+  $('#bBail').onclick=()=>{S.money=Math.max(3e8,S.totalRev*.03);S.rep=Math.max(3,S.rep-10);S.fac=1;S.lab=1;S.warned=0;S.proj=null;news('🏦 구조 자금으로 다시 시작했어요');closeModal();updTop();render();save();};
   $('#bOver').onclick=()=>{localStorage.removeItem(SK);location.reload();};}
 function yearStart(){pickTrend();const nw=[...Object.values(ALL_LISTS).flat()].filter(x=>x.y===S.year&&x.rp);if(nw.length)news(`🆕 ${S.year}년 새 기술 ${nw.length}개 연구 가능: ${nw.slice(0,4).map(x=>esc(x.n)).join(', ')}${nw.length>4?' …':''}`);
   if(S.year===2007)news('🚀 <b>스마트폰 시대 시작!</b> 연구 탭에서 「스마트폰」을 연구하세요. 피처폰 인기가 점점 떨어져요');
 }
 function pickTrend(){const k=pick(CATS)[0];S.trend={k,y:S.year};news(`🔥 ${S.year}년 유행: 사람들이 <b>${CATS.find(c=>c[0]===k)[1]}</b>을(를) 특히 중요하게 봐요`);}
 function news(t){S.news.unshift({t,y:S.year,w:S.week});if(S.news.length>40)S.news.pop();}
+const FORM_RISK={fold:.07,flip:.05,tri:.1,roll:.12,slide:.02,gaming:.02,folder:.01};
+function defectRate(p){const n=appeal(p.d).norm;const q=p.d.asmQ==null?85:p.d.asmQ;return clamp(.012+Math.max(0,.9-n.dur)*.15+(100-q)/500+(FORM_RISK[p.d.form]||0)+(p.rt<5?.04:0),0,.45);}
+function lineCost(p){return 1.1e6*(1+(S.year-2000)*.12)*(L('form',p.d.form).novel?2:1);}
 function capNow(){return FAC[S.fac].cap*(S.ev&&S.ev.k==='shortage'?.5:1);}
 function queued(){return S.prods.filter(p=>p.on).reduce((a,p)=>a+(p.queue||[]).reduce((b,q)=>b+q.n,0),0);}
 function order(p,n,auto){n=Math.round(Math.min(n,capNow()*2-queued()));if(n<100){if(!auto)toast('🏭 공장이 꽉 찼어요. 공장을 확장하세요');return false;}const c=n*p.uc;if(S.money<c){if(!auto)toast('돈이 부족해요');return false;}S.money-=c*(S.ev&&S.ev.k==='partup'?.15:0);S.money-=c;(p.queue=p.queue||[]).push({n,wk:2});if(!auto){toast(`🏭 ${units(n)} 생산 주문 (2주 뒤 입고)`);updTop();}return true;}
@@ -695,7 +710,8 @@ function renderProds(){
   const card=p=>{const pf=p.fair?p.d.price/p.fair:1;return `<div class="card prod" data-pid="${p.id}"><div>${phoneImg(p.d,'back',96)}</div><div class="meta">
     <div class="row" style="justify-content:space-between"><h3>${esc(p.d.name)}</h3><span class="pill" style="color:${p.rt>=8?'var(--good)':p.rt>=6?'var(--warn)':'var(--bad)'}">⭐ ${p.rt}</span></div>
     <div class="muted" style="font-size:12px">${esc(L('form',p.d.form).n)} · 🧠 ${esc(p.d.chipSpec?p.d.chipSpec.name:'-')} · 🔧 조립 ${p.d.asmQ??'-'}% · ${p.y}년 출시 · ${p.on?(p.stock<=0&&!(p.queue||[]).length?'<b style="color:var(--bad)">품절!</b>':'판매 중'):'단종'}</div>
-    <div class="kv"><div><small>가격</small><b>${won(p.d.price)}</b></div><div><small>적정가</small><b style="color:${pf>1.15?'var(--bad)':pf<.9?'var(--good)':'inherit'}">${won(p.fair||0)}</b></div><div><small>지난주 판매</small><b>${units(p.last||0)}</b></div><div><small>재고</small><b>${units(p.stock)}${(p.queue||[]).length?` <small style="display:inline">+${units(p.queue.reduce((a,q)=>a+q.n,0))}</small>`:''}</b></div><div><small>총 판매</small><b>${units(p.sold)}</b></div><div><small>총 매출</small><b>${won(p.rev)}</b></div></div>
+    <div class="kv"><div><small>가격</small><b>${won(p.d.price)}</b></div><div><small>적정가</small><b style="color:${pf>1.15?'var(--bad)':pf<.9?'var(--good)':'inherit'}">${won(p.fair||0)}</b></div><div><small>지난주 판매</small><b>${units(p.last||0)}</b></div><div><small>재고</small><b>${units(p.stock)}${(p.queue||[]).length?` <small style="display:inline">+${units(p.queue.reduce((a,q)=>a+q.n,0))}</small>`:''}</b></div><div><small>총 판매</small><b>${units(p.sold)}</b></div><div><small>총 매출</small><b>${won(p.rev)}</b></div><div><small>지난주 이익</small><b style="color:${(p.wkProfit||0)>=0?'var(--good)':'var(--bad)'}">${won(p.wkProfit||0)}</b></div><div><small>반품 · 수리율</small><b style="color:${(p.dr||0)>.08?'var(--bad)':(p.dr||0)>.04?'var(--warn)':'inherit'}">${((p.dr||0)*100).toFixed(1)}%</b></div><div><small>누적 이익</small><b style="color:${(p.profit||0)>=0?'var(--good)':'var(--bad)'}">${won(p.profit||0)}</b></div><div><small>라인 유지비</small><b>${won(lineCost(p))}/주</b></div></div>
+    ${p.on&&(p.lossWk||0)>=2?`<div class="tipB">📉 ${p.lossWk}주째 손해 중이에요! 가격을 바꾸거나 단종하세요</div>`:''}
     ${p.on&&(p.wantLast||0)>(p.last||0)?`<div class="pill" style="color:var(--warn)">⚠️ 재고 부족으로 ${units(p.wantLast-p.last)} 못 팔았어요</div>`:''}
     <canvas class="chart" data-chart="${p.id}"></canvas>
     ${p.on?`<div class="row"><button class="btn sm" data-ord="${p.id}">🏭 생산</button><button class="btn sm alt" data-pr="${p.id}">💰 가격</button><button class="btn sm alt" data-auto="${p.id}">${p.auto?'🔁 자동 보충 켜짐':'🔁 자동 보충 꺼짐'}</button><button class="btn sm bad" data-end="${p.id}">단종</button></div>`:''}
@@ -901,10 +917,11 @@ function renderDev(){const pr=S.proj,d=pr.d;const ap=appeal(d);const c=devCost(d
        <button class="btn good" id="bToAd">🎬 광고 영상 만들러 가기</button>`);$('#bToAd').onclick=()=>{closeModal();render();scrollTo(0,0);};});};}
 
 /* ----- 6단계: 출시 ----- */
-function renderLaunch(){const pr=S.proj,d=pr.d;const ap=appeal(d);const fair=fairPrice(d,ap.a);const uc=unitCost(d);if(!pr.price)pr.price=Math.round(fair/1000)*1000;
+function renderLaunch(){const pr=S.proj,d=pr.d;const ap=appeal(d);const drE=defectRate({d,rt:pr.rt});const fair=fairPrice(d,ap.a);const uc=unitCost(d);if(!pr.price)pr.price=Math.round(fair/1000)*1000;
   $('#main').innerHTML=`${projHeader()}<div class="grid g2"><div class="card" style="display:flex;justify-content:center;gap:6px">${phoneImg(d,'front',150)}${phoneImg(d,'back',150)}</div>
    <div class="card grid" style="gap:10px"><b style="font-size:18px">🚀 「${esc(d.name)}」 출시</b>
-    <div class="kv"><div><small>평점</small><b>⭐ ${pr.rt}</b></div><div><small>광고 점수</small><b>${pr.adScore||0}점</b></div><div><small>개당 원가</small><b>${won(uc)}</b></div><div><small>적정 가격</small><b>${won(fair)}</b></div></div>
+    <div class="kv"><div><small>평점</small><b>⭐ ${pr.rt}</b></div><div><small>광고 점수</small><b>${pr.adScore||0}점</b></div><div><small>개당 원가</small><b>${won(uc)}</b></div><div><small>적정 가격</small><b>${won(fair)}</b></div><div><small>예상 반품 · 수리율</small><b style="color:${drE>.08?'var(--bad)':drE>.04?'var(--warn)':'var(--good)'}">${(drE*100).toFixed(1)}%</b></div><div><small>라인 유지비</small><b>${won(lineCost({d}))}/주</b></div></div>
+    <div class="tipB" style="margin:0">⚠️ 폰은 시간이 지나면 점점 안 팔리고 적정가도 떨어져요. 반품 · 라인 유지비 · 창고비 · 세금 때문에 오래 팔면 손해가 날 수 있어요!</div>
     <div class="field" style="margin:0"><label>판매 가격 <b id="lpV"></b></label><input type="range" id="lp" min="${Math.round(uc*.8/1000)}" max="${Math.round(Math.max(fair*1.8,uc*2.5)/1000)}" value="${Math.round(pr.price/1000)}"><small class="muted" id="lpHint"></small></div>
     <div class="field" style="margin:0"><label>첫 생산 수량 <b id="lqV"></b></label><input type="range" id="lq" min="0" max="100" value="50"><small class="muted">공장 한 주 최대 ${units(capNow())} · 안 팔린 재고는 창고비가 나가요</small></div>
     <label class="chk on" id="autoChk"><span>🔁</span><div><b>재고 자동 보충</b><small>팔리는 만큼 알아서 더 만들어요</small></div></label>
@@ -927,7 +944,7 @@ function advance(weeks,label,cb){const m0=S.money,n0=S.news[0];let i=0;
     weekTick();i++;const bi=$('#advI');if(!bi)return;bi.style.width=(i/weeks*100)+'%';$('#advD').textContent=`${S.year}년 ${month()}월`;$('#advM').textContent=won(S.money);
     const k=S.news.indexOf(n0);$('#advN').innerHTML=(k<0?S.news.slice(0,4):S.news.slice(0,Math.min(k,4))).map(n=>`<div>${n.t}</div>`).join('');updTop();setTimeout(tick,160);};
   tick();}
-function runSeason(weeks,focus){const m0=S.money,s0=S.totalSold,n0=S.news[0];const hist=[];let i=0;
+function runSeason(weeks,focus){const m0=S.money,s0=S.totalSold,n0=S.news[0];const p0={};S.prods.forEach(p=>p0[p.id]=p.profit||0);const hist=[];let i=0;
   openModal(`<h2>📈 판매 시즌 · ${weeks}주</h2><canvas id="seaCv" class="chart" style="height:150px"></canvas>
    <div class="kv"><div><small>날짜</small><b id="seaD"></b></div><div><small>지난주 판매</small><b id="seaW"></b></div><div><small>이번 시즌 판매</small><b id="seaS"></b></div><div><small>이번 시즌 이익</small><b id="seaP"></b></div></div>
    <div><small class="muted">점유율</small><div class="share" id="seaShare"></div><div class="shareL" id="seaL"></div></div><div id="seaN" class="advN"></div><div id="seaEnd"></div>`);
@@ -941,6 +958,7 @@ function runSeason(weeks,focus){const m0=S.money,s0=S.totalSold,n0=S.news[0];con
     const k=S.news.indexOf(n0);$('#seaN').innerHTML=(k<0?S.news.slice(0,3):S.news.slice(0,Math.min(k,3))).map(n=>`<div>${n.t}</div>`).join('');updTop();setTimeout(tick,280);};
   const end=()=>{save();const dm=S.money-m0;const lost=S.prods.filter(p=>p.on).reduce((a,p)=>a+Math.max(0,(p.wantLast||0)-(p.last||0)),0);
     $('#seaEnd').innerHTML=`<div class="card" style="text-align:center;margin-top:8px"><b style="font-size:18px">${dm>=0?'🎉 이번 시즌 흑자!':'😢 이번 시즌 적자…'}</b><div class="score" style="color:${dm>=0?'var(--good)':'var(--bad)'}">${dm>=0?'+':''}${won(dm)}</div>
+      <div style="text-align:left;margin-top:8px">${S.prods.filter(p=>p.on||p0[p.id]!==(p.profit||0)).slice(0,5).map(p=>{const v=(p.profit||0)-(p0[p.id]||0);return `<div class="row" style="justify-content:space-between;font-size:13px"><span>${esc(p.d.name)} <small class="muted">반품 ${((p.dr||0)*100).toFixed(1)}%</small></span><b style="color:${v>=0?'var(--good)':'var(--bad)'}">${v>=0?'+':''}${won(v)}</b></div>`;}).join('')}</div>
       ${lost>0?`<div class="tipB">📦 재고가 모자라서 지난주에만 ${units(lost)}를 못 팔았어요 → 공장 확장!</div>`:''}${S.rep<30?'<div class="tipB">⭐ 아직 브랜드가 약해요. 평점 높은 폰을 계속 내야 해요</div>':''}</div>
       <div class="row" style="justify-content:center;margin-top:10px">${S.proj?'<button class="btn" id="seaGo">📱 만들던 폰 계속</button>':'<button class="btn" id="seaNew">🛠️ 새 폰 만들기</button>'}<button class="btn alt" id="seaMore">📈 13주 더 팔기</button><button class="btn alt" id="seaClose">닫기</button></div>`;
     const g=$('#seaGo');if(g)g.onclick=()=>{closeModal();setTab('home');};const nw=$('#seaNew');if(nw)nw.onclick=()=>{closeModal();newProject();};
