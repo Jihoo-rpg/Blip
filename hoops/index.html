@@ -71,7 +71,7 @@ h1,h2,h3{font-family:var(--display);font-weight:400;margin:0;text-wrap:balance;l
 .ab .k.s{background:var(--p2);color:#03222c}
 .ab .k.u{background:var(--gold);color:#2a1d00}
 .hint{color:var(--gold);font-weight:700;font-size:13px}
-@media (max-width:640px){#lhelp{display:none}#info{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 200px);max-height:40vh;overflow:auto}.badge{font-size:17px}}
+@media (max-width:640px){.badge{white-space:nowrap}.hubBack{padding:7px 10px;font-size:13px}#lhelp{display:none}#info{top:auto;bottom:calc(env(safe-area-inset-bottom,0px) + 200px);max-height:40vh;overflow:auto}.badge{font-size:17px}}
 
 /* MODALS */
 .modal{position:fixed;inset:0;z-index:30;display:grid;place-items:center;background:rgba(10,8,20,.55);padding-block:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));overflow:auto}
@@ -184,7 +184,7 @@ kbd{font-family:var(--body);font-weight:700;font-size:12px;background:var(--pane
 #emoteMenu[hidden]{display:none}
 #emoteMenu button{display:flex;align-items:center;gap:10px;padding:9px 12px;border:0;border-radius:10px;background:rgba(255,255,255,.08);color:#fff;font:inherit;font-size:14px;cursor:pointer;text-align:left}
 #emoteMenu button:hover{background:rgba(255,255,255,.18)}#emoteMenu span{font-size:22px}#emoteMenu b{flex:1}#emoteMenu kbd{opacity:.6;font-size:12px}
-.hubBack{display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:12px;background:var(--gui);color:#fff;font-size:14px;font-weight:700;text-decoration:none}
+.hubBack{display:inline-flex;align-items:center;gap:4px;padding:8px 14px;border-radius:12px;white-space:nowrap;flex:0 0 auto;background:var(--gui);color:#fff;font-size:14px;font-weight:700;text-decoration:none}
 .hubBack:hover{background:rgba(40,40,52,.9)}
 #onbody{display:grid;gap:14px;min-width:min(440px,80vw)}
 #onbody .ob{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;gap:10px}
@@ -209,7 +209,7 @@ kbd{font-family:var(--body);font-weight:700;font-size:12px;background:var(--pane
 <!-- LOBBY GUI -->
 <div id="lobbyUI">
   <div class="lb-top">
-    <div style="display:flex;gap:8px;align-items:flex-start;pointer-events:auto"><div class="badge">하프코트<span>레전드</span></div><a href="../hub/" class="hubBack" aria-label="허브로 돌아가기">🏠 허브</a><button class="hubBack" id="bEmote" title="G">😎 이모트</button><button class="hubBack" id="bOnline" style="border:0;cursor:pointer;background:#ff7a1a;color:#241003">🌐 온라인 대결</button></div>
+    <div class="ltopL" style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;pointer-events:auto;max-width:calc(100vw - 150px)"><div class="badge">하프코트<span>레전드</span></div><a href="../hub/" class="hubBack" aria-label="허브로 돌아가기">🏠 허브</a><button class="hubBack" id="bEmote" title="G">😎 이모트</button><button class="hubBack" id="bOnline" style="border:0;cursor:pointer;background:#ff7a1a;color:#241003">🌐 온라인 대결</button></div>
     <div class="lstats"><span>뽑기권</span><b id="lsT">3</b><span>코인</span><b id="lsC">0</b><span>캐릭터</span><b id="lsO">0/8</b><button id="bMuteL">소리 켬</button></div>
   </div>
   <div id="lhelp">이동 <kbd>WASD</kbd> · 점프 <kbd>Space</kbd><br>달리기 <kbd>Shift</kbd> · 상호작용 <kbd>E</kbd> · 이모트 <kbd>G</kbd> · <kbd>1</kbd>~<kbd>6</kbd><br>화면 드래그: 시점 회전 · 휠: 줌</div>

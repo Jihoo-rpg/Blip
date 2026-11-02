@@ -6,12 +6,12 @@
 <title>blip — 게임 아케이드</title>
 <meta name="description" content="blip 게임 허브 · 냥냥 점프, 바이러스 시뮬레이터, 쌍성 궤도, 머드락 섬, 하프코트 레전드">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jua&family=Gothic+A1:wght@400;600;700;800&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sun-typeface/SUIT@2/fonts/variable/woff2/SUIT-Variable.css">
 <style>
   /* =========== 색상: 캔디 아케이드(밝게) / 나이트 아케이드(어둡게) =========== */
   :root{--bg:#f7f3ff;--bg2:#efe8ff;--panel:#ffffff;--panel2:#f4f0fc;--line:#e6dff7;--text:#1d1830;--sub:#6e6688;--blue:#5b5bf7;--green:#16c784;--green2:#0e9e68;--chip:#efe9fb;
     --g1:#ff5fa2;--g2:#7c5cff;--g3:#22d3ee;--grad:linear-gradient(120deg,var(--g1),var(--g2) 55%,var(--g3));--shadow:0 6px 18px rgba(80,50,160,.10);--shadow2:0 18px 40px rgba(80,50,160,.18);
-    --disp:"Jua",sans-serif;--body:"Gothic A1","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
+    --disp:"SUIT Variable","SUIT",system-ui,sans-serif;--body:"SUIT Variable","SUIT","Apple SD Gothic Neo","Noto Sans KR",system-ui,sans-serif}
   html.dark{--bg:#0e0b1c;--bg2:#160f2e;--panel:#191433;--panel2:#221b42;--line:#2f2758;--text:#f5f2ff;--sub:#a99fd0;--chip:#261f4a;--shadow:0 6px 18px rgba(0,0,0,.4);--shadow2:0 20px 50px rgba(0,0,0,.55)}
   *{box-sizing:border-box}
   html,body{margin:0;color:var(--text);font-family:var(--body);background:var(--bg)}
@@ -19,11 +19,11 @@
   body::before{content:"";position:fixed;inset:0;pointer-events:none;background-image:radial-gradient(rgba(124,92,255,.10) 1px,transparent 1px);background-size:22px 22px;z-index:0}
   button{font-family:inherit;color:inherit;cursor:pointer}
   a{color:inherit;text-decoration:none}
-  h1,h2,h3,.dtitle,.tname,.logo{font-family:var(--disp);font-weight:400}
+  h1,h2,h3,.dtitle,.tname,.logo{font-family:var(--disp);font-weight:800;letter-spacing:-.025em}
 
   /* =========== 위쪽 바 (떠 있는 유리 막대) =========== */
   .top{position:sticky;top:10px;z-index:20;margin:10px 14px 0;height:62px;display:flex;align-items:center;gap:12px;padding:0 12px 0 16px;background:color-mix(in srgb,var(--panel) 82%,transparent);backdrop-filter:blur(14px);border:1px solid var(--line);border-radius:22px;box-shadow:var(--shadow)}
-  .logo{display:flex;align-items:center;gap:8px;font-size:30px;letter-spacing:.01em}
+  .logo{display:flex;align-items:center;gap:8px;font-size:28px;font-weight:900!important;letter-spacing:-.04em}
   .logo span{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
   .logo i{display:grid;place-items:center;width:36px;height:36px;border-radius:12px;background:var(--grad);color:#fff;font-style:normal;font-size:20px;box-shadow:0 6px 14px rgba(124,92,255,.4);animation:wob 3s ease-in-out infinite}
   @keyframes wob{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(8deg) translateY(-2px)}}
@@ -52,7 +52,7 @@
   .hero h1{margin:0;font-size:clamp(30px,4.4vw,52px);line-height:1.05;text-shadow:0 4px 24px rgba(0,0,0,.5)}
   .hero p{margin:0;font-size:14.5px;line-height:1.6;opacity:.9;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;font-weight:600}
   .hero .hb{display:flex;gap:10px;margin-top:6px}
-  .hplay{border:0;border-radius:16px;padding:13px 22px;font-family:var(--disp);font-size:20px;color:#fff;background:var(--grad);box-shadow:0 10px 24px rgba(255,95,162,.4);transition:.15s}
+  .hplay{border:0;border-radius:16px;padding:13px 22px;font-family:var(--disp);font-weight:800;font-size:18px;color:#fff;background:var(--grad);box-shadow:0 10px 24px rgba(255,95,162,.4);transition:.15s}
   .hplay:hover{transform:translateY(-2px) scale(1.03)}
   .hmore{border:0;border-radius:16px;padding:13px 18px;font-weight:800;font-size:14px;color:#fff;background:rgba(255,255,255,.16);backdrop-filter:blur(6px)}
   .dots{position:absolute;right:20px;bottom:18px;z-index:2;display:flex;gap:6px}
@@ -97,7 +97,7 @@
   .dtitle{margin:2px 0 4px;font-size:34px;line-height:1.1}
   .by{color:var(--sub);font-size:14px;margin-bottom:14px;font-weight:600}.by b{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
   .bigplay{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;height:62px;border:0;border-radius:18px;background:var(--grad);color:#fff;font-size:26px;font-family:var(--disp);box-shadow:0 10px 24px rgba(255,95,162,.35);transition:.15s}
-  .bigplay::after{content:"플레이";font-size:22px}
+  .bigplay::after{content:"플레이";font-size:20px;font-weight:800}
   .bigplay:hover{transform:translateY(-2px)}
   .bigplay:active{transform:translateY(2px)}
   .drow{display:flex;gap:8px;margin-top:10px}
@@ -146,7 +146,7 @@
   .gbtn.sm{height:36px;padding:0 13px;font-size:13px;border-radius:12px}
   .gbtn:disabled{opacity:.45;cursor:not-allowed}
   .mycode{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px;color:var(--sub);font-size:14px;font-weight:700}
-  .mycode b{font-size:24px;letter-spacing:.18em;color:var(--text);font-family:var(--disp);font-weight:400}
+  .mycode b{font-size:22px;letter-spacing:.16em;color:var(--text);font-weight:900}
   .flist{display:grid;gap:10px}
   .fitem{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:18px;background:var(--panel);border:1px solid var(--line)}
   .fitem .av{width:48px;height:48px;font-size:26px;border-radius:16px}
