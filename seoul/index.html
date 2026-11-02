@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>서울 시티 스토리</title>
+<meta name="description" content="서울을 배경으로 한 3D 오픈월드. 걷고 뛰고, 차를 훔쳐 달리고, 경찰을 따돌리고, 미션을 깨요.">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/pretendard@1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+:root{--fg:#fff;--ui:"Pretendard Variable","Pretendard",system-ui,sans-serif;--disp:"Black Han Sans","Pretendard Variable",sans-serif;--money:#7ee08a;--gold:#ffcc33;--hp:#5fd35f;--ar:#4aa8ff;--red:#ff4040}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:#000;color:var(--fg);font-family:var(--ui);touch-action:none;user-select:none;-webkit-user-select:none}
+[hidden]{display:none!important}
+button{font:inherit;color:inherit;cursor:pointer}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+.ol{position:fixed;inset:0;pointer-events:none}
+.tx{text-shadow:0 2px 0 #000,0 0 6px rgba(0,0,0,.8),2px 0 0 #000,-2px 0 0 #000,0 -2px 0 #000}
+/* HUD 오른쪽 위 */
+#hudR{position:absolute;right:calc(14px + env(safe-area-inset-right));top:calc(10px + env(safe-area-inset-top));text-align:right;display:grid;justify-items:end;gap:2px}
+#clock{font:24px var(--disp);letter-spacing:.04em}
+#money{font:34px var(--disp);color:var(--money);letter-spacing:.02em}
+#stars{font-size:26px;letter-spacing:2px;height:32px}
+#stars .s{display:inline-block;color:rgba(255,255,255,.25)}
+#stars .s.on{color:#fff;text-shadow:0 0 8px rgba(255,255,255,.7),0 2px 0 #000}
+#stars.flash .s.on{animation:fl .5s steps(2) infinite}
+@keyframes fl{50%{opacity:.25}}
+#weap{display:flex;align-items:center;gap:6px;font:15px var(--disp)}
+#weap i{font-style:normal;font-size:30px}
+/* 미니맵 */
+#radarW{position:absolute;left:calc(14px + env(safe-area-inset-left));bottom:calc(14px + env(safe-area-inset-bottom));width:210px}
+#radar{width:210px;height:150px;border-radius:12px;display:block;border:3px solid rgba(0,0,0,.75);box-shadow:0 4px 18px rgba(0,0,0,.5);background:#1c2128}
+#bars{display:flex;gap:4px;margin-top:4px}
+#bars div{height:9px;border-radius:3px;background:rgba(0,0,0,.6);overflow:hidden;flex:1;border:1px solid rgba(0,0,0,.6)}
+#bars b{display:block;height:100%;width:100%}
+#hpB b{background:linear-gradient(180deg,#7ee87e,#3fae3f)}#arB b{background:linear-gradient(180deg,#7cc4ff,#2f86d9)}
+/* 가운데 문구 */
+#area{position:absolute;right:calc(18px + env(safe-area-inset-right));bottom:calc(22px + env(safe-area-inset-bottom));text-align:right;transition:opacity .6s}
+#area b{display:block;font:34px var(--disp)}#area small{font:600 16px var(--ui);opacity:.9}
+#obj{position:absolute;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(680px,90vw);text-align:center;font:700 19px/1.4 var(--ui)}
+#obj em{font-style:normal;color:var(--gold)}
+#timer{position:absolute;left:50%;top:calc(14px + env(safe-area-inset-top));transform:translateX(-50%);font:30px var(--disp)}
+#help{position:absolute;left:calc(14px + env(safe-area-inset-left));top:calc(12px + env(safe-area-inset-top));max-width:min(360px,60vw);background:rgba(0,0,0,.72);border-radius:10px;padding:10px 14px;font:600 14px/1.5 var(--ui)}
+#help kbd{display:inline-block;background:#fff;color:#111;border-radius:4px;padding:0 5px;font:700 12px var(--ui);margin:0 1px}
+#big{position:absolute;inset:0;display:grid;place-items:center;text-align:center;background:radial-gradient(transparent 30%,rgba(0,0,0,.55))}
+#big b{display:block;font:clamp(48px,11vw,110px) var(--disp);letter-spacing:.02em;transform:skewX(-6deg)}
+#big small{display:block;font:700 20px var(--ui);margin-top:6px}
+#big.pass b{color:var(--gold)}#big.dead b{color:#d93030}#big.bust b{color:#5aa7ff}
+#radio{position:absolute;left:50%;top:calc(56px + env(safe-area-inset-top));transform:translateX(-50%);font:26px var(--disp);color:#ffcf5a;text-align:center}
+#radio small{display:block;font:700 13px var(--ui);color:#fff}
+#prompt{position:absolute;left:50%;top:58%;transform:translateX(-50%);background:rgba(0,0,0,.7);border-radius:10px;padding:8px 14px;font:700 16px var(--ui)}
+#toast{position:absolute;left:50%;top:22%;transform:translateX(-50%);background:rgba(10,10,14,.85);border-left:4px solid var(--gold);border-radius:8px;padding:10px 16px;font:700 16px/1.45 var(--ui);max-width:min(520px,90vw)}
+#speed{position:absolute;right:calc(18px + env(safe-area-inset-right));bottom:calc(84px + env(safe-area-inset-bottom));font:38px var(--disp);text-align:right}
+#speed small{font:700 13px var(--ui);display:block}
+#cross{position:absolute;left:50%;top:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:#fff;box-shadow:0 0 0 2px rgba(0,0,0,.5);opacity:.0}
+#fade{position:fixed;inset:0;background:#000;opacity:0;transition:opacity .5s;pointer-events:none}
+/* 터치 */
+#touch{position:fixed;inset:0;pointer-events:none}
+#joy{position:absolute;left:calc(26px + env(safe-area-inset-left));bottom:calc(205px + env(safe-area-inset-bottom));width:140px;height:140px;border-radius:50%;background:rgba(255,255,255,.08);border:2px solid rgba(255,255,255,.22);pointer-events:auto;touch-action:none}
+#joyK{position:absolute;left:50%;top:50%;width:62px;height:62px;margin:-31px;border-radius:50%;background:rgba(255,255,255,.35);box-shadow:0 4px 12px rgba(0,0,0,.4)}
+#tbtn{position:absolute;right:calc(16px + env(safe-area-inset-right));bottom:calc(130px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(3,64px);gap:10px;pointer-events:auto;direction:rtl}
+.tb{width:64px;height:64px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(0,0,0,.45);font-size:26px;display:grid;place-items:center;touch-action:none;direction:ltr;line-height:1}
+.tb small{font:800 10px var(--ui);display:block;margin-top:-6px}
+.tb.on{background:rgba(255,204,51,.5)}
+#tTop{position:absolute;left:calc(10px + env(safe-area-inset-left));top:calc(150px + env(safe-area-inset-top));display:flex;gap:8px;pointer-events:auto}
+#tTop .tb{width:48px;height:48px;font-size:20px}
+/* 메뉴 */
+.scr{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.55);backdrop-filter:blur(3px)}
+#title{background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(0,0,0,.75));place-items:end center;padding-bottom:max(6vh,30px)}
+.logo{text-align:center;margin-bottom:4vh;filter:drop-shadow(0 8px 24px rgba(0,0,0,.6))}
+.logo .l1{font:clamp(54px,12vw,120px)/0.95 var(--disp);color:#fff;letter-spacing:-.01em;-webkit-text-stroke:3px #000;paint-order:stroke}
+.logo .l1 span{color:#ff4d6d}
+.logo .l2{display:inline-block;margin-top:10px;background:#ffcc33;color:#111;font:clamp(16px,3.4vw,26px) var(--disp);padding:6px 18px;transform:skewX(-10deg);letter-spacing:.3em}
+.mbox{background:rgba(12,14,20,.92);border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:20px;width:min(460px,92vw);max-height:86vh;overflow:auto;display:grid;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.mbox h2{margin:0;font:28px var(--disp);letter-spacing:.02em}
+.mbox p{margin:0;color:#c9ced8;font-size:15px;line-height:1.55}
+.btn{border:0;border-radius:12px;padding:13px 18px;font:700 17px var(--ui);background:#fff;color:#111;box-shadow:0 4px 0 #999}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 #999}
+.btn.y{background:#ffcc33;box-shadow:0 4px 0 #b38600}.btn.d{background:#2a2f3a;color:#fff;box-shadow:0 4px 0 #111}
+.row{display:flex;gap:10px;flex-wrap:wrap}.row .btn{flex:1}
+#titleBtns{display:grid;gap:10px;width:min(360px,86vw)}
+.keys{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:14px;color:#dfe3ea}
+.keys b{font-weight:800;color:#ffcc33;white-space:nowrap}
+#bigMap{position:fixed;inset:0;background:rgba(0,0,0,.85);display:grid;place-items:center}
+#bigMap canvas{max-width:96vw;max-height:84vh;border-radius:14px;border:2px solid rgba(255,255,255,.2)}
+#bigMap .x{position:absolute;right:16px;top:16px}
+#loading{position:fixed;inset:0;background:#0b0d12;display:grid;place-items:center;font:700 18px var(--ui);z-index:20}
+#loading .bar{width:240px;height:8px;border-radius:4px;background:#222;margin-top:12px;overflow:hidden}#loading .bar b{display:block;height:100%;width:0;background:#ffcc33;transition:width .3s}
+.shopL{display:grid;gap:8px}.shopL button{display:flex;justify-content:space-between;align-items:center;text-align:left}
+@media (max-width:700px){#radarW{width:150px;bottom:auto;top:calc(10px + env(safe-area-inset-top));left:calc(10px + env(safe-area-inset-left))}#radar{width:150px;height:110px}#money{font-size:26px}#clock{font-size:18px}#stars{font-size:20px;height:24px}#area b{font-size:24px}#area{bottom:auto;top:calc(150px + env(safe-area-inset-top))}#obj{font-size:15px;bottom:calc(14px + env(safe-area-inset-bottom));width:60vw}#help{display:none}#speed{bottom:auto;top:calc(120px + env(safe-area-inset-top));font-size:26px}}
+@media (max-height:500px){#joy{bottom:calc(30px + env(safe-area-inset-bottom));width:120px;height:120px}#tbtn{bottom:calc(16px + env(safe-area-inset-bottom))}#radarW{bottom:auto;top:calc(8px + env(safe-area-inset-top));width:150px}#radar{width:150px;height:100px}#obj{bottom:calc(10px + env(safe-area-inset-bottom));width:50vw;font-size:14px}#area{bottom:auto;top:110px}#tTop{top:calc(128px + env(safe-area-inset-top))}}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div class="ol" id="hud" hidden>
+ <div id="hudR" class="tx"><div id="clock">17:00</div><div id="money">₩0</div><div id="stars"></div><div id="weap"><i>👊</i>주먹</div></div>
+ <div id="radarW"><canvas id="radar" width="420" height="300"></canvas><div id="bars"><div id="hpB"><b></b></div><div id="arB"><b></b></div></div></div>
+ <div id="area" class="tx" style="opacity:0"><b></b><small></small></div>
+ <div id="obj" class="tx"></div>
+ <div id="timer" class="tx" hidden></div>
+ <div id="radio" class="tx" hidden></div>
+ <div id="speed" class="tx" hidden></div>
+ <div id="prompt" hidden></div>
+ <div id="toast" hidden></div>
+ <div id="help" hidden></div>
+ <div id="big" class="tx" hidden><div><b></b><small></small></div></div>
+</div>
+<div id="touch" hidden>
+ <div id="joy"><div id="joyK"></div></div>
+ <div id="tbtn">
+  <button class="tb" id="bAct">👊<small>펀치</small></button><button class="tb" id="bRun">🏃<small>달리기</small></button><button class="tb" id="bJump">⤴️<small>점프</small></button>
+  <button class="tb" id="bCar">🚗<small>타기</small></button><button class="tb" id="bHorn" hidden>📯<small>경적</small></button><button class="tb" id="bHand" hidden>🛑<small>핸드</small></button>
+ </div>
+ <div id="tTop"><button class="tb" id="bPause">⏸</button><button class="tb" id="bMap">🗺️</button><button class="tb" id="bRadio" hidden>📻</button><button class="tb" id="bCam">🎥</button></div>
+</div>
+<div id="fade"></div>
+<div class="scr" id="title" hidden>
+ <div style="display:grid;justify-items:center">
+  <div class="logo"><div class="l1">서울 <span>시티</span><br>스토리</div><div class="l2">SEOUL CITY STORY</div></div>
+  <div id="titleBtns"></div>
+ </div>
+</div>
+<div class="scr" id="menu" hidden><div class="mbox" id="mbox"></div></div>
+<div id="bigMap" hidden><canvas id="bigMapC" width="1000" height="1000"></canvas><button class="btn d x" id="bigMapX">닫기 ✕</button></div>
+<div id="loading"><div style="text-align:center"><div style="font:40px var(--disp)">서울 시티 스토리</div><div id="ldT" style="margin-top:8px;color:#aab">서울을 짓는 중…</div><div class="bar"><b id="ldB"></b></div></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="lib/GLTFLoader.js"></script>
+<script src="lib/SkeletonUtils.js"></script>
+<script src="lib/BufferGeometryUtils.js"></script>
+<script src="js/core.js"></script>
+<script src="js/city.js"></script>
+<script src="js/chars.js"></script>
+<script src="js/cars.js"></script>
+<script src="js/audio.js"></script>
+<script src="js/game.js"></script>
+<script src="../common/blip.js" data-game="seoul"></script>
+</body>
+</html>
