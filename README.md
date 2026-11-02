@@ -14,7 +14,7 @@ This is blip company.
 | 💥 차를 부수세요 | /Blip/carcrash/ | `carcrash/index.html` (3D 자동차 파괴 · cannon-es 물리 · 파괴 기계 10개) |
 | 📱 폰 공장 타이쿤 | /Blip/phonetycoon/ | `phonetycoon/index.html` (휴대폰 회사 경영 · 칩 블록 설계 · 3D 시제품 조립 · 광고 영상 만들기) |
 | 🎱 당구 마스터 3D | /Blip/billiards/ | `billiards/index.html` (3D 당구 · 포켓볼/4구/3구 · 회전 물리 · AI · 온라인) |
-| 🏙️ 서울 시티 스토리 | /Blip/seoul/ | `seoul/index.html` + `seoul/js/` (3D 오픈월드 · 서울 배경 · 차 뺏기 · 경찰 추격 · 미션 · 진짜 사람 캐릭터 NPC) |
+| 🏙️ STA 1 | /Blip/seoul/ | `seoul/index.html` + `seoul/js/` (3D 오픈월드 · 서울 배경 · 차/오토바이 · 총 · 경찰/특공대/헬기 · 휴대폰 · 옷 · 미션 9개) |
 
 - 모든 게임 화면에 「🏠 허브」 버튼이 있어요.
 - 예전 냥냥 점프 주소(`/CatJump/CatJump.html`)는 새 주소로 자동 이동해요.

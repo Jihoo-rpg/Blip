@@ -7,7 +7,9 @@ const SPEC = {
   suv: { L: 4.8, W: 1.95, acc: 9, max: 40, brake: 17, wb: 2.85, mass: 1.4, hp: 130, name: 'SUV' },
   sports: { L: 4.45, W: 1.95, acc: 15, max: 58, brake: 22, wb: 2.6, mass: .9, hp: 90, name: '스포츠카' },
   truck: { L: 5.1, W: 1.78, acc: 7, max: 33, brake: 14, wb: 2.6, mass: 1.6, hp: 140, name: '1톤 트럭' },
-  bus: { L: 11, W: 2.5, acc: 4.5, max: 26, brake: 10, wb: 6.2, mass: 5, hp: 300, name: '시내버스' }
+  bus: { L: 11, W: 2.5, acc: 4.5, max: 26, brake: 10, wb: 6.2, mass: 5, hp: 300, name: '시내버스' },
+  bike: { L: 2.1, W: .8, acc: 15, max: 52, brake: 20, wb: 1.42, mass: .35, hp: 60, name: '오토바이', bike: 1 },
+  scooter: { L: 1.9, W: .78, acc: 8.5, max: 30, brake: 16, wb: 1.3, mass: .3, hp: 50, name: '배달 스쿠터', bike: 1 }
 };
 const PAINT = ['#f4f4f2', '#f4f4f2', '#111214', '#111214', '#8d9399', '#c4c8cc', '#2a3e66', '#7a1620', '#3b4a3a', '#d8d2c4', '#1f5ea8', '#5a5f66'];
 const _paint = {}; function paintMat(c) { return _paint[c] || (_paint[c] = new T.MeshPhysicalMaterial({ color: lin(c), metalness: .45, roughness: .32, clearcoat: 1, clearcoatRoughness: .08, envMapIntensity: 1.1 })); }
@@ -35,6 +37,18 @@ function buildModel(type) {
     M.busFront = front; M.wr = .5;
     for (const z of [-hl + 2.2, hl - 2.4]) for (const s of [-1, 1]) M.wheels.push([s * (W / 2 - .2), .5, z]);
     return MODEL[type] = M;
+  }
+  if (S.bike) {
+    const t = M.trim, sc = type === 'scooter'; M.wr = sc ? .27 : .32; const blk = '#121212', chr = '#b8bec4';
+    t.push(vcol(at(new T.BoxGeometry(.12, .12, 1.15), 0, .55, 0, -.15), blk)); // 프레임
+    t.push(vcol(at(new T.BoxGeometry(.3, .1, .62), 0, .86, -.25), '#1a1a1a')); // 안장
+    t.push(vcol(at(new T.CylinderGeometry(.03, .03, .75, 6), 0, .78, .66, .42), chr)); t.push(vcol(at(new T.CylinderGeometry(.025, .025, .62, 6).rotateZ(Math.PI / 2), 0, 1.08, .52), blk)); // 포크 · 핸들
+    t.push(vcol(at(new T.CylinderGeometry(.05, .06, .5, 8).rotateX(Math.PI / 2), .14, .42, -.55), chr));
+    if (sc) { t.push(vcol(at(new T.BoxGeometry(.55, .45, .5), 0, 1.08, -.72), '#e8303a')); }
+    M.lights.push(vcol(at(new T.BoxGeometry(.16, .1, .05), 0, .92, .9), '#fff7de'), vcol(at(new T.BoxGeometry(.16, .07, .05), 0, .85, -.95), '#ff1f1f'));
+    M.body = sc ? merge([at(new T.BoxGeometry(.42, .5, .55), 0, .66, .55), at(new T.BoxGeometry(.4, .25, .9), 0, .55, -.2)]) : merge([at(new T.BoxGeometry(.36, .3, .55), 0, .82, .18), at(new T.BoxGeometry(.26, .24, .5), 0, .62, -.1), at(new T.BoxGeometry(.3, .18, .5), 0, .82, -.65)]);
+    M.roof = new T.BoxGeometry(.001, .001, .001);
+    M.wheels.push([0, M.wr, -S.wb / 2], [0, M.wr, S.wb / 2]); M.seatY = .9; return MODEL[type] = M;
   }
   let P, cab, roofZ;
   if (type === 'sports') { P = [[-hl, .25], [hl - .1, .24], [hl, .42], [hl - .15, .62], [hl - 1.4, .78], [-hl + .7, .82], [-hl + .1, .8], [-hl, .62]]; cab = [[hl - 1.45, .76], [-.1, 1.16], [-.9, 1.17], [-hl + .75, .82]]; roofZ = [-.85, -.12, 1.15]; M.wr = .33; }
@@ -70,7 +84,7 @@ function makeCar(type, color) {
   } else {
     const pm = paintMat(type === 'taxi' ? '#e8792a' : type === 'police' ? '#f4f4f2' : color || pick(PAINT));
     if (!M.bodyR) M.bodyR = merge([M.body, M.roof]); const b = new T.Mesh(M.bodyR, pm); b.castShadow = true; body.add(b);
-    body.add(new T.Mesh(M.glass, GLASS));
+    if (M.glass) body.add(new T.Mesh(M.glass, GLASS));
     if (!M.trimG) { M.trimG = merge(M.trim); M.lightG = merge(M.lights); }
     body.add(new T.Mesh(M.trimG, TRIM)); body.add(new T.Mesh(M.lightG, LIGHTM));
     if (type === 'taxi') { if (!M.sign) M.sign = new T.MeshBasicMaterial({ map: decalTex('택시', '#ffd84a', '#1b1b1b', 256, 96) }); const sg = new T.Mesh(new T.BoxGeometry(.5, .22, .28), [M.sign, M.sign, M.sign, M.sign, M.sign, M.sign]); sg.position.set(0, 1.52, -.2); sg.rotation.y = Math.PI / 2; body.add(sg); }
@@ -81,13 +95,13 @@ function makeCar(type, color) {
       const r = new T.Mesh(new T.BoxGeometry(.52, .12, .26), SIREN.r); r.position.set(-.3, 1.55, -.25); body.add(r); const bl = new T.Mesh(new T.BoxGeometry(.52, .12, .26), SIREN.b); bl.position.set(.3, 1.55, -.25); body.add(bl); car.sirenM = [r, bl];
     }
   }
-  const wg = wheelGeo(M.wr);
+  const wg = S.bike ? (M.wgeo || (M.wgeo = merge([vcol(new T.CylinderGeometry(M.wr, M.wr, .12, 18).rotateZ(Math.PI / 2), '#141414'), vcol(new T.CylinderGeometry(M.wr * .6, M.wr * .6, .13, 10).rotateZ(Math.PI / 2), '#9aa0a6')]))) : wheelGeo(M.wr);
   M.wheels.forEach(([x, y, z], i) => { const piv = new T.Group(); piv.position.set(x, y, z); const w = new T.Mesh(wg, WHEELM); w.castShadow = true; piv.add(w); g.add(piv); car.wheels.push({ piv, w, front: z > 0 }); });
   car.circles = []; const n = Math.max(2, Math.round(S.L / S.W)); for (let i = 0; i < n; i++) car.circles.push(-S.L / 2 + S.W / 2 + (S.L - S.W) * i / (n - 1));
   return car;
 }
 function carFwd(c) { return [Math.sin(c.yaw), Math.cos(c.yaw)]; }
-function placeCar(c) { c.y = lerp(c.y, groundY(c.x, c.z), .3); c.g.position.set(c.x, c.y, c.z); c.g.rotation.y = c.yaw; c.bodyG.rotation.z = c.roll; c.bodyG.rotation.x = c.pitch; for (const w of c.wheels) { w.w.rotation.x = c.spin; if (w.front) w.piv.rotation.y = c.steer; } }
+function placeCar(c) { c.y = lerp(c.y, groundY(c.x, c.z), .3); c.g.position.set(c.x, c.y, c.z); c.g.rotation.y = c.yaw; if (c.S.bike) { const want = c.fallen ? 1.35 : (c.drv || c.rider) ? clamp(-c.steer * Math.abs(c.v) * .07, -.6, .6) : .18; c.lean = lerp(c.lean || 0, want, .15); c.g.rotation.z = c.lean; c.g.rotation.order = 'YXZ'; c.bodyG.rotation.x = c.pitch * .5; } else { c.bodyG.rotation.z = c.roll; c.bodyG.rotation.x = c.pitch; } for (const w of c.wheels) { w.w.rotation.x = c.spin; if (w.front) w.piv.rotation.y = c.steer; } }
 
 /* ---------- 운전 물리 (플레이어 · 경찰 · 버려진 차) ---------- */
 function drive(c, inp, dt) {

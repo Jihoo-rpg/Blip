@@ -12,6 +12,8 @@ const K = {}; const IN = { mx: 0, mz: 0, look: [0, 0], punch: false, jump: false
 addEventListener('keydown', e => {
   if (e.repeat) { K[e.code] = 1; return; } K[e.code] = 1; auInit();
   if (!G.on) return;
+  if (e.code === 'Tab') { e.preventDefault(); togglePhone(); return; }
+  if (!$('#phone').hidden) { if (e.code === 'Escape') closePhone(); return; }
   if (e.code === 'Escape' || e.code === 'KeyP') { togglePause(); return; }
   if (G.paused) return;
   if (e.code === 'KeyF' || e.code === 'Enter') IN.car = true;
@@ -23,11 +25,14 @@ addEventListener('keydown', e => {
   if (e.code === 'KeyM') openMap();
   if (e.code === 'KeyC') cycleCam();
   if (e.code === 'KeyT') startTaxiJob();
+  if (e.code === 'KeyQ') IN.wsw = 1;
+  const dg = /^Digit([1-4])$/.exec(e.code); if (dg) IN.wsel = WORDER[+dg[1] - 1];
   if (e.code === 'F1' || e.code === 'Slash') { G.help = !G.help; e.preventDefault(); }
 });
 addEventListener('keyup', e => { K[e.code] = 0; });
 addEventListener('blur', () => { for (const k in K) K[k] = 0; });
-cv.addEventListener('mousedown', e => { auInit(); if (!G.on || G.paused) return; if (document.pointerLockElement !== cv && !IS_MOBILE) { cv.requestPointerLock && cv.requestPointerLock(); return; } if (e.button === 0) IN.punch = true; });
+cv.addEventListener('mousedown', e => { auInit(); if (!G.on || G.paused) return; if (document.pointerLockElement !== cv && !IS_MOBILE) { cv.requestPointerLock && cv.requestPointerLock(); return; } if (e.button === 0) { IN.punch = true; IN.fireHeld = true; IN.mouseL = true; } if (e.button === 2) IN.aim = true; });
+addEventListener('mouseup', e => { if (e.button === 0) { IN.mouseL = false; IN.fireHeld = false; } if (e.button === 2) IN.aim = false; });
 addEventListener('mousemove', e => { if (document.pointerLockElement === cv) { IN.look[0] += e.movementX; IN.look[1] += e.movementY; } });
 cv.addEventListener('contextmenu', e => e.preventDefault());
 cv.addEventListener('wheel', e => { CAMS.zoom = clamp(CAMS.zoom * (e.deltaY > 0 ? 1.1 : .9), .55, 2); });
@@ -43,7 +48,10 @@ const TOUCH = { joy: null, look: null, jx: 0, jy: 0 };
   addEventListener('pointermove', e => { if (TOUCH.look === e.pointerId) { IN.look[0] += (e.clientX - TOUCH.lx) * 1.6; IN.look[1] += (e.clientY - TOUCH.ly) * 1.6; TOUCH.lx = e.clientX; TOUCH.ly = e.clientY; } });
   addEventListener('pointerup', e => { if (TOUCH.look === e.pointerId) TOUCH.look = null; }); addEventListener('pointercancel', e => { if (TOUCH.look === e.pointerId) TOUCH.look = null; });
   const hold = (id, k) => { const b = $(id); b.addEventListener('pointerdown', e => { e.preventDefault(); auInit(); IN[k + 'H'] = true; b.classList.add('on'); }); const u = () => { IN[k + 'H'] = false; if (k !== 'run') b.classList.remove('on'); }; b.addEventListener('pointerup', u); b.addEventListener('pointercancel', u); b.addEventListener('pointerleave', u); };
-  $('#bAct').addEventListener('pointerdown', e => { e.preventDefault(); auInit(); if (PL.car) IN.horn = true; else IN.punch = true; });
+  $('#bAct').addEventListener('pointerdown', e => { e.preventDefault(); auInit(); if (PL.car) IN.horn = true; else { IN.punch = true; IN.fireHeld = IN.fireHeldTouch = true; } });
+  for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) $('#bAct').addEventListener(ev, () => { IN.fireHeldTouch = false; IN.fireHeld = false; });
+  $('#weap').addEventListener('pointerdown', e => { e.preventDefault(); IN.wsw = 1; });
+  $('#bPhone').addEventListener('pointerdown', e => { e.preventDefault(); auInit(); togglePhone(); });
   $('#bJump').addEventListener('pointerdown', e => { e.preventDefault(); auInit(); IN.jump = true; });
   $('#bCar').addEventListener('pointerdown', e => { e.preventDefault(); auInit(); if (PROMPT.act && !PL.car) IN.act = true; else IN.car = true; });
   $('#bRun').addEventListener('pointerdown', e => { e.preventDefault(); auInit(); IN.sprintT = !IN.sprintT; $('#bRun').classList.toggle('on', IN.sprintT); });
@@ -67,14 +75,15 @@ function fx(kind, x, y, z, o) {
   const s = new T.Sprite(m); s.position.set(x, y, z); const sz = o.s || 1; s.scale.set(sz, sz, sz); scene.add(s);
   FX.list.push({ s, t: 0, life: o.life || 1, vx: o.vx || rand(-.5, .5), vy: o.vy == null ? 1 : o.vy, vz: o.vz || rand(-.5, .5), grow: o.g || 1.5, a: o.a || .8, sz });
 }
-function fxUpdate(dt) { for (let i = FX.list.length - 1; i >= 0; i--) { const p = FX.list[i]; p.t += dt; const k = p.t / p.life; if (k >= 1) { scene.remove(p.s); p.s.material.dispose(); FX.list.splice(i, 1); continue; } p.s.position.x += p.vx * dt; p.s.position.y += p.vy * dt; p.s.position.z += p.vz * dt; const s = p.sz * (1 + k * p.grow); p.s.scale.set(s, s, s); p.s.material.opacity = p.a * (1 - k); } }
+function fxUpdate(dt) { for (let i = FX.list.length - 1; i >= 0; i--) { const p = FX.list[i]; p.t += dt; const k = p.t / p.life; if (k >= 1) { scene.remove(p.s); p.s.material.dispose(); FX.list.splice(i, 1); continue; } p.s.position.x += p.vx * dt; p.s.position.y += p.vy * dt; p.s.position.z += p.vz * dt; if (!p.lbl) { const s = p.sz * (1 + k * p.grow); p.s.scale.set(s, s, s); } p.s.material.opacity = p.a * (p.lbl ? Math.min(1, (1 - k) * 3) : 1 - k); } }
 
 /* ---------- 플레이어 ---------- */
-const PL = { P: null, x: 0, z: 0, y: 0, vy: 0, yaw: 0, spd: 0, car: null, punchT: 0, punchHit: false, ko: 0, koMax: 1, hp: 100, ar: 0, dmgT: 99, grab: 0, isPlayer: true, side: 1, kv: [0, 0], stepT: 0 };
-function spawnPlayer() { PL.P = makePerson(LOOKS.player); scene.add(PL.P.root); setShadow(PL.P, true); }
+const PL = { P: null, x: 0, z: 0, y: 0, vy: 0, yaw: 0, spd: 0, car: null, punchT: 0, punchHit: false, stompT: 0, ko: 0, koMax: 1, hp: 100, ar: 0, dmgT: 99, grab: 0, isPlayer: true, side: 1, kv: [0, 0], stepT: 0, fireCD: 0, aimT: 0, gun: null, gunW: null };
+function playerLook() { return Object.assign({}, LOOKS.player, SV.outfit || {}); }
+function spawnPlayer() { if (PL.P) { PL.P.root.parent && PL.P.root.parent.remove(PL.P.root); PL.P.mixer.stopAllAction(); } PL.P = makePerson(playerLook()); scene.add(PL.P.root); setShadow(PL.P, true); if (PL.car && PL.car.S.bike) mountBike(PL.car); }
 function playerPos(x, z, yaw) { PL.x = x; PL.z = z; PL.y = groundY(x, z); PL.yaw = yaw || 0; CAMS.yaw = PL.yaw; }
 function hurtPlayer(d, from) {
-  if (G.dead || !G.on) return; d = Math.round(d); if (PL.ar > 0) { const a = Math.min(PL.ar, d * .7); PL.ar -= a; d -= a; } PL.hp -= d; PL.dmgT = 0; G.shake = Math.max(G.shake, .25); SFX.hurt();
+  if (G.dead || !G.on) return; d = Math.round(d); if (PL.ar > 0) { const a = Math.min(PL.ar, d * .7); PL.ar -= a; d -= a; } PL.hp -= d; PL.dmgT = 0; G.shake = Math.max(G.shake, .25); SFX.hurt(); G.hurtFlash = .5;
   if (PL.hp <= 0) wasted();
 }
 function knockPlayer(t, vx, vz) { if (PL.car) return; PL.ko = Math.max(PL.ko, t); PL.koMax = PL.ko; PL.kv = [vx || 0, vz || 0]; PL.P.pose = null; }
@@ -86,63 +95,94 @@ function updatePlayerFoot(dt) {
     const p = { x: PL.x, z: PL.z }; collideCircle(p, .35, PL.y); inBounds(p, .35); PL.x = p.x; PL.z = p.z; PL.y = groundY(PL.x, PL.z) + k * .12; return;
   }
   P.root.rotation.x = 0;
+  const wid = curWid(), armed = wid !== 'fist'; PL.fireCD -= dt; PL.aimT -= dt;
+  const aiming = armed && (IN.aim || PL.aimT > 0 || IN.fireHeld);
   const fwd = [Math.sin(CAMS.yaw), Math.cos(CAMS.yaw)], rt = [-Math.cos(CAMS.yaw), Math.sin(CAMS.yaw)];
   let dx = fwd[0] * IN.mz + rt[0] * IN.mx, dz = fwd[1] * IN.mz + rt[1] * IN.mx; const mag = Math.hypot(dx, dz);
-  let target = 0; if (mag > .05) { dx /= mag; dz /= mag; target = IN.walk || (IS_MOBILE && mag < .55) ? 1.8 : IN.sprint ? 6.6 : 4.4; if (PL.grab > 0) target *= .6; }
-  if (PL.punchT > 0) target *= .25;
+  let target = 0; if (mag > .05) { dx /= mag; dz /= mag; target = IN.walk || (IS_MOBILE && mag < .55) ? 1.8 : IN.sprint && !aiming ? 6.6 : aiming ? 3.2 : 4.4; if (PL.grab > 0) target *= .6; }
+  if (PL.punchT > 0 || PL.stompT > 0) target *= .2;
   PL.spd += clamp(target - PL.spd, -18 * dt, 10 * dt);
-  if (mag > .05) { const ty = Math.atan2(dx, dz); PL.yaw += angDiff(PL.yaw, ty) * Math.min(1, dt * 12); PL.mvx = dx; PL.mvz = dz; }
+  if (mag > .05) { PL.mvx = dx; PL.mvz = dz; if (!aiming) { const ty = Math.atan2(dx, dz); PL.yaw += angDiff(PL.yaw, ty) * Math.min(1, dt * 12); } }
+  if (aiming && !IS_MOBILE && (IN.aim || IN.fireHeld)) PL.yaw += angDiff(PL.yaw, CAMS.yaw) * Math.min(1, dt * 20);
   PL.x += (PL.mvx || 0) * PL.spd * dt; PL.z += (PL.mvz || 0) * PL.spd * dt;
   // 점프
   const gy = groundY(PL.x, PL.z); if (IN.jump && PL.y <= gy + .02 && PL.punchT <= 0) { PL.vy = 4.6; SFX.whoosh(); }
   PL.vy -= 14 * dt; PL.y += PL.vy * dt; if (PL.y <= gy) { PL.y = gy; PL.vy = 0; }
   const p = { x: PL.x, z: PL.z }; collideCircle(p, .35, PL.y); inBounds(p, .35); PL.x = p.x; PL.z = p.z;
-  // 펀치
-  if (IN.punch && PL.punchT <= 0) { PL.punchT = .42; PL.punchHit = false; PL.side = -PL.side; P.pose = 'punch'; P.punchSide = PL.side; SFX.whoosh(); }
-  if (PL.punchT > 0) {
-    PL.punchT -= dt; P.poseT = 1 - PL.punchT / .42;
-    if (!PL.punchHit && P.poseT > .3) { PL.punchHit = true; const f = [Math.sin(PL.yaw), Math.cos(PL.yaw)]; let best = null, bd = 1.6;
-      for (const n of NPCS) { if (n.ko > 0 || n.inCar) continue; const ddx = n.x - PL.x, ddz = n.z - PL.z, d = Math.hypot(ddx, ddz); if (d < bd && (ddx * f[0] + ddz * f[1]) / (d || 1) > .45) { best = n; bd = d; } }
-      if (best) { npcHit(best, 34, f[0], f[1], 'player'); SFX.punch(); G.shake = Math.max(G.shake, .12); if (PL.grab > 0) PL.grab = 0; }
+  if (armed) {
+    if (IN.punch || (WEAP[wid].auto && IN.fireHeld)) playerFire();
+    if (aiming) { P.pose = 'aim'; if (!IS_MOBILE || !P.aimDir || PL.aimT < 1.6) { const d = new T.Vector3(); cam.getWorldDirection(d); if (!IS_MOBILE || !P.aimDir) P.aimDir = d; } }
+    else if (P.pose === 'aim') P.pose = null;
+  } else {
+    // 펀치 · 밟기
+    if (IN.punch && PL.punchT <= 0 && PL.stompT <= 0) {
+      const f = [Math.sin(PL.yaw), Math.cos(PL.yaw)]; let down = null, dd = 1.7;
+      for (const n of NPCS) { if (!(n.ko > 0) || n.dead) continue; const ddx = n.x - PL.x, ddz = n.z - PL.z, d = Math.hypot(ddx, ddz); if (d < dd && (d < 1.4 || (ddx * f[0] + ddz * f[1]) / d > .2)) { down = n; dd = d; } }
+      if (down) { PL.stompT = .62; PL.stompTgt = down; PL.punchHit = false; P.pose = 'stomp'; PL.yaw = Math.atan2(down.x - PL.x, down.z - PL.z); }
+      else { PL.punchT = .42; PL.punchHit = false; PL.side = -PL.side; P.pose = 'punch'; P.punchSide = PL.side; SFX.whoosh(); }
     }
-    if (PL.punchT <= 0) P.pose = PL.grab > 0 ? 'hands' : null;
+    if (PL.stompT > 0) {
+      PL.stompT -= dt; P.poseT = 1 - PL.stompT / .62; const n = PL.stompTgt;
+      if (!PL.punchHit && P.poseT > .55) { PL.punchHit = true; if (n && NPCS.includes(n) && Math.hypot(n.x - PL.x, n.z - PL.z) < 2) { npcDamage(n, 80, 0, 0, 'player', 'stomp'); SFX.punch(); SFX.punch(); G.shake = Math.max(G.shake, .2); fx('dust', n.x, n.y + .2, n.z, { s: .7, life: .4, vy: .4, a: .7 }); } }
+      if (PL.stompT <= 0) P.pose = null;
+    }
+    if (PL.punchT > 0) {
+      PL.punchT -= dt; P.poseT = 1 - PL.punchT / .42;
+      if (!PL.punchHit && P.poseT > .22) { PL.punchHit = true; const f = [Math.sin(PL.yaw), Math.cos(PL.yaw)]; let best = null, bd = 1.6;
+        for (const n of NPCS) { if (n.ko > 0 || n.dead) continue; const ddx = n.x - PL.x, ddz = n.z - PL.z, d = Math.hypot(ddx, ddz); if (d < bd && (ddx * f[0] + ddz * f[1]) / (d || 1) > .45) { best = n; bd = d; } }
+        if (best) { npcDamage(best, 34, f[0], f[1], 'player', 'punch'); SFX.punch(); G.shake = Math.max(G.shake, .12); if (PL.grab > 0) PL.grab = 0; }
+      }
+      if (PL.punchT <= 0) P.pose = PL.grab > 0 ? 'hands' : null;
+    }
   }
   // 애니메이션
   const s = PL.spd; if (PL.y > gy + .05) setAnim(P, 'run', .5); else if (s < .3) setAnim(P, 'idle', 1); else if (s < 2.6) setAnim(P, 'walk', s / 1.5); else setAnim(P, 'run', s / 5.2);
   PL.stepT += s * dt; if (PL.stepT > 1.4 && PL.y <= gy + .02) { PL.stepT = 0; SFX.step(); }
-  if (PL.grab > 0 && PL.punchT <= 0) P.pose = 'hands'; else if (PL.punchT <= 0 && P.pose === 'hands') P.pose = null;
+  if (PL.grab > 0 && PL.punchT <= 0 && !armed) P.pose = 'hands'; else if (PL.punchT <= 0 && P.pose === 'hands') P.pose = null;
 }
-function placePlayer(dt) { const P = PL.P; P.root.position.set(PL.x, PL.y, PL.z); P.root.rotation.y = PL.yaw; P.mixer.update(dt); if (P.pose) applyPose(P); }
+function placePlayer(dt) {
+  const P = PL.P; if (!(PL.car && PL.car.S.bike)) { P.root.position.set(PL.x, PL.y, PL.z); P.root.rotation.y = PL.yaw; } P.mixer.update(dt); applyPose(P);
+  if (PL.gun) { const ok = !PL.car && PL.ko <= 0; PL.gun.visible = ok; if (ok) placeGun(P, PL.gun, P.aimDir || new T.Vector3(Math.sin(PL.yaw), 0, Math.cos(PL.yaw)), P.pose === 'aim'); }
+}
 
 /* ---------- 차 타기 · 내리기 ---------- */
-function nearestCar(x, z, r) { let best = null, bd = r; for (const c of CARS) { if (c.dead || c === PL.car) continue; const f = carFwd(c); const dx = x - c.x, dz = z - c.z; const lz = dx * f[0] + dz * f[1], lx = dx * f[1] - dz * f[0]; const ex = Math.max(0, Math.abs(lx) - c.S.W / 2), ez = Math.max(0, Math.abs(lz) - c.S.L / 2); const d = Math.hypot(ex, ez); if (d < bd) { bd = d; best = c; } } return best; }
+function nearestCar(x, z, r) { let best = null, bd = r; for (const c of CARS) { if (c.dead || c === PL.car || c.roadblock && false) continue; const f = carFwd(c); const dx = x - c.x, dz = z - c.z; const lz = dx * f[0] + dz * f[1], lx = dx * f[1] - dz * f[0]; const ex = Math.max(0, Math.abs(lx) - c.S.W / 2), ez = Math.max(0, Math.abs(lz) - c.S.L / 2); const d = Math.hypot(ex, ez); if (d < bd) { bd = d; best = c; } } return best; }
+function ejectRider(c, vx, vz) { // 오토바이 운전자 떨어뜨리기
+  if (!c.rider) return; const look = c.rider.look; c.bodyG.remove(c.rider.root); c.rider.mixer.stopAllAction(); c.rider = null; c.drvP = false; c.ai = null; c.parked = true; c.fallen = true;
+  const n = spawnNPC(c.x + (vx || 0) * .2, c.z + (vz || 0) * .2, look.cop ? 'cop' : 'ped', look); knockNPC(n, 1.4, vx || rand(-2, 2), vz || rand(-2, 2)); n.afterKo = n.tough ? 'fight' : 'flee'; n.t = 12; n.threat = [PL.x, PL.z]; return n;
+}
+function mountBike(c) { const P = PL.P; c.bodyG.add(P.root); P.root.position.set(0, (buildModel(c.type).seatY || .9) - P.hipY + .04, -.22); P.root.rotation.set(0, 0, 0); P.pose = 'ride'; setAnim(P, 'idle', 1); }
 function enterCar(c) {
-  if (c.drvP || c.ai && c.ai.mode !== 'parked') { // 운전자 끌어내기
+  if (c.rider) { const n = ejectRider(c, carLeft(c)[0] * 2.5, carLeft(c)[1] * 2.5); crime('jack', c.x, c.z); SV.stolen++; if (n && n.tough && Math.random() < .6) { n.afterKo = 'fight'; } }
+  else if (c.drvP || c.ai && c.ai.mode !== 'parked') { // 운전자 끌어내기
     const look = c.drvLook || randomLook(Math.random() < .3); const L = carLeft(c); const n = spawnNPC(c.x + L[0] * (c.S.W / 2 + .7), c.z + L[1] * (c.S.W / 2 + .7), look.cop ? 'cop' : 'ped', look);
-    if (n) { n.yaw = c.yaw; knockNPC(n, 1.2, L[0] * 2.5, L[1] * 2.5); n.afterKo = look.cop ? 'chase' : 'flee'; n.threat = [PL.x, PL.z]; }
+    if (n) { n.yaw = c.yaw; knockNPC(n, 1.2, L[0] * 2.5, L[1] * 2.5); n.afterKo = look.cop ? 'chase' : n.tough && Math.random() < .55 ? 'fight' : 'flee'; n.t = 15; n.threat = [PL.x, PL.z]; if (n.afterKo === 'fight') popLabel(n.x, n.y + 2.1, n.z, '내 차야!', '#ffffff', 1.4); if (look.cop && G.wanted >= 1) armNPC(n, 'pistol'); }
     crime(c.type === 'police' ? 'copcar' : 'jack', c.x, c.z); SV.stolen++;
-    if (c.type === 'police') for (const o of c.cops || []) { }
   }
-  c.ai = null; c.drvLook = null; c.drvP = false; c.chase = false; c.siren = false; c.parked = false; c.drv = 'player'; PL.car = c; PL.P.root.visible = false; PL.P.pose = null; PL.punchT = 0; PL.grab = 0;
+  c.ai = null; c.drvLook = null; c.drvP = false; c.chase = false; c.siren = false; c.parked = false; c.fallen = false; c.roadblock = false; c.drv = 'player'; PL.car = c; PL.P.pose = null; PL.punchT = 0; PL.stompT = 0; PL.grab = 0; PL.aimT = 0;
+  if (c.S.bike) { mountBike(c); PL.P.root.visible = true; } else PL.P.root.visible = false;
   SFX.door(); radioShow(); if (c.alarm) { c.alarm = false; crime('alarm', c.x, c.z); }
-  missionEvent('enter', c);
+  hudWeapon(); missionEvent('enter', c);
 }
 function carLeft(c) { const f = carFwd(c); return [f[1], -f[0]]; }
 function exitCar() {
-  const c = PL.car; if (!c) return; const L = carLeft(c), f = carFwd(c); let p = { x: c.x + L[0] * (c.S.W / 2 + .6) + f[0] * .4, z: c.z + L[1] * (c.S.W / 2 + .6) + f[1] * .4 };
-  const before = { x: p.x, z: p.z }; collideCircle(p, .35, 0); if (Math.hypot(p.x - before.x, p.z - before.z) > .3) p = { x: c.x - L[0] * (c.S.W / 2 + .6), z: c.z - L[1] * (c.S.W / 2 + .6) };
+  const c = PL.car; if (!c) return; const L = carLeft(c), f = carFwd(c); const side = c.S.bike ? .7 : c.S.W / 2 + .6; let p = { x: c.x + L[0] * side + f[0] * .4, z: c.z + L[1] * side + f[1] * .4 };
+  const before = { x: p.x, z: p.z }; collideCircle(p, .35, 0); if (Math.hypot(p.x - before.x, p.z - before.z) > .3) p = { x: c.x - L[0] * side, z: c.z - L[1] * side };
+  if (c.S.bike) { scene.add(PL.P.root); PL.P.pose = null; PL.P.root.rotation.set(0, c.yaw, 0); c.fallen = Math.abs(c.v) > 4; }
   inBounds(p, .35); PL.x = p.x; PL.z = p.z; PL.y = groundY(p.x, p.z); PL.yaw = c.yaw; PL.spd = 0; c.drv = null; c.parked = true; PL.car = null; SFX.door();
   if (Math.abs(c.v) > 9) { knockPlayer(1.1, f[0] * c.v * .4 + L[0] * 3, f[1] * c.v * .4 + L[1] * 3); hurtPlayer(Math.abs(c.v) * .6); }
-  engineUpdate(false, 0); radioHide(); missionEvent('exit', c);
+  engineUpdate(false, 0); radioHide(); hudWeapon(); missionEvent('exit', c);
 }
 function updatePlayerCar(dt) {
   const c = PL.car; let thr = Math.max(0, IN.mz), brk = Math.max(0, -IN.mz); const steer = -IN.mx;
   const hit = drive(c, { thr, brk, steer, hand: IN.hand }, dt);
   if (hit > 4) carHurt(c, hit, true);
+  if (c.S.bike && hit > 8) { throwOffBike(hit); return; }
   if (IN.horn) { SFX.horn(); hornScare(c.x, c.z); }
   PL.x = c.x; PL.z = c.z; PL.y = c.y; PL.yaw = c.yaw;
   if (c.fire > 0 && c.fire < 1.5) setPrompt('🔥 차에 불이 붙었어요! 빨리 내려요 (F)');
 }
+function throwOffBike(imp) { const c = PL.car; const f = carFwd(c); const v = c.v; exitCar(); c.fallen = true; c.v *= .3; knockPlayer(1.6, f[0] * v * .5, f[1] * v * .5); hurtPlayer(6 + imp * 1.1); SFX.crash(.8); popLabel(PL.x, PL.y + 2, PL.z, '꽈당!', '#ffcc33', 1.2); }
 function carHurt(c, imp, mine) {
   if (c.dead) return; const d = Math.max(0, imp - 5) * 1.3 / Math.sqrt(c.S.mass); c.hp -= d; if (imp > 6) { SFX.crash(imp / 18); G.shake = Math.max(G.shake, mine ? clamp(imp / 30, .1, .6) : 0); for (let i = 0; i < 4; i++)fx('spark', c.x + rand(-1, 1), c.y + .7, c.z + rand(-1, 1), { s: .35, life: .4, vy: 3, a: 1 }); }
   if (c.hp <= 0 && !c.fire) { c.fire = 6; c.hp = 0; }
@@ -151,53 +191,77 @@ function carHurt(c, imp, mine) {
 function explodeCar(c) {
   c.dead = true; c.fire = 0; SFX.boom(); G.shake = Math.max(G.shake, PL.car === c ? 1 : clamp(1 - Math.hypot(c.x - PL.x, c.z - PL.z) / 40, 0, .8));
   for (let i = 0; i < 18; i++) fx(i % 3 ? 'fire' : 'smoke', c.x + rand(-1.5, 1.5), c.y + 1, c.z + rand(-1.5, 1.5), { s: rand(1.5, 3), life: rand(.6, 1.6), vy: rand(1, 5), vx: rand(-3, 3), vz: rand(-3, 3), a: .9 });
+  if (c.rider) ejectRider(c);
   const burnt = new T.MeshStandardMaterial({ color: lin('#151312'), roughness: .9 }); c.bodyG.traverse(o => { if (o.isMesh) o.material = burnt; }); c.v *= .2; c.ai = null; c.parked = true;
   if (PL.car === c) { exitCar(); hurtPlayer(70); knockPlayer(1.5, rand(-4, 4), rand(-4, 4)); }
   else { const d = Math.hypot(c.x - PL.x, c.z - PL.z); if (d < 7 && !PL.car) { hurtPlayer((7 - d) * 12); knockPlayer(1.2, (PL.x - c.x) / d * 6, (PL.z - c.z) / d * 6); } }
-  for (const n of NPCS) { const d = Math.hypot(n.x - c.x, n.z - c.z); if (d < 6) knockNPC(n, 6, (n.x - c.x) / d * 6, (n.z - c.z) / d * 6); else if (d < 25) npcFlee(n, c.x, c.z); }
+  for (const n of NPCS) { const d = Math.hypot(n.x - c.x, n.z - c.z); if (d < 6) { npcDamage(n, 200, (n.x - c.x) / (d || 1), (n.z - c.z) / (d || 1), PL.car === c || c.byPlayer ? 'player' : 'npc', 'boom'); knockNPC(n, n.dead ? 1e9 : n.ko, (n.x - c.x) / (d || 1) * 6, (n.z - c.z) / (d || 1) * 6); } else if (d < 25) npcFlee(n, c.x, c.z); }
   for (const o of CARS) if (o !== c && !o.dead && Math.hypot(o.x - c.x, o.z - c.z) < 6) carHurt(o, 30, o === PL.car);
   if (G.on) crime('boom', c.x, c.z); missionEvent('boom', c);
 }
-function hornScare(x, z) { for (const n of NPCS) if (n.st === 'walk' || n.st === 'idle' || n.st === 'wait') { const d = Math.hypot(n.x - x, n.z - z); if (d < 9 && Math.random() < .4) npcFlee(n, x, z, 2.5); } }
+function hornScare(x, z) { for (const n of NPCS) if (n.st === 'walk' || n.st === 'idle' || n.st === 'wait') { const d = Math.hypot(n.x - x, n.z - z); if (d < 9) { if (n.tough && Math.random() < .25) { n.st = 'fight'; n.t = 12; popLabel(n.x, n.y + 2.1, n.z, '뭐야!', '#fff', 1.2); } else if (Math.random() < .4) npcFlee(n, x, z, 2.5); } } }
 
 /* ---------- 행인 NPC ---------- */
 const NPCS = [];
 const RING_E = RH + 2.2;
 function ringCorner(bi, bj, k) { const x0 = bi * P + RING_E, x1 = (bi + 1) * P - RING_E, z0 = bj * P + RING_E, z1 = (bj + 1) * P - RING_E; return [[x0, z0], [x1, z0], [x1, z1], [x0, z1]][((k % 4) + 4) % 4]; }
 function spawnNPC(x, z, kind, look) {
-  const isCop = kind === 'cop'; look = look || (isCop ? LOOKS.police() : kind === 'thug' ? LOOKS.thug() : randomLook(Math.random() < .32));
+  const isCop = kind === 'cop' || kind === 'swat'; look = look || (kind === 'swat' ? LOOKS.swat() : isCop ? LOOKS.police() : kind === 'thug' ? LOOKS.thug() : randomLook(Math.random() < .32));
   const P_ = makePerson(look); scene.add(P_.root);
-  const n = { P: P_, x, z, y: groundY(x, z), yaw: rand(0, 6.28), st: 'walk', cop: isCop, kind, hp: isCop ? 100 : kind === 'thug' ? 160 : 70, ko: 0, koMax: 1, kv: [0, 0], t: 0, spd: rand(1.15, 1.55), tough: !look.w && (kind === 'thug' || Math.random() < .2), punchT: 0, cool: 0, money: Math.random() < .55 ? randi(1, 8) * 1000 : 0 };
-  n.bi = clamp(Math.floor(x / P), -NR, NR - 1); n.bj = clamp(Math.floor(z / P), -NR, NR - 1); n.k = randi(0, 3); n.dir = Math.random() < .5 ? 1 : -1; n.tgt = ringCorner(n.bi, n.bj, n.k);
-  if (isCop) { n.st = 'chase'; n.spd = 5.6; }
+  const n = { P: P_, look, x, z, y: groundY(x, z), yaw: rand(0, 6.28), st: 'walk', cop: isCop || !!look.cop, kind, hp: look.swat ? 200 : isCop ? 100 : kind === 'thug' ? 150 : 70, ko: 0, kos: 0, koMax: 1, kv: [0, 0], t: 0, spd: rand(1.15, 1.55), tough: kind === 'thug' || (!look.w ? Math.random() < .45 : Math.random() < .12), punchT: 0, cool: 0, money: Math.random() < .6 ? randi(1, 9) * 1000 : 0, thug: kind === 'thug' };
+  n.maxHp = n.hp; n.bi = clamp(Math.floor(x / P), -NR, NR - 1); n.bj = clamp(Math.floor(z / P), -NR, NR - 1); n.k = randi(0, 3); n.dir = Math.random() < .5 ? 1 : -1; n.tgt = ringCorner(n.bi, n.bj, n.k);
+  if (n.cop) { n.st = 'chase'; n.spd = 5.6; if (look.swat) armNPC(n, 'smg'); else if (G.wanted >= 2) armNPC(n, 'pistol'); }
   NPCS.push(n); return n;
 }
-function removeNPC(n) { scene.remove(n.P.root); n.P.mixer.stopAllAction(); n.P.root.traverse(o => { if (o.isMesh && o.material) o.material.dispose(); }); const i = NPCS.indexOf(n); if (i >= 0) NPCS.splice(i, 1); }
-function knockNPC(n, t, vx, vz) { n.ko = Math.max(n.ko, t); n.koMax = n.ko; n.kv = [vx, vz]; n.st = 'ko'; n.P.pose = null; }
-function npcFlee(n, fx_, fz_, t) { if (n.st === 'ko' || n.cop || n.st === 'fight' || n.mission) return; n.st = 'flee'; n.threat = [fx_, fz_]; n.t = t || rand(5, 8); }
-function npcHit(n, dmg, fx_, fz_, by) {
+function removeNPC(n) { scene.remove(n.P.root); if (n.gunM) scene.remove(n.gunM); n.P.mixer.stopAllAction(); n.P.root.traverse(o => { if (o.isMesh && o.material) o.material.dispose(); }); const i = NPCS.indexOf(n); if (i >= 0) NPCS.splice(i, 1); }
+function knockNPC(n, t, vx, vz) { if (n.dead) { n.kv = [vx, vz]; return; } n.ko = Math.max(n.ko, t); n.koMax = n.ko; n.kv = [vx, vz]; n.st = 'ko'; n.P.pose = null; }
+function npcFlee(n, fx_, fz_, t) { if (n.dead || n.ko > 0 || n.cop || n.st === 'fight' || n.st === 'shoot' || n.mission) return; n.st = 'flee'; n.threat = [fx_, fz_]; n.t = t || rand(5, 8); n.P.pose = null; }
+/* 다치게 하기: 처음 쓰러지면 기절, 기절한 사람을 또 때리거나 · 깨어난 뒤 또 쓰러뜨리면 사망 */
+function npcDamage(n, dmg, dx, dz, by, kind) {
+  if (n.dead) { if (kind !== 'stomp') return; }
+  const mine = by === 'player';
+  if (mine && kind !== 'boom') { missionEvent('hit', n); crime(n.cop ? 'hitcop' : kind === 'gun' ? 'shootped' : 'punch', n.x, n.z); }
+  if (n.ko > 0 && !n.dead) { if (dmg >= 10) killNPC(n, by); return; }
   n.hp -= dmg; fx('dust', n.x, n.y + 1.2, n.z, { s: .5, life: .4, vy: .5, a: .6 });
-  if (by === 'player') { crime(n.cop ? 'hitcop' : 'punch', n.x, n.z); missionEvent('hit', n); }
-  if (n.hp <= 0) { knockNPC(n, rand(6, 9), fx_ * 3, fz_ * 3); n.afterKo = n.cop ? 'chase' : 'flee'; n.hp = n.cop ? 60 : 40; if (n.cop && by === 'player') crime('kocop', n.x, n.z); if (n.money && !n.cop) { dropCash(n.x, n.z, n.money); n.money = 0; } missionEvent('ko', n); }
-  else if (n.cop) { n.st = 'chase'; knockNPC(n, .5, fx_ * 2, fz_ * 2); n.afterKo = 'chase'; }
-  else if (n.tough && by === 'player') { n.st = 'fight'; n.t = 15; n.P.pose = 'guard'; }
-  else { knockNPC(n, .45, fx_ * 2.5, fz_ * 2.5); n.afterKo = 'flee'; n.threat = [PL.x, PL.z]; }
-  for (const o of NPCS) if (o !== n && !o.cop && Math.hypot(o.x - n.x, o.z - n.z) < 14) npcFlee(o, n.x, n.z);
+  if (n.hp <= 0) {
+    if (n.kos >= 1) { killNPC(n, by); knockNPC(n, 1e9, dx * 3, dz * 3); return; }
+    n.kos = 1; n.hp = Math.round(n.maxHp * .5); knockNPC(n, rand(10, 14), dx * 3, dz * 3); n.afterKo = n.cop ? 'chase' : n.tough && kind !== 'gun' ? 'fight' : 'flee'; n.t = 12;
+    popLabel(n.x, n.y + 1.4, n.z, '기절', '#ffd84a', 1.6); if (n.money && !n.cop) { dropCash(n.x, n.z, n.money); n.money = 0; }
+    if (mine && n.cop) crime('kocop', n.x, n.z); missionEvent('ko', n);
+  }
+  else if (n.cop) { if (n.st !== 'chase') n.st = 'chase'; if (kind !== 'gun') { knockNPC(n, .45, dx * 2, dz * 2); n.afterKo = 'chase'; } }
+  else if (kind === 'gun' && !n.thug) { npcFlee(n, PL.x, PL.z, 9); }
+  else if (n.tough && mine) { if (n.st !== 'fight') popLabel(n.x, n.y + 2.1, n.z, pick(['덤벼!', '이게 미쳤나!', '야!', '가만 안 둬!']), '#ffffff', 1.3); n.st = 'fight'; n.t = 18; n.P.pose = 'guard'; if (kind === 'punch' && Math.random() < .35) { knockNPC(n, .4, dx * 2, dz * 2); n.afterKo = 'fight'; } }
+  else { knockNPC(n, .45, dx * 2.5, dz * 2.5); n.afterKo = 'flee'; n.threat = [PL.x, PL.z]; }
+  // 주변 사람들: 센 사람은 같이 덤비고, 나머지는 도망
+  if (mine && kind !== 'gun') for (const o of NPCS) { if (o === n || o.cop || o.dead || o.ko > 0 || o.mission) continue; const d = Math.hypot(o.x - n.x, o.z - n.z); if (d > 14) continue; if (o.tough && d < 11 && o.st !== 'fight' && Math.random() < .4) { o.st = 'fight'; o.t = 16; popLabel(o.x, o.y + 2.1, o.z, pick(['왜 때려요!', '그만해!', '야!']), '#ffffff', 1.3); } else if (o.st !== 'fight') npcFlee(o, n.x, n.z); }
+}
+function npcHit(n, dmg, fx_, fz_, by) { npcDamage(n, dmg, fx_, fz_, by, 'punch'); }
+function killNPC(n, by) {
+  if (n.dead) return; n.dead = true; n.st = 'dead'; n.ko = 1e9; n.koMax = 1e9; n.deadT = 0; n.P.pose = null; if (n.gunM) n.gunM.visible = false;
+  popLabel(n.x, n.y + 1.2, n.z, '사망', '#ff4d4d', 2);
+  if (n.money) { dropCash(n.x, n.z, n.money); n.money = 0; } if (n.cop && n.gun && Math.random() < .7) dropAmmo(n.x + .6, n.z, 'pistol', 12);
+  if (by === 'player') { crime(n.cop ? 'killcop' : 'kill', n.x, n.z); SV.kills = (SV.kills || 0) + 1; }
+  for (const o of NPCS) if (!o.cop && !o.dead && Math.hypot(o.x - n.x, o.z - n.z) < 20) npcFlee(o, n.x, n.z, 9);
+  missionEvent('kill', n);
 }
 function moveToward(n, tx, tz, spd, dt) { const dx = tx - n.x, dz = tz - n.z, d = Math.hypot(dx, dz); if (d < .05) return d; const st = Math.min(d, spd * dt); n.x += dx / d * st; n.z += dz / d * st; n.yaw += angDiff(n.yaw, Math.atan2(dx, dz)) * Math.min(1, dt * 9); return d; }
 function updateNPC(n, dt) {
   const P_ = n.P; let spd = 0;
+  if (n.dead) { // 쓰러진 채로
+    n.deadT += dt; n.x += n.kv[0] * dt; n.z += n.kv[1] * dt; n.kv[0] *= Math.pow(.03, dt); n.kv[1] *= Math.pow(.03, dt); const k = Math.min(1, (n.layK || 0) + dt * 4); n.layK = k; P_.root.rotation.x = -Math.PI / 2 * k; n.lay = k; setAnim(P_, 'idle', 0);
+    const p = { x: n.x, z: n.z }; collideCircle(p, .3, n.y); inBounds(p, .3); n.x = p.x; n.z = p.z; n.y = groundY(n.x, n.z) + k * .12; n.lastSpd = 0; return;
+  }
   if (n.ko > 0) {
     n.ko -= dt; n.x += n.kv[0] * dt; n.z += n.kv[1] * dt; n.kv[0] *= Math.pow(.03, dt); n.kv[1] *= Math.pow(.03, dt);
     const k = n.ko > .7 ? Math.min(1, (n.koMax - n.ko) / .25) : Math.max(0, n.ko / .7); P_.root.rotation.x = -Math.PI / 2 * k; n.lay = k;
-    if (n.ko <= 0) { P_.root.rotation.x = 0; n.lay = 0; n.st = n.afterKo || 'flee'; n.t = rand(6, 9); n.threat = n.threat || [PL.x, PL.z]; }
+    if (n.ko <= 0) { P_.root.rotation.x = 0; n.lay = 0; n.st = n.afterKo || 'flee'; n.t = n.st === 'fight' ? 15 : rand(6, 9); n.threat = n.threat || [PL.x, PL.z]; if (n.st === 'fight') n.P.pose = 'guard'; }
     setAnim(P_, 'idle', 1);
   } else if (n.st === 'walk') {
     const d = moveToward(n, n.tgt[0], n.tgt[1], n.spd, dt); spd = n.spd;
     if (d < .4) { // 모퉁이: 계속 돌거나 길 건너기
       if (Math.random() < .35) { // 건너기
         const c = ringCorner(n.bi, n.bj, n.k); const k = ((n.k % 4) + 4) % 4; const opts = [];
-        // 이 모퉁이에 붙은 두 길: x방향 건너기(세로 도로) · z방향 건너기(가로 도로)
         const sx = (k === 1 || k === 2) ? 1 : -1, sz = (k === 2 || k === 3) ? 1 : -1;
         if (n.bi + sx >= -NR && n.bi + sx < NR) opts.push({ ax: 'x', bi: n.bi + sx, bj: n.bj, tgt: [c[0] + sx * 2 * RING_E, c[1]], k: [1, 0, 3, 2][k] });
         if (n.bj + sz >= -NR && n.bj + sz < NR) opts.push({ ax: 'z', bi: n.bi, bj: n.bj + sz, tgt: [c[0], c[1] + sz * 2 * RING_E], k: [3, 2, 1, 0][k] });
@@ -213,78 +277,109 @@ function updateNPC(n, dt) {
     if (d < .4) { n.bi = n.cross.bi; n.bj = n.cross.bj; n.k = n.cross.k; n.k += n.dir; n.tgt = ringCorner(n.bi, n.bj, n.k); n.st = 'walk'; n.cross = null; }
   } else if (n.st === 'idle') {
     n.t -= dt; if (n.t <= 0) { n.st = 'walk'; n.P.pose = null; }
+  } else if (n.st === 'cower') {
+    n.t -= dt; n.P.pose = 'cower'; if (n.t <= 0) { n.P.pose = null; npcFlee(n, PL.x, PL.z, 8); }
   } else if (n.st === 'flee') {
     n.t -= dt; const th = n.threat || [PL.x, PL.z]; let dx = n.x - th[0], dz = n.z - th[1]; const d = Math.hypot(dx, dz) || 1; dx /= d; dz /= d;
     n.x += dx * 5.2 * dt; n.z += dz * 5.2 * dt; spd = 5.2; n.yaw += angDiff(n.yaw, Math.atan2(dx, dz)) * Math.min(1, dt * 8); n.P.pose = null;
     if (n.t <= 0) { n.bi = clamp(Math.floor(n.x / P), -NR, NR - 1); n.bj = clamp(Math.floor(n.z / P), -NR, NR - 1); let best = 0, bd = 1e9; for (let k = 0; k < 4; k++) { const c = ringCorner(n.bi, n.bj, k), dd = Math.hypot(c[0] - n.x, c[1] - n.z); if (dd < bd) { bd = dd; best = k; } } n.k = best; n.tgt = ringCorner(n.bi, n.bj, best); n.st = 'walk'; }
   } else if (n.st === 'fight') {
     n.t -= dt; const d = Math.hypot(PL.x - n.x, PL.z - n.z); n.cool -= dt;
-    if (d > 1.15) { moveToward(n, PL.x, PL.z, 4.6, dt); spd = 4.6; }
-    else { n.yaw += angDiff(n.yaw, Math.atan2(PL.x - n.x, PL.z - n.z)) * Math.min(1, dt * 9); if (n.cool <= 0 && !PL.car && PL.ko <= 0) { n.cool = 1.1; n.punchT = .42; n.P.pose = 'punch'; n.P.punchSide = Math.random() < .5 ? 1 : -1; } }
-    if (n.punchT > 0) { n.punchT -= dt; n.P.poseT = 1 - n.punchT / .42; if (n.punchT < .25 && !n.hitDone && d < 1.4) { n.hitDone = true; hurtPlayer(n.kind === 'thug' ? 9 : 6); SFX.punch(); if (Math.random() < .2) knockPlayer(.7, (PL.x - n.x) * 2, (PL.z - n.z) * 2); } if (n.punchT <= 0) { n.hitDone = false; n.P.pose = 'guard'; } }
-    if (n.t <= 0 || d > 25 || PL.car || G.dead) { n.st = 'flee'; n.t = 4; n.P.pose = null; }
+    if (PL.car) { // 차에서 끌어내기
+      const c = PL.car, L = carLeft(c); const tx = c.x + L[0] * (c.S.W / 2 + .6), tz = c.z + L[1] * (c.S.W / 2 + .6); const di = Math.hypot(tx - n.x, tz - n.z);
+      if (di > .5 && Math.abs(c.v) < 4) { moveToward(n, tx, tz, 5, dt); spd = 5; } if (di < 1.1 && Math.abs(c.v) < 1.5 && c.type !== 'bus') { n.pull = (n.pull || 0) + dt; if (n.pull > 1.3) { n.pull = 0; exitCar(); knockPlayer(1, L[0] * 2, L[1] * 2); popLabel(n.x, n.y + 2.1, n.z, '나와!', '#fff', 1.2); } } else n.pull = 0;
+      if (Math.abs(c.v) > 8 || d > 30) { n.st = 'flee'; n.t = 4; n.P.pose = null; }
+    } else {
+      if (d > 1.15) { moveToward(n, PL.x, PL.z, 4.8, dt); spd = 4.8; if (n.punchT <= 0) n.P.pose = 'guard'; }
+      else { n.yaw += angDiff(n.yaw, Math.atan2(PL.x - n.x, PL.z - n.z)) * Math.min(1, dt * 9); if (n.cool <= 0 && PL.ko <= 0) { n.cool = rand(.75, 1.2); n.punchT = .42; n.P.pose = 'punch'; n.P.punchSide = Math.random() < .5 ? 1 : -1; } }
+      if (n.punchT > 0) { n.punchT -= dt; n.P.poseT = 1 - n.punchT / .42; if (n.punchT < .3 && !n.hitDone && d < 1.45) { n.hitDone = true; hurtPlayer(n.thug ? 9 : 7); SFX.punch(); if (Math.random() < .18) knockPlayer(.7, (PL.x - n.x) * 2, (PL.z - n.z) * 2); } if (n.punchT <= 0) { n.hitDone = false; n.P.pose = 'guard'; } }
+      if (curWid() !== 'fist' && PL.aimT > 0 && !n.thug && Math.random() < dt * .8) { npcFlee(n, PL.x, PL.z, 8); n.st = 'flee'; popLabel(n.x, n.y + 2.1, n.z, '총이다!', '#fff', 1.2); }
+    }
+    if (n.t <= 0 && !n.thug || d > 30 || G.dead) { n.st = 'flee'; n.t = 4; n.P.pose = null; }
+  } else if (n.st === 'shoot') { // 총 든 깡패
+    const d = Math.hypot(PL.x - n.x, PL.z - n.z); const los = d < 40 && rayBlock(n.x, 1.5, n.z, PL.x, 1.2, PL.z) > .98;
+    if (!los || d > 22) { moveToward(n, PL.x, PL.z, 4.4, dt); spd = 4.4; n.P.pose = null; } else { n.yaw += angDiff(n.yaw, Math.atan2(PL.x - n.x, PL.z - n.z)) * Math.min(1, dt * 8); if ((n.fireT -= dt) <= 0) { n.fireT = rand(.8, 1.6); npcFire(n); } }
+    if (G.dead) { n.st = 'stand'; n.P.pose = null; }
   } else if (n.st === 'chase') { // 경찰
     copAI(n, dt); spd = n.lastSpd || 0;
   } else if (n.st === 'goto') { // 미션 손님
     const d = moveToward(n, n.tgt[0], n.tgt[1], 2.4, dt); spd = d > .3 ? 2.4 : 0; if (d < .3 && n.onArrive) { const f = n.onArrive; n.onArrive = null; f(n); }
   } else if (n.st === 'stand') { if (n.face) n.yaw += angDiff(n.yaw, Math.atan2(n.face[0] - n.x, n.face[1] - n.z)) * Math.min(1, dt * 4); }
-  if (n.ko <= 0) { const p = { x: n.x, z: n.z }; collideCircle(p, .3, n.y); inBounds(p, .3); n.x = p.x; n.z = p.z; } else { const p = { x: n.x, z: n.z }; collideCircle(p, .3, n.y); inBounds(p, .3); n.x = p.x; n.z = p.z; }
+  const p = { x: n.x, z: n.z }; collideCircle(p, .3, n.y); inBounds(p, .3); n.x = p.x; n.z = p.z;
   n.y = groundY(n.x, n.z) + (n.lay || 0) * .12;
-  if (n.ko <= 0 && n.st !== 'fight' && n.st !== 'chase') { if (spd < .2) setAnim(P_, n.st === 'idle' && Math.random() < .002 ? pick(['agree', 'headShake', 'idle']) : P_.cur === 'agree' || P_.cur === 'headShake' ? P_.cur : 'idle', 1); else if (spd < 2.8) setAnim(P_, 'walk', spd / 1.45); else setAnim(P_, 'run', spd / 5.2); }
-  else if (n.st === 'fight' || n.st === 'chase') { if (spd < .2) setAnim(P_, 'idle', 1); else setAnim(P_, 'run', spd / 5.2); }
+  if (n.ko <= 0 && !['fight', 'chase', 'shoot'].includes(n.st)) { if (spd < .2) setAnim(P_, n.st === 'idle' && Math.random() < .002 ? pick(['agree', 'headShake', 'idle']) : P_.cur === 'agree' || P_.cur === 'headShake' ? P_.cur : 'idle', 1); else if (spd < 2.8) setAnim(P_, 'walk', spd / 1.45); else setAnim(P_, 'run', spd / 5.2); }
+  else if (n.ko <= 0) { if (spd < .2) setAnim(P_, 'idle', 1); else if (spd < 3) setAnim(P_, 'walk', spd / 1.45); else setAnim(P_, 'run', spd / 5.2); }
   n.lastSpd = spd;
 }
-function placeNPC(n, dt, far) { const R_ = n.P.root; R_.position.set(n.x, n.y, n.z); R_.rotation.y = n.yaw; n.acc = (n.acc || 0) + dt; if (!far || n.acc > .1) { n.P.mixer.update(n.acc); n.acc = 0; if (n.P.pose) applyPose(n.P); } }
+function placeNPC(n, dt, far) { const R_ = n.P.root; R_.position.set(n.x, n.y, n.z); R_.rotation.y = n.yaw; n.acc = (n.acc || 0) + dt; if (!far || n.acc > .1) { n.P.mixer.update(n.acc); n.acc = 0; applyPose(n.P); } if (n.gunM) { n.gunM.visible = !n.dead && n.ko <= 0 && R_.visible; if (n.gunM.visible) placeGun(n.P, n.gunM, n.P.aimDir || new T.Vector3(Math.sin(n.yaw), 0, Math.cos(n.yaw)), n.P.pose === 'aim'); } }
 
 /* ---------- 경찰 ---------- */
 function copAI(n, dt) {
   const d = Math.hypot(PL.x - n.x, PL.z - n.z); n.cool -= dt;
-  if (G.wanted <= 0) { n.st = 'flee'; n.cop = true; n.t = 3; n.leave = true; return; }
+  if (G.wanted <= 0) { n.st = 'flee'; n.cop = true; n.t = 3; n.leave = true; n.P.pose = null; return; }
+  if (!n.gun && G.wanted >= 2 && !n.armT) { n.armT = 1; armNPC(n, 'pistol'); }
+  const shootMode = n.gun && (G.wanted >= 3 || n.look.swat || (G.wanted >= 2 && (curWid() !== 'fist' || PL.car || PL.spd > 5)));
+  const los = d < 42 && rayBlock(n.x, 1.5, n.z, PL.x, PL.y + 1.2, PL.z) > .98;
+  if (shootMode && los && d > 2 && !G.dead) {
+    let mv = 0; if (n.hold && d > 10) mv = 0; else if (d > 18) mv = 5.2; else if (d < 7) mv = -2.2;
+    if (mv > 0) moveToward(n, PL.x, PL.z, mv, dt); else if (mv < 0) { n.x -= (PL.x - n.x) / d * 2.2 * dt; n.z -= (PL.z - n.z) / d * 2.2 * dt; }
+    n.lastSpd = Math.abs(mv); n.yaw += angDiff(n.yaw, Math.atan2(PL.x - n.x, PL.z - n.z)) * Math.min(1, dt * 8);
+    n.P.pose = 'aim'; n.P.aimDir = new T.Vector3(PL.x - n.x, (PL.y + 1.2) - (n.y + 1.45), PL.z - n.z).normalize();
+    if ((n.fireT = (n.fireT || 0) - dt) <= 0) { const w = WEAP[n.gun]; n.fireT = n.look.swat ? (Math.random() < .7 ? w.rate * 1.5 : rand(.8, 1.4)) : rand(.9, 1.8); npcFire(n); }
+    return;
+  }
+  if (n.P.pose === 'aim') n.P.pose = null;
+  if (n.hold && d > 12) { n.lastSpd = 0; n.yaw += angDiff(n.yaw, Math.atan2(PL.x - n.x, PL.z - n.z)) * Math.min(1, dt * 5); return; }
   if (PL.car) { // 차 안의 플레이어: 차 옆으로 가서 끌어내기
     const L = carLeft(PL.car); const tx = PL.car.x + L[0] * (PL.car.S.W / 2 + .7), tz = PL.car.z + L[1] * (PL.car.S.W / 2 + .7); const dd = Math.hypot(tx - n.x, tz - n.z);
     if (dd > .6) { moveToward(n, tx, tz, 5.6, dt); n.lastSpd = 5.6; } else n.lastSpd = 0;
     if (dd < 1.2 && Math.abs(PL.car.v) < 1.5) { PL.grab += dt * .6; if (PL.grab > 1.6) busted(); } return;
   }
-  if (d > 1.1) { moveToward(n, PL.x, PL.z, d > 3 ? 5.7 : 3, dt); n.lastSpd = d > 3 ? 5.7 : 3; n.P.pose = null; }
+  if (d > 1.1) { moveToward(n, PL.x, PL.z, d > 3 ? 5.7 : 3, dt); n.lastSpd = d > 3 ? 5.7 : 3; if (n.P.pose !== 'punch') n.P.pose = null; }
   else {
     n.lastSpd = 0; n.yaw += angDiff(n.yaw, Math.atan2(PL.x - n.x, PL.z - n.z)) * Math.min(1, dt * 9);
-    if (G.wanted <= 2 && PL.ko <= 0) { PL.grab += dt; if (PL.grab > 1.7) busted(); }
-    else if (n.cool <= 0) { n.cool = 1; n.P.pose = 'punch'; n.P.punchSide = 1; n.P.poseT = .5; setTimeout(() => { if (n.P) n.P.pose = null; }, 300); if (d < 1.4) { hurtPlayer(8); SFX.punch(); if (Math.random() < .25) knockPlayer(.9, (PL.x - n.x) * 3, (PL.z - n.z) * 3); } }
+    if (G.wanted <= 2 && PL.ko <= 0 && curWid() === 'fist') { PL.grab += dt; if (PL.grab > 1.7) busted(); }
+    else if (n.cool <= 0) { n.cool = 1; n.punchT = .42; n.P.pose = 'punch'; n.P.punchSide = 1; if (d < 1.4) { hurtPlayer(8); SFX.punch(); if (Math.random() < .25) knockPlayer(.9, (PL.x - n.x) * 3, (PL.z - n.z) * 3); } }
   }
+  if (n.punchT > 0) { n.punchT -= dt; n.P.poseT = 1 - n.punchT / .42; if (n.punchT <= 0) n.P.pose = null; }
 }
 function crime(kind, x, z) {
   if (!G.on || G.dead) return; const seenBy = copsSee(x, z, 45);
-  const sev = { punch: .25, hitcop: 1, kocop: 1, jack: .3, copcar: 1, carhit: .55, boom: .8, alarm: 1, mission: 1 }[kind] || .3;
-  let add = 0; if (kind === 'hitcop' || kind === 'kocop' || kind === 'copcar') add = 1; else if (seenBy) add = 1; else if (Math.random() < sev) add = G.wanted ? 0 : 1;
-  if (kind === 'kocop' && G.wanted >= 2) add = 1;
+  const sev = { punch: .25, hitcop: 1, kocop: 1, jack: .3, copcar: 1, carhit: .55, boom: .8, alarm: 1, mission: 1, shoot: .5, shootped: .7, kill: .75, killcop: 1 }[kind] || .3;
+  let add = 0; if (kind === 'hitcop' || kind === 'kocop' || kind === 'copcar') add = 1; else if (kind === 'killcop') add = 2; else if (seenBy) add = 1; else if (Math.random() < sev) add = G.wanted ? 0 : 1;
+  if ((kind === 'kocop' || kind === 'kill') && G.wanted >= 2 && seenBy) add = 1;
   G.crimes = (G.crimes || 0) + 1; if (G.wanted >= 1 && G.crimes % 4 === 0) add = Math.max(add, 1);
+  if (kind === 'kill' && G.wanted < 2 && seenBy) add = Math.max(add, 2 - G.wanted);
   if (add) setWanted(Math.min(5, G.wanted + add));
   if (G.wanted) G.lastSeen = G.t;
 }
-function copsSee(x, z, r) { for (const n of NPCS) if (n.cop && n.ko <= 0 && Math.hypot(n.x - x, n.z - z) < r && rayBlock(n.x, 1.6, n.z, x, 1.2, z) > .98) return true; for (const c of CARS) if (c.type === 'police' && !c.dead && c !== PL.car && (c.chase || c.ai) && Math.hypot(c.x - x, c.z - z) < r && rayBlock(c.x, 1.6, c.z, x, 1.2, z) > .98) return true; return false; }
+function copsSee(x, z, r) { for (const n of NPCS) if (n.cop && n.ko <= 0 && !n.dead && Math.hypot(n.x - x, n.z - z) < r && rayBlock(n.x, 1.6, n.z, x, 1.2, z) > .98) return true; for (const c of CARS) if (c.type === 'police' && !c.dead && c !== PL.car && (c.chase || c.ai || c.roadblock) && Math.hypot(c.x - x, c.z - z) < r && rayBlock(c.x, 1.6, c.z, x, 1.2, z) > .98) return true; return heliSees(); }
 function setWanted(w) { const up = w > G.wanted; G.wanted = w; G.lastSeen = G.t; G.crimes = 0; if (up) { SFX.star(); G.starPulse = 1.2; } hudStars(); if (!w) { G.evadeT = 0; } }
 function updateWanted(dt) {
   if (!G.wanted) { G.wantFlash = false; return; }
   const seen = copsSee(PL.x, PL.z, 60); if (seen) G.lastSeen = G.t; G.wantFlash = !seen;
   const need = 6 + G.wanted * 3.5; if (G.t - G.lastSeen > need) { setWanted(G.wanted - 1); if (!G.wanted) toast('👮 경찰을 따돌렸어요!'); }
 }
+let SIRENL = null;
 function updatePolice(dt) {
-  // 필요한 경찰차 수
   const want = [0, 1, 2, 3, 4, 5][G.wanted]; const pol = CARS.filter(c => c.type === 'police' && c.chase && !c.dead && c !== PL.car);
   if (pol.length < want && (G.polT = (G.polT || 0) - dt) <= 0) { G.polT = 3.5 - G.wanted * .4; spawnPoliceCar(); }
-  const footWant = G.wanted >= 1 ? Math.min(6, 1 + G.wanted) : 0; const foot = NPCS.filter(n => n.cop && n.st === 'chase').length;
-  if (foot < footWant && !PL.car && (G.copT = (G.copT || 0) - dt) <= 0) { G.copT = 6; const s = sidewalkNear(PL.x, PL.z, 30, 48); if (s) { spawnNPC(s[0], s[1], 'cop'); } }
+  const footWant = G.wanted >= 1 ? Math.min(7, 1 + G.wanted) : 0; const foot = NPCS.filter(n => n.cop && n.st === 'chase' && !n.dead && n.ko <= 0).length;
+  if (foot < footWant && !PL.car && (G.copT = (G.copT || 0) - dt) <= 0) { G.copT = 6 - G.wanted * .6; const s = sidewalkNear(PL.x, PL.z, 30, 48); if (s) { spawnNPC(s[0], s[1], G.wanted >= 4 && Math.random() < .6 ? 'swat' : 'cop'); } }
   for (const c of pol) policeDrive(c, dt);
-  sirenUpdate(G.wanted > 0 && pol.some(c => Math.hypot(c.x - PL.x, c.z - PL.z) < 90), G.t);
+  updateHeli(dt); updateRoadblocks(dt);
+  const near = CARS.filter(c => c.type === 'police' && c.siren && !c.dead && c !== PL.car).sort((a, b) => Math.hypot(a.x - PL.x, a.z - PL.z) - Math.hypot(b.x - PL.x, b.z - PL.z))[0];
+  sirenUpdate(G.wanted > 0 && near && Math.hypot(near.x - PL.x, near.z - PL.z) < 90, G.t);
   const fl = Math.floor(G.t * 6) % 2; SIREN.r.color.set(fl ? '#ff2a2a' : '#4a0505'); SIREN.b.color.set(fl ? '#06103a' : '#2a64ff');
+  if (!SIRENL) { SIRENL = new T.PointLight('#ff2020', 0, 22); scene.add(SIRENL); }
+  if (near && Math.hypot(near.x - PL.x, near.z - PL.z) < 70) { SIRENL.position.set(near.x, near.y + 2.2, near.z); SIRENL.color.set(fl ? '#ff2a2a' : '#2a5cff'); SIRENL.intensity = 1.5 + DAY.night * 3; } else SIRENL.intensity = 0;
 }
 function spawnPoliceCar() {
-  const pos = laneNear(PL.x, PL.z, 70, 130); if (!pos) return; const c = makeCar('police'); laneSpawn(c, pos.x, pos.z, pos.f, pos.li); c.ai = null; c.chase = true; c.copsOut = false; c.v = 6; scene.add(c.g); CARS.push(c);
+  const pos = laneNear(PL.x, PL.z, 70, 130); if (!pos) return; const c = makeCar('police'); laneSpawn(c, pos.x, pos.z, pos.f, pos.li); c.ai = null; c.chase = true; c.siren = true; c.copsOut = false; c.v = 6; scene.add(c.g); CARS.push(c);
 }
 function gridPath(ax, az, bx, bz) { // 교차로 격자에서 다음으로 갈 교차로
   const ai = clamp(Math.round(ax / P), -NR, NR), aj = clamp(Math.round(az / P), -NR, NR), bi = clamp(Math.round(bx / P), -NR, NR), bj = clamp(Math.round(bz / P), -NR, NR);
   if (ai === bi && aj === bj) return [bx, bz]; const di = Math.sign(bi - ai), dj = Math.sign(bj - aj);
-  // 지금 있는 도로 방향 먼저
   const onX = Math.abs(az - aj * P) < RH + 2, onZ = Math.abs(ax - ai * P) < RH + 2;
   if (onX && di) return [(ai + di) * P, aj * P]; if (onZ && dj) return [ai * P, (aj + dj) * P];
   return [ai * P, aj * P];
@@ -293,15 +388,15 @@ function policeDrive(c, dt) {
   const tx = PL.x, tz = PL.z, d = Math.hypot(tx - c.x, tz - c.z); c.siren = true;
   if (G.wanted <= 0) { c.chase = false; c.ai = null; c.parked = true; c.leaving = true; drive(c, { brk: 1 }, dt); return; }
   let target; const los = d < 50 && rayBlock(c.x, 1, c.z, tx, 1, tz) > .98;
-  if (los) { const pc = PL.car; target = pc ? [tx + Math.sin(pc.yaw) * pc.v * .4, tz + Math.cos(pc.yaw) * pc.v * .4] : [tx, tz]; }
+  if (los) { const pc = PL.car; target = pc ? [tx + Math.sin(pc.yaw) * pc.v * .5, tz + Math.cos(pc.yaw) * pc.v * .5] : [tx, tz]; }
   else target = gridPath(c.x, c.z, tx, tz);
   if (Math.hypot(target[0] - c.x, target[1] - c.z) < 6 && !los) target = gridPath(c.x + Math.sin(c.yaw) * 10, c.z + Math.cos(c.yaw) * 10, tx, tz);
   const want = Math.atan2(target[0] - c.x, target[1] - c.z); let a = angDiff(c.yaw, want);
   let inp = { thr: 1, steer: clamp(a * 2, -1, 1), brk: 0 };
   if (Math.abs(a) > 1.6 && c.v < 6) { inp = { brk: 1, steer: -clamp(a * 2, -1, 1) }; }
-  if (!PL.car && d < 14 + c.v * c.v / (2 * c.S.brake) + c.v * .3) { inp.thr = 0; inp.brk = c.v > 1 ? 1 : 0; if (!c.copsOut && c.v < 3) { c.copsOut = true; const L = carLeft(c); for (let k = 0; k < (G.wanted >= 3 ? 2 : 1); k++) { const n = spawnNPC(c.x + L[0] * (2 - k * 4) + Math.sin(c.yaw) * k, c.z + L[1] * (2 - k * 4) + Math.cos(c.yaw) * k, 'cop'); } } }
-  if (c.copsOut && PL.car && d > 25) c.copsOut = false;
-  // 막혔을 때 후진
+  const stopNear = (!PL.car && d < 14 + c.v * c.v / (2 * c.S.brake) + c.v * .3) || (PL.car && Math.abs(PL.car.v) < 2.5 && d < 18);
+  if (stopNear) { inp.thr = 0; inp.brk = c.v > 1 ? 1 : 0; if (!c.copsOut && c.v < 3) { c.copsOut = true; const L = carLeft(c); for (let k = 0; k < (G.wanted >= 3 ? 2 : 1); k++) { spawnNPC(c.x + L[0] * (2 - k * 4) + Math.sin(c.yaw) * k, c.z + L[1] * (2 - k * 4) + Math.cos(c.yaw) * k, G.wanted >= 4 && k ? 'swat' : 'cop'); } } }
+  if (c.copsOut && PL.car && d > 25 && Math.abs(PL.car.v) > 5) c.copsOut = false;
   if (c.rev > 0) { c.rev -= dt; inp = { brk: 1, steer: c.revS }; }
   else if (Math.abs(c.v) < 1 && inp.thr) { c.stk = (c.stk || 0) + dt; if (c.stk > 1.2) { c.rev = 1.3; c.revS = -inp.steer || 1; c.stk = 0; } } else c.stk = 0;
   if (d > 260) { removeCar(c); return; }
@@ -310,7 +405,8 @@ function policeDrive(c, dt) {
 
 /* ---------- 차 · 행인 생성 ---------- */
 const CARS = [];
-function removeCar(c) { scene.remove(c.g); const i = CARS.indexOf(c); if (i >= 0) CARS.splice(i, 1); }
+function addRider(c, look) { const R_ = makePerson(look); R_.root.position.set(0, (buildModel(c.type).seatY || .9) - R_.hipY + .04, -.22); R_.pose = 'ride'; c.bodyG.add(R_.root); c.rider = R_; c.drvLook = look; }
+function removeCar(c) { if (c.rider) { c.rider.mixer.stopAllAction(); c.rider = null; } scene.remove(c.g); const i = CARS.indexOf(c); if (i >= 0) CARS.splice(i, 1); }
 function laneNear(px, pz, r0, r1) {
   for (let tries = 0; tries < 20; tries++) {
     const ax = Math.random() < .5; const k = randi(-NR, NR) * P; const s = rand(-LIM + 10, LIM - 10); const x = ax ? s : k, z = ax ? k : s; const d = Math.hypot(x - px, z - pz); if (d < r0 || d > r1) continue;
@@ -322,8 +418,10 @@ function laneNear(px, pz, r0, r1) {
 function sidewalkNear(px, pz, r0, r1) { for (let t = 0; t < 20; t++) { const bi = randi(-NR, NR - 1), bj = randi(-NR, NR - 1); const k = randi(0, 3); const a = ringCorner(bi, bj, k), b = ringCorner(bi, bj, k + 1); const u = Math.random(); const x = lerp(a[0], b[0], u), z = lerp(a[1], b[1], u); const d = Math.hypot(x - px, z - pz); if (d > r0 && d < r1) return [x, z, bi, bj, k]; } return null; }
 function spawnTraffic() {
   const pos = laneNear(PL.x, PL.z, 60, 150); if (!pos) return; const r = Math.random();
-  const type = r < .05 ? 'police' : r < .2 ? 'taxi' : r < .3 ? 'suv' : r < .38 ? 'truck' : r < .45 ? 'bus' : r < .48 ? 'sports' : 'sedan';
-  const c = makeCar(type, type === 'bus' ? pick(['blue', 'green']) : null); laneSpawn(c, pos.x, pos.z, pos.f, pos.li); c.drvLook = type === 'police' ? LOOKS.police() : randomLook(Math.random() < .3); c.drvP = true; scene.add(c.g); CARS.push(c); placeCar(c);
+  const type = r < .05 ? 'police' : r < .18 ? 'taxi' : r < .27 ? 'suv' : r < .34 ? 'truck' : r < .4 ? 'bus' : r < .43 ? 'sports' : r < .5 ? 'scooter' : r < .54 ? 'bike' : 'sedan';
+  const c = makeCar(type, type === 'bus' ? pick(['blue', 'green']) : null); laneSpawn(c, pos.x, pos.z, pos.f, pos.li); c.drvLook = type === 'police' ? LOOKS.police() : randomLook(Math.random() < .3); c.drvP = true; scene.add(c.g); CARS.push(c);
+  if (c.S.bike) addRider(c, Object.assign(c.drvLook, { helmet: pick(['#f2f2f2', '#111', '#d61f26', '#1e64d8', '#ffcc33']) }));
+  placeCar(c);
 }
 function spawnParked() {
   for (const s of PARK_SPOTS) {
@@ -338,9 +436,9 @@ function spawnParked() {
 function spawnPedestrians(dt) {
   G.spT = (G.spT || 0) - dt; if (G.spT > 0) return; G.spT = .35;
   // 멀리 간 것 정리
-  for (let i = NPCS.length - 1; i >= 0; i--) { const n = NPCS[i]; const d = Math.hypot(n.x - PL.x, n.z - PL.z); if ((d > 110 && !n.mission) || (n.leave && d > 50)) removeNPC(n); }
+  for (let i = NPCS.length - 1; i >= 0; i--) { const n = NPCS[i]; const d = Math.hypot(n.x - PL.x, n.z - PL.z); if ((d > 110 && !n.mission) || (n.leave && d > 50) || (n.dead && (n.deadT > 60 || d > 70))) removeNPC(n); }
   for (let i = CARS.length - 1; i >= 0; i--) { const c = CARS[i]; if (c === PL.car || c.mission) continue; const d = Math.hypot(c.x - PL.x, c.z - PL.z); if ((c.ai && d > 190) || (!c.ai && !c.parked && !c.chase && d > 190) || (c.dead && d > 150) || (c.leaving && d > 120)) removeCar(c); }
-  const peds = NPCS.filter(n => !n.cop && !n.mission).length; if (peds < MAXN.peds) { const s = sidewalkNear(PL.x, PL.z, 28, 85); if (s && !inView(s[0], s[1], 40)) { const n = spawnNPC(s[0], s[1], 'ped'); n.bi = s[2]; n.bj = s[3]; n.k = s[4] + (n.dir > 0 ? 1 : 0); n.tgt = ringCorner(n.bi, n.bj, n.k); if (Math.random() < .12) { n.st = 'idle'; n.t = rand(5, 20); n.P.pose = Math.random() < .5 ? 'phone' : null; } } }
+  const peds = NPCS.filter(n => !n.cop && !n.mission && !n.dead).length; if (peds < MAXN.peds) { const s = sidewalkNear(PL.x, PL.z, 28, 85); if (s && !inView(s[0], s[1], 40)) { const n = spawnNPC(s[0], s[1], 'ped'); n.bi = s[2]; n.bj = s[3]; n.k = s[4] + (n.dir > 0 ? 1 : 0); n.tgt = ringCorner(n.bi, n.bj, n.k); if (Math.random() < .12) { n.st = 'idle'; n.t = rand(5, 20); n.P.pose = Math.random() < .5 ? 'phone' : null; } } }
   const traf = CARS.filter(c => c.ai).length; if (traf < MAXN.traffic) spawnTraffic();
 }
 function inView(x, z, minD) { const v = new T.Vector3(x, 1.5, z); const d = v.distanceTo(cam.position); if (d < minD) return true; v.project(cam); return v.z < 1 && Math.abs(v.x) < 1.1 && Math.abs(v.y) < 1.1 && d < 70; }
@@ -349,6 +447,7 @@ function inView(x, z, minD) { const v = new T.Vector3(x, 1.5, z); const d = v.di
 const PICKS = [];
 const cashGeo = new T.BoxGeometry(.5, .05, .26), cashMat = new T.MeshStandardMaterial({ color: lin('#5fbf5f'), emissive: lin('#1f6f1f'), emissiveIntensity: .6 });
 function dropCash(x, z, amt) { const m = new T.Mesh(cashGeo, cashMat); m.position.set(x, groundY(x, z) + .5, z); scene.add(m); PICKS.push({ m, x, z, amt, t: 25, kind: 'cash' }); }
+function dropAmmo(x, z, w, n) { const m = new T.Mesh(new T.BoxGeometry(.35, .2, .25), new T.MeshStandardMaterial({ color: lin('#5a4a1a'), emissive: lin('#3a2a00'), emissiveIntensity: .5 })); m.position.set(x, groundY(x, z) + .4, z); scene.add(m); PICKS.push({ m, x, z, kind: 'ammo', w, amt: n, t: 40 }); }
 function addPickup(kind, x, z, respawn) {
   const g = new T.Group(); if (kind === 'health') { const b = new T.Mesh(new T.BoxGeometry(.6, .45, .4), new T.MeshStandardMaterial({ color: '#fff', emissive: '#fff', emissiveIntensity: .25 })); g.add(b); const c1 = new T.Mesh(new T.BoxGeometry(.42, .12, .41), new T.MeshBasicMaterial({ color: '#e02020' })); const c2 = new T.Mesh(new T.BoxGeometry(.12, .34, .41), c1.material); g.add(c1, c2); }
   else { const b = new T.Mesh(new T.BoxGeometry(.6, .7, .25), new T.MeshStandardMaterial({ color: lin('#2b3d63'), emissive: lin('#1a2a50'), emissiveIntensity: .5 })); g.add(b); }
@@ -359,7 +458,8 @@ function updatePicks(dt) {
     const p = PICKS[i]; p.m.rotation.y += dt * 2; if (p.wait > 0) { p.wait -= dt; p.m.visible = p.wait <= 0; continue; }
     p.t -= dt; if (p.t <= 0) { scene.remove(p.m); PICKS.splice(i, 1); continue; }
     if (!PL.car && Math.hypot(PL.x - p.x, PL.z - p.z) < 1.3) {
-      if (p.kind === 'cash') { addMoney(p.amt); SFX.cash(); scene.remove(p.m); PICKS.splice(i, 1); }
+      if (p.kind === 'cash') { addMoney(p.amt); SFX.cash(); popLabel(p.x, PL.y + 2, p.z, '+' + won(p.amt), '#7ee08a', 1); scene.remove(p.m); PICKS.splice(i, 1); }
+      else if (p.kind === 'ammo') { giveWeapon(p.w, p.amt, curWid() === 'fist'); SFX.cash(); toast(`🔫 ${WEAP[p.w].n} 탄약 +${p.amt}`); scene.remove(p.m); PICKS.splice(i, 1); }
       else if (p.kind === 'health' && PL.hp < 100) { PL.hp = 100; SFX.cash(); toast('❤️ 체력 회복!'); p.wait = p.respawn; p.m.visible = false; }
       else if (p.kind === 'armor' && PL.ar < 100) { PL.ar = 100; SFX.cash(); toast('🦺 방탄조끼를 입었어요!'); p.wait = p.respawn; p.m.visible = false; }
     }
@@ -369,7 +469,7 @@ function addMoney(n) { SV.money = Math.max(0, SV.money + n); G.moneyPulse = 1; s
 
 /* ---------- 정비소 (수배 지우기 · 수리) ---------- */
 function updateGarage() {
-  const g = BUILD.landmarks.garage; if (!g) return; const c = PL.car; const inside = c && c.x > g.x0 && c.x < g.x1 && c.z > g.z0 && c.z < g.z1;
+  const g = BUILD.landmarks.garage; if (!g) return; const c = PL.car; if (MI && MI.noGarage && c && c.x > g.x0 && c.x < g.x1 && c.z > g.z0 && c.z < g.z1) { if (!G.inGarage) { G.inGarage = true; toast('🔧 경찰이 정비소를 지키고 있어요! 오늘은 안 돼요'); } return; } const inside = c && c.x > g.x0 && c.x < g.x1 && c.z > g.z0 && c.z < g.z1;
   if (inside && !G.inGarage && Math.abs(c.v) < 9) {
     G.inGarage = true; const need = G.wanted > 0 || c.hp < c.maxHp * .95; if (!need) { if (Math.abs(c.v) > 2) toast('🔧 정비소예요. 수배 중이거나 차가 망가졌을 때 오면 고쳐 줘요.'); return; }
     if (SV.money < 5000) { toast('💸 돈이 부족해요 (₩5,000 필요)'); return; }
@@ -437,12 +537,32 @@ const STORY = [
     };
     MI.timeUp = () => missionFail('너무 늦었어요…'); MI.cleanup = () => { rmMarker(M); c.mission = false; if (pas && NPCS.includes(pas)) { pas.mission = false; pas.st = 'flee'; pas.t = 3; pas.P.pose = null; } };
   } },
-  { n: '한강 질주', who: '박 사장', intro: '마지막 시험이야. 서울을 가로질러 <b>한강 다리 끝</b>까지 달려!\n체크포인트를 시간 안에 다 지나야 해. 빠른 차를 골라!', start() {
+  { n: '한강 질주', who: '박 사장', intro: '실력 시험이야. 서울을 가로질러 <b>한강 다리 끝</b>까지 달려!\n체크포인트를 시간 안에 다 지나야 해. 빠른 차를 골라!', start() {
     const cps = [[P, -2 * P], [-2 * P, -2 * P], [-2 * P, P], [P, P], [2 * P, 2 * P], [0, 3 * P], [0, 420], [0, 580]]; let i = -1, M = null;
-    obj('🏁 먼저 <em>차</em>를 타요'); const next = () => { rmMarker(M); i++; if (i >= cps.length) { SV.best.race = Math.round(G.mTimer); missionPass(1000000); big('서울의 전설!', '모든 미션을 끝냈어요 🎉', 'pass', 4500); return; } M = mkMarker(cps[i][0], cps[i][1], i === cps.length - 1 ? '#ff4d6d' : '#ffcc33', { r: 3 }); obj(`🏁 체크포인트 <em>${i + 1} / ${cps.length}</em>`); };
+    obj('🏁 먼저 <em>차</em>를 타요'); const next = () => { rmMarker(M); i++; if (i >= cps.length) { SV.best.race = Math.round(G.mTimer); missionPass(1000000); big('서울의 전설!', '다음 미션도 박 사장에게!', 'pass', 4500); return; } M = mkMarker(cps[i][0], cps[i][1], i === cps.length - 1 ? '#ff4d6d' : '#ffcc33', { r: 3 }); obj(`🏁 체크포인트 <em>${i + 1} / ${cps.length}</em>`); };
     MI.upd = () => { if (i < 0) { if (PL.car) { next(); timer(150); SFX.star(); } return; } if (inMarker(M, PL.x, PL.z)) { SFX.click(); G.mTimer += 4; next(); } };
     MI.on = e => { if (e === 'exit' && i >= 0) missionFail('차에서 내렸어요'); };
     MI.timeUp = () => missionFail('시간 초과!'); MI.cleanup = () => rmMarker(M);
+  } },
+  { n: '배달 라이더', who: '박 사장', intro: '요즘은 오토바이 배달이 대세지!\n정비소 앞 <b>배달 스쿠터</b>를 타고 주문 <b>3건</b>을 시간 안에 배달해 줘.', start() {
+    const g = BUILD.landmarks.garage; const c = makeCar('scooter'); c.x = g.x - 4; c.z = g.z + 9; c.yaw = Math.PI / 2; c.parked = true; c.mission = true; placeCar(c); scene.add(c.g); CARS.push(c); MI.blipCar = c;
+    let done = 0, M = null; obj('🛵 <em>배달 스쿠터</em>를 타요');
+    const next = () => { rmMarker(M); const d = apartmentDoor(); M = mkMarker(d.x, d.z, '#ffcc33'); const dist = Math.hypot(d.x - PL.x, d.z - PL.z); timer(Math.round(dist / 8 + 22)); obj(`🛵 배달 <em>${done + 1} / 3</em> · ${d.name} 앞까지!`); };
+    MI.on = (e, a) => { if (e === 'enter' && a === c && !M) { MI.blipCar = null; next(); } if (e === 'boom' && a === c) missionFail('스쿠터가 터졌어요!'); };
+    MI.upd = () => { if (M && PL.car === c && inMarker(M, PL.x, PL.z)) { done++; SFX.cash(); SV.deliveries++; if (done >= 3) { c.mission = false; missionPass(250000); return; } next(); } if (M && PL.car !== c) obj('🛵 <em>스쿠터</em>로 돌아가요!'); };
+    MI.timeUp = () => missionFail('음식이 다 식었어요…'); MI.cleanup = () => { rmMarker(M); c.mission = false; };
+  } },
+  { n: '불량배 소탕', who: '박 사장', intro: '공원에서 <b>불량배들</b>이 시민들을 괴롭힌대.\n이 <b>권총</b> 가져가. 놈들을 전부 쓰러뜨려!', start() {
+    giveWeapon('pistol', 48); toast('🔫 권총을 받았어요! (Q / 무기 아이콘으로 바꾸기)'); const pk = BUILD.landmarks.park || { x: P * 1.5, z: -P * 2.5 }; const M = mkMarker(pk.x, pk.z, '#ff3040', { r: 2.5 }); const thugs = []; let on = false;
+    for (let i = 0; i < 5; i++) { const a = i / 5 * Math.PI * 2; const n = spawnNPC(pk.x + Math.cos(a) * 5, pk.z + Math.sin(a) * 5, 'thug'); n.mission = true; n.st = 'stand'; n.face = [pk.x, pk.z]; n.money = 20000; if (i < 2) armNPC(n, 'pistol'); thugs.push(n); }
+    obj('😠 <em>공원</em>의 불량배들에게 가요');
+    MI.upd = () => { const down = thugs.filter(n => n.dead || n.kos >= 1 || !NPCS.includes(n)).length; if (!on && Math.hypot(PL.x - pk.x, PL.z - pk.z) < 32) { on = true; rmMarker(M); popLabel(pk.x, 3, pk.z, '덤벼라!', '#ff4d4d', 2); for (const n of thugs) { n.st = n.gun ? 'shoot' : 'fight'; n.t = 999; } } if (on) obj(`😠 불량배를 모두 쓰러뜨려요 <em>${down} / 5</em>`); if (down >= 5) missionPass(400000); };
+    MI.cleanup = () => { rmMarker(M); for (const n of thugs) if (NPCS.includes(n)) { n.mission = false; if (!n.dead && n.ko <= 0) { n.st = 'flee'; n.t = 5; } } };
+  } },
+  { n: '포위망 돌파', who: '박 사장', intro: '마지막이야. 경찰이 너를 <b>별 5개</b>로 쫓고 있어!\n이번엔 정비소도 변호사도 못 도와줘. <b>60초</b> 버티고, 끝까지 따돌려!', start() {
+    setWanted(5); MI.noGarage = true; MI.noLawyer = true; timer(60); let phase = 0; obj('🚨 <em>60초</em> 동안 살아남아요!');
+    MI.timeUp = () => { phase = 1; obj('🚨 이제 <em>경찰을 완전히 따돌려요!</em>'); };
+    MI.upd = () => { if (phase === 1 && G.wanted === 0) { missionPass(2000000); big('서울의 왕!', 'STA 1 스토리를 모두 끝냈어요 👑', 'pass', 5000); } };
   } }
 ];
 function setupGivers() {
@@ -497,7 +617,7 @@ function updateMission(dt) {
 function busted() {
   if (G.dead) return; G.dead = true; SV.busted++; const fine = Math.min(SV.money, Math.max(2000, Math.round(SV.money * .08 / 100) * 100)); big('체포!', `벌금 ${won(fine)}`, 'bust', 3000); SFX.fail();
   if (MI) missionFail('체포됐어요'); PL.P.pose = 'hands';
-  setTimeout(() => { fade(true); setTimeout(() => { addMoney(-fine); respawn(BUILD.landmarks.police); fade(false); }, 600); }, 2600);
+  setTimeout(() => { fade(true); setTimeout(() => { addMoney(-fine); if (SV.ammo && Object.keys(SV.ammo).length) { SV.ammo = {}; SV.wep = 'fist'; refreshGun(); toast('👮 경찰이 총을 모두 압수했어요'); } respawn(BUILD.landmarks.police); fade(false); }, 600); }, 2600);
 }
 function wasted() {
   if (G.dead) return; G.dead = true; SV.wasted++; const bill = Math.min(SV.money, 10000); big('기절!', `병원비 ${won(bill)}`, 'dead', 3000); SFX.fail(); if (MI) missionFail('기절했어요');
@@ -505,7 +625,8 @@ function wasted() {
   setTimeout(() => { fade(true); setTimeout(() => { addMoney(-bill); respawn(BUILD.landmarks.hospital); fade(false); }, 600); }, 2600);
 }
 function respawn(at) {
-  setWanted(0); for (let i = NPCS.length - 1; i >= 0; i--) if (NPCS[i].cop || (NPCS[i].st === 'fight')) removeNPC(NPCS[i]); for (let i = CARS.length - 1; i >= 0; i--) if (CARS[i].chase) removeCar(CARS[i]);
+  setWanted(0); for (let i = NPCS.length - 1; i >= 0; i--) if (NPCS[i].cop || ['fight', 'shoot'].includes(NPCS[i].st)) removeNPC(NPCS[i]); for (let i = CARS.length - 1; i >= 0; i--) if (CARS[i].chase || CARS[i].roadblock) removeCar(CARS[i]); if (HELI.h) { scene.remove(HELI.h.g); HELI.h = null; } BLOCKS.length = 0;
+  if (PL.car && PL.car.S.bike) { scene.add(PL.P.root); }
   if (PL.car) { PL.car.drv = null; PL.car = null; } PL.hp = 100; PL.ko = 0; PL.grab = 0; PL.P.pose = null; PL.P.root.rotation.x = 0; playerPos(at.x, at.z, 0); G.dead = false; setupGivers(); save();
 }
 
@@ -513,13 +634,14 @@ function respawn(at) {
 const CAMS = { yaw: 0, pitch: .32, pos: new T.Vector3(), look: new T.Vector3(), zoom: 1, manualT: 9 };
 function cycleCam() { G.camMode = (G.camMode + 1) % 3; CAMS.zoom = [.7, 1, 1.5][G.camMode]; }
 function updateCamera(dt) {
-  const lk = IN.look; if (lk[0] || lk[1]) { CAMS.yaw -= lk[0] * .0032; CAMS.pitch = clamp(CAMS.pitch + lk[1] * .0028, -.25, 1.25); CAMS.manualT = 0; } lk[0] = lk[1] = 0; CAMS.manualT += dt;
+  const lk = IN.look; const sens = 1 - (CAMS.aimK || 0) * .45; if (lk[0] || lk[1]) { CAMS.yaw -= lk[0] * .0032 * sens; CAMS.pitch = clamp(CAMS.pitch + lk[1] * .0028 * sens, -.45, 1.25); CAMS.manualT = 0; } lk[0] = lk[1] = 0; CAMS.manualT += dt;
+  if (G.selfieT > 0) { G.selfieT -= dt; PL.P.pose = G.selfieT > 0 ? 'phone' : null; const f = [Math.sin(PL.yaw), Math.cos(PL.yaw)]; cam.position.set(PL.x + f[0] * 1.6 - f[1] * .5, PL.y + 1.6, PL.z + f[1] * 1.6 + f[0] * .5); cam.lookAt(PL.x, PL.y + 1.45, PL.z); CAMS.pos.copy(cam.position); return; }
   let dist, h, tgt; const c = PL.car;
   if (c) {
     dist = (c.type === 'bus' ? 14 : c.type === 'truck' ? 9 : 7.2) * CAMS.zoom; h = 1.6;
     if (CAMS.manualT > 1.3 && Math.abs(c.v) > 1.5) { const want = c.v >= 0 ? c.yaw : c.yaw; CAMS.yaw += angDiff(CAMS.yaw, want) * Math.min(1, dt * 2.5); CAMS.pitch += (.2 - CAMS.pitch) * Math.min(1, dt * 1.5); }
     tgt = new T.Vector3(c.x, c.y + h, c.z);
-  } else { dist = 4.3 * CAMS.zoom; h = 1.55; tgt = new T.Vector3(PL.x, PL.y + h, PL.z); const rt = [-Math.cos(CAMS.yaw), Math.sin(CAMS.yaw)]; tgt.x += rt[0] * .35; tgt.z += rt[1] * .35; }
+  } else { const aim = curWid() !== 'fist' && (IN.aim || IN.fireHeld) && !IS_MOBILE; CAMS.aimK = lerp(CAMS.aimK || 0, aim ? 1 : 0, Math.min(1, dt * 10)); dist = 4.3 * CAMS.zoom * (1 - CAMS.aimK * .45); h = 1.55; tgt = new T.Vector3(PL.x, PL.y + h, PL.z); const rt = [-Math.cos(CAMS.yaw), Math.sin(CAMS.yaw)], so = .35 + CAMS.aimK * .4; tgt.x += rt[0] * so; tgt.z += rt[1] * so; }
   if (innerWidth < innerHeight) dist *= 1.35;
   const f = [Math.sin(CAMS.yaw), Math.cos(CAMS.yaw)]; const cp = Math.cos(CAMS.pitch), sp = Math.sin(CAMS.pitch);
   let want = new T.Vector3(tgt.x - f[0] * cp * dist, tgt.y + sp * dist, tgt.z - f[1] * cp * dist); want.y = Math.max(want.y, groundY(want.x, want.z) + .3);
@@ -544,8 +666,8 @@ function updateHUD(dt) {
   const an = areaName(PL.x, PL.z), rn = roadName(PL.x, PL.z); if (an !== G.area) { G.area = an; const a = $('#area'); a.querySelector('b').textContent = an; a.querySelector('small').textContent = rn; a.style.opacity = 1; clearTimeout(G.areaT); G.areaT = setTimeout(() => a.style.opacity = 0, 4000); }
   if (PL.car) { $('#speed').hidden = false; $('#speed').innerHTML = Math.round(Math.abs(PL.car.v) * 3.6) + '<small>km/h · ' + PL.car.S.name + '</small>'; } else $('#speed').hidden = true;
   const pr = $('#prompt'); const t = PROMPT.next || ''; if (t !== PROMPT.t) { PROMPT.t = t; pr.textContent = t; pr.hidden = !t; } PROMPT.next = '';
-  const hp = $('#help'); hp.hidden = !G.help; if (G.help) hp.innerHTML = PL.car ? '<kbd>W</kbd><kbd>S</kbd> 가속·브레이크 <kbd>A</kbd><kbd>D</kbd> 핸들 <kbd>Space</kbd> 핸드브레이크<br><kbd>F</kbd> 내리기 <kbd>H</kbd> 경적 <kbd>R</kbd> 라디오 <kbd>T</kbd> 택시 알바 (택시)<br><kbd>M</kbd> 지도 <kbd>C</kbd> 카메라 <kbd>Esc</kbd> 일시정지 · <kbd>/</kbd> 도움말 닫기' : '<kbd>WASD</kbd> 걷기 <kbd>Shift</kbd> 전력질주 <kbd>Space</kbd> 점프<br><kbd>클릭</kbd>/<kbd>J</kbd> 펀치 <kbd>F</kbd> 차 타기(뺏기) <kbd>E</kbd> 가게<br>마우스로 둘러보기 (화면 클릭) · <kbd>M</kbd> 지도 <kbd>Esc</kbd> 일시정지 · <kbd>/</kbd> 닫기';
-  if (IS_MOBILE) { const inC = !!PL.car; $('#bAct').innerHTML = inC ? '📯<small>경적</small>' : '👊<small>펀치</small>'; $('#bJump').hidden = inC; $('#bRun').hidden = inC; $('#bHand').hidden = !inC; $('#bRadio').hidden = !inC; $('#bCar').innerHTML = PROMPT.act && !inC ? '🏪<small>들어가기</small>' : inC ? '🚪<small>내리기</small>' : '🚗<small>타기</small>'; }
+  const hp = $('#help'); hp.hidden = !G.help; if (G.help) hp.innerHTML = PL.car ? '<kbd>W</kbd><kbd>S</kbd> 가속·브레이크 <kbd>A</kbd><kbd>D</kbd> 핸들 <kbd>Space</kbd> 핸드브레이크<br><kbd>F</kbd> 내리기 <kbd>H</kbd> 경적 <kbd>R</kbd> 라디오 <kbd>T</kbd> 택시 알바 (택시)<br><kbd>M</kbd> 지도 <kbd>C</kbd> 카메라 <kbd>Esc</kbd> 일시정지 · <kbd>/</kbd> 도움말 닫기' : '<kbd>WASD</kbd> 걷기 <kbd>Shift</kbd> 전력질주 <kbd>Space</kbd> 점프<br><kbd>클릭</kbd> 펀치·쏘기 (쓰러진 사람 앞: 밟기) <kbd>우클릭</kbd> 조준<br><kbd>Q</kbd>/<kbd>1~4</kbd> 무기 <kbd>F</kbd> 차 타기(뺏기) <kbd>E</kbd> 가게<br><kbd>Tab</kbd> 📱 휴대폰 <kbd>M</kbd> 지도 <kbd>Esc</kbd> 일시정지 · <kbd>/</kbd> 닫기';
+  if (IS_MOBILE) { const inC = !!PL.car; if (G.hudCar !== inC) { G.hudCar = inC; hudWeapon(); } $('#bJump').hidden = inC; $('#bRun').hidden = inC; $('#bHand').hidden = !inC; $('#bRadio').hidden = !inC; $('#bCar').innerHTML = PROMPT.act && !inC ? '🏪<small>들어가기</small>' : inC ? '🚪<small>내리기</small>' : '🚗<small>타기</small>'; }
 }
 function radioShow() { $('#radio').hidden = false; $('#radio').innerHTML = '📻 ' + STATIONS[AU.radio.st].n + '<small>R 키 / 📻 로 바꾸기</small>'; clearTimeout(radioShow.t); radioShow.t = setTimeout(() => $('#radio').hidden = true, 2600); }
 function radioHide() { $('#radio').hidden = true; }
@@ -570,7 +692,8 @@ function mapIcons() {
   for (const k in GIVERS) out.push({ x: GIVERS[k].x, z: GIVERS[k].z, t: GIVERS[k].M.icon, c: GIVERS[k].M.col, big: 1 });
   for (const M of MARKS) if (!M.icon) out.push({ x: M.x, z: M.z, t: '', c: M.col, mk: 1 });
   if (MI && MI.blipCar && !MI.blipCar.dead) out.push({ x: MI.blipCar.x, z: MI.blipCar.z, t: '', c: '#ff3040', mk: 1 });
-  for (const s of BUILD.shops) if (s.name.startsWith('편의점') && Math.hypot(s.x - PL.x, s.z - PL.z) < 140) out.push({ x: s.x, z: s.z, t: '🏪', c: '#1f8f4a', small: 1 });
+  for (const s of BUILD.shops) { const ic = s.name.startsWith('편의점') ? ['🏪', '#1f8f4a'] : s.name === '총포사' ? ['🔫', '#ff9a3c'] : s.name === '옷가게' ? ['👕', '#ff7ab6'] : null; if (ic && Math.hypot(s.x - PL.x, s.z - PL.z) < 160) out.push({ x: s.x, z: s.z, t: ic[0], c: ic[1], small: 1 }); }
+  if (G.waypoint) out.push({ x: G.waypoint[0], z: G.waypoint[1], t: '', c: '#c86bff', mk: 1 }); if (G.deliv && CARS.includes(G.deliv) && PL.car !== G.deliv) out.push({ x: G.deliv.x, z: G.deliv.z, t: '', c: '#3aa0ff', mk: 1 });
   return out;
 }
 function drawRadar() {
@@ -637,11 +760,12 @@ function frame(now) {
   // 플레이어
   if (IN.car && !G.dead) { if (PL.car) exitCar(); else if (PL.ko <= 0) { const c = nearestCar(PL.x, PL.z, 3.6); if (c && (Math.abs(c.v) < 6 || nearestCar(PL.x, PL.z, 1.2) === c)) enterCar(c); } }
   if (PL.car) updatePlayerCar(dt); else if (!G.dead || PL.ko > 0) updatePlayerFoot(dt);
-  placePlayer(dt); PL.P.root.visible = !PL.car;
+  placePlayer(dt); PL.P.root.visible = !PL.car || PL.car.S.bike;
   if (!PL.car) { const c = nearestCar(PL.x, PL.z, 2.4); if (c && !G.dead) setPrompt((IS_MOBILE ? '🚗 ' : 'F: ') + (c.ai || c.drvP ? c.S.name + ' 뺏기' : c.S.name + ' 타기')); }
   // 편의점
-  PROMPT.act = null; if (!PL.car) for (const s of BUILD.shops) if (s.name.startsWith('편의점') && Math.hypot(s.x - PL.x, s.z - PL.z) < 2.2) { PROMPT.act = 'shop'; setPrompt((IS_MOBILE ? '🏪 버튼: ' : 'E: ') + '편의점 들어가기'); break; }
-  if (IN.act && PROMPT.act === 'shop') shopMenu();
+  PROMPT.act = null; if (!PL.car) for (const s of BUILD.shops) if ((s.name.startsWith('편의점') || s.name === '총포사' || s.name === '옷가게') && Math.hypot(s.x - PL.x, s.z - PL.z) < 2.4) { PROMPT.act = s.name; setPrompt((IS_MOBILE ? '🏪 버튼: ' : 'E: ') + s.name + ' 들어가기'); break; }
+  if (IN.act && PROMPT.act) { if (PROMPT.act === '총포사') gunShop(); else if (PROMPT.act === '옷가게') wardrobe(true); else shopMenu(); }
+  if (IN.wsw) { switchWeapon(IN.wsw); IN.wsw = 0; } if (IN.wsel) { selectWeapon(IN.wsel); IN.wsel = null; }
   // 차들
   const people = NPCS.filter(n => n.ko <= 0).map(n => n); people.push(PL);
   for (const c of CARS) {
@@ -651,37 +775,38 @@ function frame(now) {
     else if (!c.parked || Math.abs(c.v) > .05) { drive(c, { brk: c.dead ? 0 : .3 }, dt); placeCar(c); }
     if (c.fire > 0) { c.fire -= dt; if (Math.random() < dt * 14) fx(c.fire < 3 ? 'fire' : 'smoke', c.x + rand(-.5, .5), c.y + 1.2, c.z + rand(-.5, .5), { s: rand(.7, 1.3), life: rand(.6, 1.2), vy: 2.2, a: .8 }); if (c.fire <= 0) explodeCar(c); }
     else if (!c.dead && c.hp < c.maxHp * .35 && Math.random() < dt * 4) fx('smoke', c.x, c.y + 1.1, c.z + 0, { s: .6, life: 1.2, vy: 1.6, a: .5 });
-    if (c.siren && c.sirenM) { const fl = Math.floor(G.t * 6) % 2; c.sirenM[0].visible = true; }
+    if (c.rider) { const d = Math.abs(c.x - PL.x) + Math.abs(c.z - PL.z); if (d < 70) { c.rider.mixer.update(dt); applyPose(c.rider); } }
   }
   updatePolice(dt);
   for (const c of CARS) { const d = Math.abs(c.x - PL.x) + Math.abs(c.z - PL.z); c.g.visible = d < 260; for (const w of c.wheels) w.piv.visible = d < 90; }
   // 차 충돌
-  for (let i = 0; i < CARS.length; i++) { const a = CARS[i]; if (Math.abs(a.x - PL.x) > 120 || Math.abs(a.z - PL.z) > 120) continue; for (let j = i + 1; j < CARS.length; j++) { const b = CARS[j]; if (Math.abs(a.x - b.x) > 12 || Math.abs(a.z - b.z) > 12) continue; const imp = carVsCar(a, b); if (imp > 0) { for (const c of [a, b]) { if (c.ai) { c.ai.stun = 1.5; if (imp > 8 && (a === PL.car || b === PL.car)) { c.ai.stun = 3; } } carHurt(c, imp, c === PL.car); } if (imp > 5 && (a === PL.car || b === PL.car)) { const o = a === PL.car ? b : a; if (o.type === 'police' || o.chase) crime('hitcop', o.x, o.z); } } } }
+  for (let i = 0; i < CARS.length; i++) { const a = CARS[i]; if (Math.abs(a.x - PL.x) > 120 || Math.abs(a.z - PL.z) > 120) continue; for (let j = i + 1; j < CARS.length; j++) { const b = CARS[j]; if (Math.abs(a.x - b.x) > 12 || Math.abs(a.z - b.z) > 12) continue; const imp = carVsCar(a, b); if (imp > 0) { for (const c of [a, b]) { if (c.ai) { c.ai.stun = 1.5; if (imp > 8 && (a === PL.car || b === PL.car)) { c.ai.stun = 3; } } carHurt(c, imp, c === PL.car); } if (imp > 5 && (a === PL.car || b === PL.car)) { const o = a === PL.car ? b : a; if (o.type === 'police' || o.chase) crime('hitcop', o.x, o.z); if (o.rider && imp > 4) { ejectRider(o, (o.x - PL.x) * .5, (o.z - PL.z) * .5); crime('carhit', o.x, o.z); } } if (PL.car && PL.car.S.bike && (a === PL.car || b === PL.car) && imp > 7) throwOffBike(imp); } } }
   // 차 ↔ 사람
   for (const c of CARS) { const sp = Math.abs(c.v); const f = carFwd(c);
     for (const n of (c === PL.car ? NPCS : NPCS.concat(PL.car ? [] : [PL]))) {
-      if (n === PL && G.dead) continue; const dx = n.x - c.x, dz = n.z - c.z; if (Math.abs(dx) > 7 || Math.abs(dz) > 7) continue; const lz = dx * f[0] + dz * f[1], lx = dx * f[1] - dz * f[0];
+      if (n === PL && G.dead) continue; if (n.dead) continue; const dx = n.x - c.x, dz = n.z - c.z; if (Math.abs(dx) > 7 || Math.abs(dz) > 7) continue; const lz = dx * f[0] + dz * f[1], lx = dx * f[1] - dz * f[0];
       const ex = c.S.W / 2 + .3 - Math.abs(lx), ez = c.S.L / 2 + .3 - Math.abs(lz); if (ex <= 0 || ez <= 0) continue;
       if (sp > 3.2 && (n.ko || 0) <= .3 && !(c.chase && n.cop)) { const vx = f[0] * c.v * .8 + (lx > 0 ? f[1] : -f[1]) * 2, vz = f[1] * c.v * .8 + (lx > 0 ? -f[0] : f[0]) * 2;
-        if (n === PL) { knockPlayer(1.6, vx, vz); hurtPlayer(sp * 2); } else { knockNPC(n, rand(5, 8), vx, vz); n.afterKo = n.cop ? 'chase' : 'flee'; n.threat = [c.x, c.z]; n.hp -= sp * 4; if (c === PL.car) { crime(n.cop ? 'hitcop' : 'carhit', n.x, n.z); if (n.money) { dropCash(n.x, n.z, n.money); n.money = 0; } missionEvent('runover', n); } SFX.punch(); for (const o of NPCS) if (o !== n && Math.hypot(o.x - n.x, o.z - n.z) < 18) npcFlee(o, c.x, c.z); } c.v *= .9; }
-      else { if (ex < ez) { const s = Math.sign(lx) || 1; n.x += f[1] * s * ex; n.z += -f[0] * s * ex; } else { const s = Math.sign(lz) || 1; n.x += f[0] * s * ez; n.z += f[1] * s * ez; } }
+        if (n === PL) { knockPlayer(1.6, vx, vz); hurtPlayer(sp * 2); } else { const wasKo = n.ko > 0; npcDamage(n, sp * 5, f[0], f[1], c === PL.car ? 'player' : 'npc', 'car'); if (!n.dead) { knockNPC(n, Math.max(n.ko, 1.3), vx, vz); if (!n.afterKo || n.kos === 0) n.afterKo = n.cop ? 'chase' : n.tough && Math.random() < .5 ? 'fight' : 'flee'; } else n.kv = [vx, vz]; n.threat = [c.x, c.z]; if (c === PL.car) { if (!n.cop) crime('carhit', n.x, n.z); missionEvent('runover', n); } SFX.punch(); for (const o of NPCS) if (o !== n && Math.hypot(o.x - n.x, o.z - n.z) < 18) npcFlee(o, c.x, c.z); } c.v *= c.S.bike ? .6 : .9; if (c === PL.car && c.S.bike && sp > 6) throwOffBike(sp * .6); }
+      else { if (c === PL.car && n !== PL && sp > 1 && n.tough && !n.cop && n.st !== 'fight' && n.ko <= 0 && Math.random() < .05) { n.st = 'fight'; n.t = 14; popLabel(n.x, n.y + 2.1, n.z, '야! 조심해!', '#fff', 1.3); }
+        if (ex < ez) { const s = Math.sign(lx) || 1; n.x += f[1] * s * ex; n.z += -f[0] * s * ex; } else { const s = Math.sign(lz) || 1; n.x += f[0] * s * ez; n.z += f[1] * s * ez; } }
     }
   }
   // 행인
   for (let i = NPCS.length - 1; i >= 0; i--) { const n = NPCS[i]; if (!NPCS.includes(n)) continue; updateNPC(n, dt); const d = Math.hypot(n.x - PL.x, n.z - PL.z); placeNPC(n, dt, d > 35); setShadow(n.P, d < 28); n.P.root.visible = d < 90; if (n.far !== (d > 18)) { n.far = d > 18; n.P.root.traverse(o => { if (o.isMesh && /Eye/.test(o.name)) o.visible = !n.far; }); } }
   // 사람끼리 밀기
-  for (const n of NPCS) { if (n.ko > 0) continue; const dx = n.x - PL.x, dz = n.z - PL.z, d = Math.hypot(dx, dz); if (!PL.car && d < .65 && d > .01) { const p = (.65 - d) / 2; n.x += dx / d * p; n.z += dz / d * p; PL.x -= dx / d * p; PL.z -= dz / d * p; } }
+  for (const n of NPCS) { if (n.ko > 0 || n.dead) continue; const dx = n.x - PL.x, dz = n.z - PL.z, d = Math.hypot(dx, dz); if (!PL.car && d < .65 && d > .01) { const p = (.65 - d) / 2; n.x += dx / d * p; n.z += dz / d * p; PL.x -= dx / d * p; PL.z -= dz / d * p; } }
   if (!PL.car && (IN.mz || IN.mx) && PL.grab > 0 && PL.spd > 3) PL.grab = Math.max(0, PL.grab - dt * 1.5);
-  if (PL.grab > 0 && !NPCS.some(n => n.cop && n.ko <= 0 && Math.hypot(n.x - PL.x, n.z - PL.z) < 1.6)) PL.grab = Math.max(0, PL.grab - dt);
+  if (PL.grab > 0 && !NPCS.some(n => n.cop && n.ko <= 0 && !n.dead && Math.hypot(n.x - PL.x, n.z - PL.z) < 1.6)) PL.grab = Math.max(0, PL.grab - dt);
   if (PL.grab > 0) setPrompt('👮 체포당하는 중! 펀치하거나 달려서 벗어나요');
-  updateWanted(dt); spawnPedestrians(dt); updatePicks(dt); updateGarage(); updateMission(dt); fxUpdate(dt);
+  updateWanted(dt); spawnPedestrians(dt); updatePicks(dt); updateGarage(); updateMission(dt); fxUpdate(dt); updateShots(dt); G.hurtFlash = Math.max(0, (G.hurtFlash || 0) - dt); $('#hurt').style.opacity = Math.max(G.hurtFlash * 1.4, PL.hp < 25 ? .35 + Math.sin(G.t * 6) * .15 : 0);
   for (const M of MARKS) { M.ar.position.y = 3 + Math.sin(G.t * 3) * .3; M.ar.rotation.y += dt * 2; }
   // 체력 회복
   PL.dmgT += dt; if (PL.dmgT > 6 && PL.hp < 60 && PL.hp > 0) PL.hp = Math.min(60, PL.hp + dt * 2);
   updateCamera(dt); updateHUD(dt); G.rf = (G.rf || 0) + 1; if (G.rf % 2 === 0) drawRadar();
   // 소리
   if (AU.ctx) { engineUpdate(!!PL.car && !PL.car.dead, PL.car ? PL.car.v : 0, PL.car ? PL.car.S.max : 40); radioTick(!!PL.car && AU.on); AU.amb.gain.value = .03 + DAY.night * .0; }
-  IN.punch = IN.jump = IN.car = IN.act = IN.horn = false;
+  IN.punch = IN.jump = IN.car = IN.act = IN.horn = false; if (!IN.fireHeldTouch && !IN.mouseL) IN.fireHeld = false;
   if ((G.saveT = (G.saveT || 0) + dt) > 10) { G.saveT = 0; save(); }
   ren.render(scene, cam);
 }
@@ -707,8 +832,8 @@ async function boot() {
 function showTitle() {
   $('#title').hidden = false; const b = $('#titleBtns');
   b.innerHTML = (hadSave ? `<button class="btn y" id="tCont">▶ 이어하기 <small style="font-weight:600">· ${won(SV.money)} · 스토리 ${SV.story}/${STORY.length}</small></button><button class="btn d" id="tNew">새로 시작</button>` : `<button class="btn y" id="tNew">▶ 게임 시작</button>`) + `<button class="btn d" id="tKeys">🎮 조작법</button>`;
-  const go = () => { auInit(); $('#title').hidden = true; $('#hud').hidden = false; if (IS_MOBILE) $('#touch').hidden = false; G.on = true; setupGivers(); hudStars(); _mShown = SV.money; $('#money').textContent = won(SV.money); CAMS.pos.set(PL.x, 30, PL.z + 30);
-    setTimeout(() => toast(SV.story < STORY.length ? '🏙️ 서울에 온 걸 환영해요!<br>노란 <b>B</b> 표시(박 사장)에게 가면 일을 줘요. 지도: <b>M</b> / 🗺️' : '🏙️ 다시 서울이에요! 치킨 배달(C), 택시 알바(택시 타고 T)로 돈을 벌어요.', 6000), 600);
+  const go = () => { auInit(); $('#title').hidden = true; $('#hud').hidden = false; if (IS_MOBILE) $('#touch').hidden = false; G.on = true; setupGivers(); hudStars(); refreshGun(); _mShown = SV.money; $('#money').textContent = won(SV.money); CAMS.pos.set(PL.x, 30, PL.z + 30);
+    setTimeout(() => toast(SV.story < STORY.length ? '🏙️ STA 1에 온 걸 환영해요!<br>노란 <b>B</b>(박 사장)에게 가거나, <b>📱 휴대폰</b>(Tab)으로 전화하면 일을 줘요.' : '🏙️ 다시 서울이에요! 📱 휴대폰으로 알바를 찾아봐요.', 6000), 600);
     if (!IS_MOBILE) { G.help = true; setTimeout(() => G.help = false, 25000); } };
   if ($('#tCont')) $('#tCont').onclick = go;
   $('#tNew').onclick = () => { if (hadSave && !confirmNew()) return; SV = Object.assign(loadSave(), { money: 30000, story: 0, stolen: 0, deliveries: 0, fares: 0, busted: 0, wasted: 0, best: {} }); save(); go(); };

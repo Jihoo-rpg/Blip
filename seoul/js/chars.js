@@ -7,6 +7,7 @@ async function loadChars() {
   const ld = new T.GLTFLoader();
   const [h, w, A] = await Promise.all([ld.loadAsync('assets/human.glb'), ld.loadAsync('assets/woman.glb'), fetch('assets/anims.json').then(r => r.json())]);
   CH.A = A; CH.tpl.m = prepTpl(h.scene); CH.tpl.w = prepTpl(w.scene); CH.ready = true;
+  ld.loadAsync('assets/swat.glb').then(g => { g.scene.traverse(o => { if (o.isMesh && o.material) o.material.color && o.material.color.multiplyScalar(.55); }); CH.tpl.s = prepTpl(g.scene); }).catch(() => { });
 }
 function prepTpl(root) {
   root.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = false; const g = o.geometry; g.computeBoundingSphere(); g.boundingSphere.radius *= 1.6; if (o.material) { o.material.envMapIntensity = .5; } } });
@@ -61,17 +62,19 @@ function randomLook(woman) {
 }
 const LOOKS = {
   player: { w: 0, skin: '#f6e3d3', top: '#151515', bot: '#3e5f8a', shoe: '#f2f2f2', beard: false, head: 'hair', hair: '#120f0d', hairStyle: 'side', glasses: false, s: 1.02, wide: 1.05 },
-  police: () => ({ w: 0, skin: pick(SKIN.slice(0, 4)), top: '#c8ff2a', bot: '#1d2a4a', shoe: '#121212', beard: false, head: 'police', hair: '#120f0d', s: rand(.98, 1.06), wide: rand(1, 1.1), cop: 1 }),
+  swat: () => ({ swat: 1, cop: 1, s: rand(1, 1.05), wide: 1.05 }),
+  police: () => ({ w: 0, skin: pick(SKIN.slice(0, 4)), top: '#1f2b47', bot: '#1d2a4a', shoe: '#121212', beard: false, head: 'police', hair: '#120f0d', s: rand(.98, 1.06), wide: rand(1, 1.1), cop: 1 }),
   thug: () => ({ w: 0, skin: pick(SKIN.slice(0, 5)), top: '#151515', bot: '#151515', shoe: '#121212', beard: true, head: 'buzz', hair: '#120f0d', glasses: true, s: 1.06, wide: 1.15 })
 };
 const _hairGeo = {};
 function mulCol(m, hex, k) { m.color.copy(lin(hex)).multiplyScalar(k || 1); }
 function makePerson(look) {
-  const t = CH.tpl[look.w ? 'w' : 'm']; const root = T.SkeletonUtils.clone(t.scene); const B = {};
+  const t = CH.tpl[look.swat && CH.tpl.s ? 's' : look.w ? 'w' : 'm']; if (look.swat && !CH.tpl.s) look = LOOKS.police(); const root = T.SkeletonUtils.clone(t.scene); const B = {};
   root.traverse(o => {
     if (o.isBone) { const n = o.name.replace(/^mixamorig:?/, ''); if (!B[n]) B[n] = o; }
     if (o.isMesh) {
       o.material = o.material.clone(); const n = o.material.name;
+      if (look.swat) return;
       if (look.w) {
         o.material.color.setRGB(look.tint[0], look.tint[1], look.tint[2]);
         if (look.pants && look.pants !== '#f2c230') { const pc = { value: lin(look.pants) }; o.material.onBeforeCompile = sh => { sh.uniforms.uPants = pc; sh.fragmentShader = 'uniform vec3 uPants;\n' + sh.fragmentShader.replace('#include <map_fragment>', '#include <map_fragment>\n{ vec3 c = diffuseColor.rgb; float gr = c.g / max(c.r, .001); float m = smoothstep(.45, .55, gr) * smoothstep(.08, .25, min(c.r, c.g) - c.b); float l = dot(c, vec3(.3, .59, .11)); diffuseColor.rgb = mix(c, uPants * (.35 + l * 1.3), m); }'); }; o.material.customProgramCacheKey = () => 'pants'; }
@@ -79,7 +82,7 @@ function makePerson(look) {
       }
       if (n === 'Wolf3D_Teeth') o.visible = false;
       if (n === 'Wolf3D_Skin' || n === 'Wolf3D_Body') mulCol(o.material, look.skin, 1);
-      if (n === 'Wolf3D_Outfit_Top') mulCol(o.material, look.top, look.top === '#ffffff' ? 1.15 : look.cop ? 1.6 : 1.9);
+      if (n === 'Wolf3D_Outfit_Top') mulCol(o.material, look.top, look.top === '#ffffff' ? 1.15 : look.cop ? 2.2 : 1.9);
       if (n === 'Wolf3D_Outfit_Bottom') mulCol(o.material, look.bot, 1.8);
       if (n === 'Wolf3D_Outfit_Footwear') mulCol(o.material, look.shoe, look.shoe === '#f2f2f2' ? 1.4 : 1.6);
       if (n === 'Wolf3D_Beard') { o.visible = look.beard; mulCol(o.material, look.hair || '#120f0d', 1.4); }
@@ -107,11 +110,15 @@ function makePerson(look) {
     }
     if (look.glasses) { const e = t.eye; add(new T.BoxGeometry(Math.abs(e.x) * 2 + .07, .035, .012), '#0a0a0a', new T.Vector3(0, e.y, e.z + .028)); }
   }
+  if (look.cop && !look.swat) policeGear(B);
+  if (look.helmet && head) { const ht = t.headTop, r = ht.length() * .62, c = ht.clone().multiplyScalar(.5); const hm = new T.Mesh(_hairGeo.helm || (_hairGeo.helm = new T.SphereGeometry(1, 18, 12, 0, Math.PI * 2, 0, Math.PI * .62)), new T.MeshPhysicalMaterial({ color: lin(look.helmet), roughness: .3, clearcoat: 1 })); hm.position.copy(c); hm.scale.set(r * 1.12, r * 1.15, r * 1.2); hm.castShadow = true; head.add(hm); }
   root.rotation.order = 'YXZ'; root.scale.set(look.s * (look.wide || 1), look.s, look.s * (look.wide || 1));
   const mixer = new T.AnimationMixer(root); const act = {};
   for (const k in t.clips) { act[k] = mixer.clipAction(t.clips[k]); act[k].enabled = true; }
   act.idle.play(); act.idle.time = Math.random() * 3;
-  const P = { root, mixer, act, cur: 'idle', B, look, pose: null, poseT: 0, upd: 0 };
+  const fingers = { Left: [], Right: [] }; for (const n in B) { const m = /^(Left|Right)Hand(Thumb|Index|Middle|Ring|Pinky)[123]$/.exec(n); if (m) fingers[m[1]].push([B[n], m[2] === 'Thumb', B[n].quaternion.clone()]); }
+  root.updateMatrixWorld(true); const hipY = B.Hips ? B.Hips.getWorldPosition(new T.Vector3()).y : 1;
+  const P = { root, mixer, act, cur: 'idle', B, look, pose: null, poseT: 0, upd: 0, fingers, hipY };
   return P;
 }
 function setAnim(P, name, ts) {
@@ -120,6 +127,17 @@ function setAnim(P, name, ts) {
 }
 function setShadow(P, on) { if (P._sh === on) return; P._sh = on; P.root.traverse(o => { if (o.isMesh) o.castShadow = on; }); }
 
+/* 경찰 장비: 형광 조끼 · 벨트 · 무전기 */
+let VEST = null;
+function policeGear(B) {
+  if (!VEST) {
+    const tex = ctex(512, 256, (g, W, H) => { g.fillStyle = '#c6ff2e'; g.fillRect(0, 0, W, H); g.fillStyle = '#d9dde2'; g.fillRect(0, H * .66, W, 16); g.fillRect(0, H * .86, W, 16); g.fillStyle = '#1a2a55'; g.fillRect(0, 0, W, 10);
+      g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = '#132a6b'; g.font = `62px ${DFONT}`; g.fillText('POLICE', W * .5, H * .3); g.font = `40px ${DFONT}`; g.fillText('경 찰', W * .5, H * .52); g.font = `30px ${DFONT}`; g.fillText('경찰', W * .9, H * .32); g.fillText('경찰', W * .1, H * .32); });
+    VEST = { m: new T.MeshStandardMaterial({ map: tex, roughness: .7, emissive: lin('#3a5000'), emissiveIntensity: .25 }), g: new T.CylinderGeometry(.165, .175, .44, 20, 1, true), belt: new T.MeshStandardMaterial({ color: lin('#111'), roughness: .6 }), radio: new T.MeshStandardMaterial({ color: lin('#222'), roughness: .5 }) };
+  }
+  const sp = B.Spine2 || B.Spine1; if (sp) { const v = new T.Mesh(VEST.g, VEST.m); v.position.set(0, .02, .01); v.scale.set(1.05, 1, .82); v.castShadow = true; sp.add(v); const rd = new T.Mesh(new T.BoxGeometry(.05, .09, .03), VEST.radio); rd.position.set(-.1, .17, .13); sp.add(rd); }
+  if (B.Hips) { const b = new T.Mesh(new T.CylinderGeometry(.16, .16, .06, 18, 1, true), VEST.belt); b.position.set(0, .06, 0); b.scale.z = .85; B.Hips.add(b); const hol = new T.Mesh(new T.BoxGeometry(.05, .14, .09), VEST.belt); hol.position.set(-.17, -.02, 0); B.Hips.add(hol); }
+}
 /* ---------- 뼈를 직접 움직이는 자세 (펀치 · 손들기) ---------- */
 const _v1 = new T.Vector3(), _v2 = new T.Vector3(), _q1 = new T.Quaternion(), _q2 = new T.Quaternion(), _q3 = new T.Quaternion();
 function aimBone(P, name, child, dir, w) {
@@ -127,21 +145,49 @@ function aimBone(P, name, child, dir, w) {
   _q1.setFromUnitVectors(_v2, dir); if (w != null && w < 1) _q1.slerp(_q3.identity(), 1 - w);
   b.parent.getWorldQuaternion(_q2); const inv = _q2.clone().invert(); b.quaternion.premultiply(inv.multiply(_q1).multiply(_q2)); b.updateMatrixWorld(true);
 }
+function fist(P, S, k) { const L = P.fingers && P.fingers[S]; if (!L) return; for (const [b, th] of L) b.rotation.x += (th ? .5 : 1.25) * k; P.curled = true; }
+function resetFingers(P) { if (!P.curled) return; P.curled = false; for (const S in P.fingers) for (const [b, , q] of P.fingers[S]) b.quaternion.copy(q); }
 function applyPose(P) {
-  if (!P.pose) return; const yaw = P.root.rotation.y; const f = new T.Vector3(Math.sin(yaw), 0, Math.cos(yaw)), rt = new T.Vector3(-Math.cos(yaw), 0, Math.sin(yaw));
+  resetFingers(P); if (!P.pose) return; P.root.updateMatrixWorld(true); const f = new T.Vector3(0, 0, 1).applyQuaternion(P.root.getWorldQuaternion(new T.Quaternion())); f.y = 0; f.normalize(); const yaw = Math.atan2(f.x, f.z); const rt = new T.Vector3(-f.z, 0, f.x), up = new T.Vector3(0, 1, 0);
+  const V = (a, b, c) => new T.Vector3().addScaledVector(f, a).addScaledVector(up, b).addScaledVector(rt, c).normalize(); // 앞 · 위 · 오른쪽
+  const mix = (a, b, k) => a.clone().lerp(b, k).normalize();
+  const arm = (S, u, l, w) => { aimBone(P, S + 'Arm', S + 'ForeArm', u, w); aimBone(P, S + 'ForeArm', S + 'Hand', l, w); };
+  const twist = (a) => { const b = P.B.Spine2 || P.B.Spine1; if (b) { b.rotateY(a); b.updateMatrixWorld(true); } };
   P.root.updateMatrixWorld(true);
-  if (P.pose === 'punch') {
-    const t = P.poseT; const ext = t < .35 ? t / .35 : t < .6 ? 1 : 1 - (t - .6) / .4; const side = P.punchSide || 1; const S = side > 0 ? 'Right' : 'Left';
-    const d = f.clone().multiplyScalar(.6 + ext * .9).addScaledVector(rt, side * (.18 - ext * .12)).add(new T.Vector3(0, .02 + ext * .12, 0)).normalize();
-    aimBone(P, S + 'Arm', S + 'ForeArm', d, .4 + ext * .6); aimBone(P, S + 'ForeArm', S + 'Hand', f.clone().add(new T.Vector3(0, .1, 0)).normalize(), .3 + ext * .7);
-    const o = side > 0 ? 'Left' : 'Right'; aimBone(P, o + 'Arm', o + 'ForeArm', f.clone().multiplyScalar(.5).add(new T.Vector3(0, -.6, 0)).addScaledVector(rt, -side * .2).normalize(), .6); aimBone(P, o + 'ForeArm', o + 'Hand', f.clone().add(new T.Vector3(0, .9, 0)).normalize(), .7);
-    if (P.B.Spine1) { P.B.Spine1.rotation.y += -side * .35 * ext; P.B.Spine1.updateMatrixWorld(true); }
+  // 권투 가드: 팔꿈치는 아래, 주먹은 턱 앞
+  const guardU = s => V(.55, -.75, s * .38), guardL = s => V(.42, .9, -s * .06);
+  if (P.pose === 'punch' || P.pose === 'guard') {
+    const t = P.poseT || 0; const side = P.punchSide || 1; let ext = 0;
+    if (P.pose === 'punch') ext = t < .28 ? Math.sin(t / .28 * Math.PI / 2) : t < .45 ? 1 : Math.max(0, 1 - (t - .45) / .55);
+    twist(-side * .38 * ext + (P.pose === 'guard' ? 0 : side * .1 * (1 - ext)));
+    for (const S of ['Left', 'Right']) {
+      const s = S === 'Right' ? 1 : -1; const k = s === side ? ext : 0;
+      // 뻗은 팔: 어깨 높이로 앞 (살짝 안쪽)
+      arm(S, mix(guardU(s), V(1, .08, -s * .12), k), mix(guardL(s), V(1, .06, -s * .1), k), 1); fist(P, S, 1);
+    }
+    if (P.B.Spine1) { P.B.Spine1.rotateX(.12 + ext * .1); P.B.Spine1.updateMatrixWorld(true); }
+  } else if (P.pose === 'stomp') {
+    const t = P.poseT || 0; const lift = t < .45 ? Math.sin(t / .45 * Math.PI / 2) : Math.max(0, 1 - (t - .45) / .15);
+    aimBone(P, 'RightUpLeg', 'RightLeg', V(.25 + lift * .75, -1 + lift * .4, .08), 1); aimBone(P, 'RightLeg', 'RightFoot', V(.12 + lift * .2, -1, 0), 1);
+    for (const S of ['Left', 'Right']) { const s = S === 'Right' ? 1 : -1; arm(S, V(-.1, -.9, s * .45), V(.3, -.6, s * .35), .9); }
+    if (P.B.Spine1) { P.B.Spine1.rotateX(.25 * (1 - lift)); P.B.Spine1.updateMatrixWorld(true); }
   } else if (P.pose === 'hands') {
-    for (const S of ['Left', 'Right']) { const s = S === 'Left' ? -1 : 1; aimBone(P, S + 'Arm', S + 'ForeArm', new T.Vector3(0, 1, 0).addScaledVector(rt, s * .35).normalize()); aimBone(P, S + 'ForeArm', S + 'Hand', new T.Vector3(0, 1, 0)); }
-  } else if (P.pose === 'guard') {
-    for (const S of ['Left', 'Right']) { const s = S === 'Left' ? -1 : 1; aimBone(P, S + 'Arm', S + 'ForeArm', f.clone().multiplyScalar(.45).add(new T.Vector3(0, -.7, 0)).addScaledVector(rt, s * .25).normalize(), .8); aimBone(P, S + 'ForeArm', S + 'Hand', f.clone().add(new T.Vector3(0, 1.2, 0)).addScaledVector(rt, -s * .2).normalize(), .9); }
+    for (const S of ['Left', 'Right']) { const s = S === 'Right' ? 1 : -1; arm(S, V(.1, .6, s * .7), V(0, 1, s * .1), 1); }
   } else if (P.pose === 'phone') {
-    aimBone(P, 'RightArm', 'RightForeArm', new T.Vector3(0, -1, 0).addScaledVector(f, .25).addScaledVector(rt, .25).normalize(), .9); aimBone(P, 'RightForeArm', 'RightHand', f.clone().multiplyScalar(.7).add(new T.Vector3(0, .9, 0)).addScaledVector(rt, -.3).normalize(), .9);
+    arm('Right', V(.2, -1, .3), V(.5, .9, -.35), .95);
+  } else if (P.pose === 'aim') { // 두 손으로 총 겨누기
+    const a = P.aimDir || f; const ar = new T.Vector3(-a.z, 0, a.x).normalize();
+    const flat = new T.Vector3(a.x, 0, a.z).normalize(); const dy = Math.atan2(flat.x, flat.z) - yaw; twist(Math.atan2(Math.sin(dy), Math.cos(dy)) * .6);
+    aimBone(P, 'RightArm', 'RightForeArm', a.clone().addScaledVector(ar, -.12).normalize(), 1); aimBone(P, 'RightForeArm', 'RightHand', a, 1); fist(P, 'Right', .8); fist(P, 'Left', .6);
+    if (!P.oneHand) { aimBone(P, 'LeftArm', 'LeftForeArm', a.clone().addScaledVector(ar, .55).add(new T.Vector3(0, -.2, 0)).normalize(), 1); aimBone(P, 'LeftForeArm', 'LeftHand', a.clone().addScaledVector(ar, -.55).normalize(), 1); }
+  } else if (P.pose === 'ride') { // 오토바이 타기
+    for (const S of ['Left', 'Right']) { const s = S === 'Right' ? 1 : -1;
+      aimBone(P, S + 'UpLeg', S + 'Leg', V(1, -.25, s * .22), 1); aimBone(P, S + 'Leg', S + 'Foot', V(-.15, -1, s * .05), 1);
+      arm(S, V(.85, -.35, s * .35), V(.9, -.25, -s * .05), 1); }
+    if (P.B.Spine1) { P.B.Spine1.rotateX(.3); P.B.Spine1.updateMatrixWorld(true); }
+  } else if (P.pose === 'cower') {
+    for (const S of ['Left', 'Right']) { const s = S === 'Right' ? 1 : -1; arm(S, V(.4, .5, s * .6), V(-.2, .7, -s * .7), 1); }
+    if (P.B.Spine1) { P.B.Spine1.rotateX(.5); P.B.Spine1.updateMatrixWorld(true); }
   }
 }
 /* 쓰러진 자세: 몸 전체를 눕혀요 */
