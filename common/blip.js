@@ -31,6 +31,7 @@
     hoops: { name: '하프코트 레전드', icon: '🏀', path: 'hoops/' },
     carcrash: { name: '차를 부수세요', icon: '💥', path: 'carcrash/' },
     phonetycoon: { name: '폰 공장 타이쿤', icon: '📱', path: 'phonetycoon/' },
+    billiards: { name: '당구 마스터 3D', icon: '🎱', path: 'billiards/' },
   };
   const AVAS = ['😺', '🐶', '🦊', '🐼', '🐸', '🐵', '🦁', '🐯', '🐰', '🐻', '🐧', '🦄', '👾', '🤖', '👻', '🐲'];
 
