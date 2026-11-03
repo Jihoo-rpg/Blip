@@ -12,7 +12,8 @@ $('#phX').onclick = () => closePhone();
 const APPS = [['contacts', '📞', '연락처', '#34c759'], ['missions', '🎯', '미션', '#ff9f0a'], ['shop', '🛒', '블립몰', '#0a84ff'], ['clothes', '👕', '옷장', '#bf5af2'], ['map', '🗺️', '지도', '#30b0c7'], ['selfie', '📷', '셀카', '#ff375f'], ['stats', '📊', '기록', '#5e5ce6'], ['settings', '⚙️', '설정', '#8e8e93']];
 function phHome() {
   const w = G.wanted ? `<div class="phAlert">🚨 수배 ${'★'.repeat(G.wanted)} — 변호사에게 전화하면 지워 줘요</div>` : '';
-  const next = SV.story < STORY.length ? `<div class="phCard" data-a="missions"><small>다음 미션</small><b>${SV.story + 1}. ${STORY[SV.story].n}</b><span>박 사장에게 전화해서 시작해요</span></div>` : `<div class="phCard"><small>스토리</small><b>👑 모두 끝냈어요!</b><span>알바로 돈을 더 벌어 봐요</span></div>`;
+  const nh = (SV.heist || 0) < HEISTS.length ? `<div class="phCard" data-a="contacts"><small>🔫 레이의 작전</small><b>${(SV.heist || 0) + 1}. ${HEISTS[SV.heist || 0].n}</b><span>레이에게 전화해서 시작해요</span></div>` : '';
+  const next = nh + (SV.story < STORY.length ? `<div class="phCard" data-a="missions"><small>다음 미션</small><b>${SV.story + 1}. ${STORY[SV.story].n}</b><span>박 사장에게 전화해서 시작해요</span></div>` : `<div class="phCard"><small>스토리</small><b>👑 모두 끝냈어요!</b><span>알바로 돈을 더 벌어 봐요</span></div>`);
   $('#phScr').innerHTML = `<div class="phMoney">${won(SV.money)}</div>${w}${next}<div class="phGrid">${APPS.map(a => `<button class="phApp" data-a="${a[0]}"><i style="background:${a[3]}">${a[1]}</i><span>${a[2]}</span></button>`).join('')}</div>`;
   $$('#phScr [data-a]').forEach(b => b.onclick = () => { SFX.click(); phApp(b.dataset.a); });
 }
@@ -29,8 +30,9 @@ function phApp(a) {
   if (a === 'clothes') return phClothes();
   if (a === 'stats') return phPage('📊 기록', `<div class="phList">${[['💰 돈', won(SV.money)], ['🎯 스토리', `${SV.story} / ${STORY.length}`], ['🚗 훔친 차', SV.stolen + '대'], ['🍗 배달', SV.deliveries + '번'], ['🚕 택시 손님', SV.fares + '명'], ['💀 쓰러뜨린 사람', (SV.kills || 0) + '명'], ['👮 체포', SV.busted + '번'], ['🏥 기절', SV.wasted + '번']].map(r => `<div class="phRow"><span>${r[0]}</span><b>${r[1]}</b></div>`).join('')}</div>`);
   if (a === 'settings') {
-    phPage('⚙️ 설정', `<div class="phList"><button class="phBtn" id="sSnd">${AU.on ? '🔊 소리 끄기' : '🔇 소리 켜기'}</button><button class="phBtn" id="sQ">${QUALITY.low ? '🐢 그래픽: 가볍게 (바꾸기)' : '✨ 그래픽: 좋게 (바꾸기)'}</button><button class="phBtn" id="sHelp">❓ 조작법 보기</button><button class="phBtn" id="sHub">🏠 허브로 나가기</button></div>`);
+    phPage('⚙️ 설정', `<div class="phList"><button class="phBtn" id="sSnd">${AU.on ? '🔊 소리 끄기' : '🔇 소리 켜기'}</button><button class="phBtn" id="sBgm">${BGM.on ? '🎵 배경음악 끄기' : '🎵 배경음악 켜기'}</button><button class="phBtn" id="sQ">${QUALITY.low ? '🐢 그래픽: 가볍게 (바꾸기)' : '✨ 그래픽: 좋게 (바꾸기)'}</button><button class="phBtn" id="sHelp">❓ 조작법 보기</button><button class="phBtn" id="sHub">🏠 허브로 나가기</button></div>`);
     $('#sSnd').onclick = () => { AU.on = !AU.on; if (AU.master) AU.master.gain.value = AU.on ? .8 : 0; phApp('settings'); };
+    $('#sBgm').onclick = () => { bgmToggle(); phApp('settings'); };
     $('#sQ').onclick = () => { QUALITY.low = !QUALITY.low; applyQuality(); phApp('settings'); };
     $('#sHelp').onclick = () => phPage('❓ 조작법', `<div class="keys"><b>이동</b><span>WASD · Shift 전력질주 · Space 점프</span><b>주먹</b><span>클릭 · J (쓰러진 사람 앞에서 누르면 밟기)</span><b>총</b><span>Q · 1~4 무기 바꾸기 · 우클릭 조준 · 클릭 쏘기</span><b>차</b><span>F 타기·뺏기 · W/S · A/D · Space 드리프트</span><b>기타</b><span>Tab 휴대폰 · M 지도 · C 카메라 · E 가게 · T 택시 알바</span><b>폰</b><span>조이스틱 · 화면 드래그 · 👊/🔫 버튼 (총은 자동 조준)</span></div>`);
     $('#sHub').onclick = () => { save(); location.href = '../hub/'; };
@@ -38,12 +40,17 @@ function phApp(a) {
 }
 /* ---------- 연락처 ---------- */
 function phContacts() {
-  const cs = [['boss', '😎', '박 사장', SV.story < STORY.length ? `다음 일: ${STORY[SV.story].n}` : '일을 다 끝냈어요'], ['chicken', '🍗', '서울치킨', '배달 알바'], ['garage', '🔧', '정비소', '차 · 오토바이 가져다주기'], ['lawyer', '⚖️', '김 변호사', '수배 지우기'], ['gun', '🔫', '총포사', '무기 · 탄약']];
+  const hs = SV.heist || 0; const cs = [['ray', '🕶️', '레이 (작전팀)', hs < HEISTS.length ? `다음 작전: ${HEISTS[hs].n}` : '작전 끝'], ['boss', '😎', '박 사장', SV.story < STORY.length ? `다음 일: ${STORY[SV.story].n}` : '일을 다 끝냈어요'], ['chicken', '🍗', '서울치킨', '배달 알바'], ['garage', '🔧', '정비소', '차 · 오토바이 가져다주기'], ['lawyer', '⚖️', '김 변호사', '수배 지우기'], ['gun', '🔫', '총포사', '무기 · 탄약']];
   phPage('📞 연락처', `<div class="phList">${cs.map(c => `<button class="phRow phCall" data-c="${c[0]}"><span class="phAv">${c[1]}</span><span><b>${c[2]}</b><small>${c[3]}</small></span><em>📞</em></button>`).join('')}</div>`);
   $$('#phScr [data-c]').forEach(b => b.onclick = () => { SFX.click(); call(b.dataset.c); });
 }
 function phTalk(who, txt, btns) { phPage('📞 ' + who, `<div class="phBubble">${txt}</div><div class="phList">${btns.map((b, i) => `<button class="phBtn ${b[2] || ''}" data-i="${i}">${b[0]}</button>`).join('')}</div>`); $$('#phScr [data-i]').forEach(e => e.onclick = () => { SFX.click(); btns[+e.dataset.i][1](); }); }
 function call(c) {
+  if (c === 'ray') {
+    const hs = SV.heist || 0; if (hs >= HEISTS.length) return phTalk('레이', '이제 서울은 우리 거야. 푹 쉬어.', [['끊기', phContacts]]);
+    if (MI) return phTalk('레이', '지금 하는 일부터 끝내.', [['끊기', phContacts]]);
+    const h = HEISTS[hs]; return phTalk('레이', `<b>작전 ${hs + 1}. ${h.n}</b><br>${h.intro.replace(/\n/g, '<br>')}`, [['▶ 간다', () => { closePhone(); startHeist(); }, 'y'], ['나중에', phContacts]]);
+  }
   if (c === 'boss') {
     if (SV.story >= STORY.length) return phTalk('박 사장', '수고 많았어! 넌 이제 서울의 왕이야 👑<br>심심하면 알바라도 해.', [['끊기', phContacts]]);
     if (MI) return phTalk('박 사장', '지금 하는 일부터 끝내고 연락해!', [['끊기', phContacts]]);
@@ -68,6 +75,7 @@ function deliverCar(type) { const p = laneNear(PL.x, PL.z, 8, 45); if (!p) { toa
 /* ---------- 미션 목록 ---------- */
 function phMissions() {
   phPage('🎯 미션', `<div class="phList">${STORY.map((s, i) => `<div class="phRow ${i < SV.story ? 'done' : i === SV.story ? 'now' : 'lock'}"><span>${i < SV.story ? '✅' : i === SV.story ? '▶' : '🔒'} ${i + 1}. ${s.n}</span><small>${i === SV.story ? '박 사장에게 전화' : ''}</small></div>`).join('')}
+   <div class="phSub">🔫 레이의 작전</div>${HEISTS.map((h, i) => { const hs = SV.heist || 0; return `<div class="phRow ${i < hs ? 'done' : i === hs ? 'now' : 'lock'}"><span>${i < hs ? '✅' : i === hs ? '▶' : '🔒'} ${i + 1}. ${h.n}</span><small>${i === hs ? '레이에게 전화' : ''}</small></div>`; }).join('')}
    <div class="phSub">알바</div><div class="phRow"><span>🍗 치킨 배달</span><small>서울치킨에 전화</small></div><div class="phRow"><span>🚕 택시 알바</span><small>택시 타고 T / 🚕</small></div><div class="phRow"><span>🔧 수배 지우기</span><small>정비소 · 변호사</small></div></div>
    ${SV.story < STORY.length && !MI ? '<button class="phBtn y" id="mCall">📞 박 사장에게 전화하기</button>' : ''}`);
   if ($('#mCall')) $('#mCall').onclick = () => call('boss');

@@ -185,6 +185,9 @@ function applyPose(P) {
       aimBone(P, S + 'UpLeg', S + 'Leg', V(1, -.25, s * .22), 1); aimBone(P, S + 'Leg', S + 'Foot', V(-.15, -1, s * .05), 1);
       arm(S, V(.85, -.35, s * .35), V(.9, -.25, -s * .05), 1); }
     if (P.B.Spine1) { P.B.Spine1.rotateX(.3); P.B.Spine1.updateMatrixWorld(true); }
+  } else if (P.pose === 'flinch') { const k = Math.sin(clamp(P.poseT || 0, 0, 1) * Math.PI);
+    if (P.B.Spine1) { P.B.Spine1.rotateX(-.45 * k); P.B.Spine1.updateMatrixWorld(true); } if (P.B.Head) { P.B.Head.rotateY(.5 * k); P.B.Head.rotateX(-.3 * k); P.B.Head.updateMatrixWorld(true); }
+    for (const S of ['Left', 'Right']) { const s = S === 'Right' ? 1 : -1; arm(S, V(-.2, -.8, s * .55), V(.2, -.4, s * .4), .7 * k); }
   } else if (P.pose === 'cower') {
     for (const S of ['Left', 'Right']) { const s = S === 'Right' ? 1 : -1; arm(S, V(.4, .5, s * .6), V(-.2, .7, -s * .7), 1); }
     if (P.B.Spine1) { P.B.Spine1.rotateX(.5); P.B.Spine1.updateMatrixWorld(true); }

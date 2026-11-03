@@ -41,6 +41,7 @@ function groundY(x, z) { if (blockAt(x, z)) return .18; if (z > LIM + RH && z < 
 function bridgeY(z) { const a = clamp((z - BRIDGE.z0 - 14) / 30, 0, 1), b = clamp((BRIDGE.z1 - z) / 30, 0, 1); return Math.min(a, b) * 4; }
 function onRoad(x, z) { const fx = ((x % P) + P) % P, fz = ((z % P) + P) % P; return (fx < RH || fx > P - RH || fz < RH || fz > P - RH) && Math.abs(x) <= LIM + RH && Math.abs(z) <= LIM + RH; }
 function inBounds(p, r) { // 도시 경계
+  if (p.x > 1500) return; // 건물 안 (은행 · 보석상 · 편의점)
   const onBr = Math.abs(p.x) < BRIDGE.hw - r + .2 && p.z > LIM + RH - 1;
   if (onBr) { p.z = Math.min(p.z, BRIDGE.z1 - 2 - r); return; }
   p.x = clamp(p.x, -LIM - RH + r, LIM + RH - r); p.z = clamp(p.z, -LIM - RH + r, RIVER.z0 - 1 - r);

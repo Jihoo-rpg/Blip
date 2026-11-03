@@ -32,6 +32,8 @@ const SFX = {
   star() { tone(880, .12, .2, 'square'); tone(660, .2, .2, 'square', null, .1); },
   hurt() { tone(220, .15, .25, 'sawtooth', 120); },
   click() { tone(900, .05, .15, 'square'); },
+  punchHeavy(h) { const k = h ? 1.25 : 1; tone(95 * k, .22, .95, 'sine', 38); noiseHit(.13, 900, .9 * k); noiseHit(.035, 5000, .35, 'highpass'); tone(160, .06, .4, 'triangle', 70); },
+  glass() { noiseHit(.5, 6000, .7, 'highpass'); for (let i = 0; i < 5; i++) tone(rand(2000, 4500), .25, .08, 'sine', null, i * .03); },
   gun(w, v) { v = v == null ? 1 : v; if (w === 'shotgun') { noiseHit(.35, 1800, .9 * v); tone(70, .25, .6 * v, 'sine', 30); } else if (w === 'smg') { noiseHit(.08, 3200, .45 * v, 'bandpass'); tone(140, .06, .25 * v, 'square', 60); } else { noiseHit(.16, 2600, .7 * v); tone(110, .12, .45 * v, 'sine', 45); } }
 };
 function engineUpdate(on, speed, max) { if (!AU.eng) return; const t = AU.ctx.currentTime; const k = clamp(Math.abs(speed) / (max || 40), 0, 1); const gear = Math.min(4, Math.floor(k * 5)); const rpm = (k * 5 - gear) * .6 + .3; const f = 38 + rpm * 70 + gear * 6;

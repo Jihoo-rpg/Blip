@@ -99,10 +99,10 @@ function playerFire() {
     else if (hit.kind === 'car') { carHurt(hit.c, 4 + w.dmg * .35, false); if (hit.c.ai) hit.c.ai.stun = 1; if ((hit.c.type === 'police' || hit.c.chase) && G.on) crime('hitcop', hit.c.x, hit.c.z); }
     else if (hit.kind === 'heli') heliHurt(w.dmg);
   }
-  shotFx(muzzle, first, id, 1); G.shake = Math.max(G.shake, id === 'shotgun' ? .25 : .06);
+  G.lastShot = { p: first.p, t: G.t }; shotFx(muzzle, first, id, 1); G.shake = Math.max(G.shake, id === 'shotgun' ? .25 : .06);
   if (G.t - (PL.shootCrime || -9) > 1) { PL.shootCrime = G.t; crime('shoot', PL.x, PL.z); panic(PL.x, PL.z, 45); }
 }
-function panic(x, z, r) { for (const n of NPCS) { if (n.cop || n.mission || n.dead || n.ko > 0 || n.st === 'fight' || n.st === 'shoot' || n.thug) continue; const d = Math.hypot(n.x - x, n.z - z); if (d > r) continue; if (d < 12 && Math.random() < .35) { n.st = 'cower'; n.t = rand(3, 6); n.P.pose = 'cower'; } else npcFlee(n, x, z, rand(7, 11)); if (Math.random() < .15) popLabel(n.x, n.y + 2.1, n.z, pick(['꺄악!', '살려줘!', '도망쳐!', '총이다!']), '#ffffff', 1.2); } }
+function panic(x, z, r) { for (const n of NPCS) { if (n.cop || n.mission || n.dead || n.ko > 0 || n.st === 'fight' || n.st === 'shoot' || n.thug) continue; const d = Math.hypot(n.x - x, n.z - z); if (d > r) continue; if (d < 12 && Math.random() < .35) { n.st = 'cower'; n.t = rand(3, 6); n.P.pose = 'cower'; } else npcFlee(n, x, z, rand(7, 11)); if (Math.random() < .3) say(n, Math.random() < .6 ? 'gun' : 'flee'); } }
 
 /* ---------- NPC 사격 (경찰 · 특공대 · 깡패) ---------- */
 function npcFire(n) {

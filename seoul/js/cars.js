@@ -8,6 +8,7 @@ const SPEC = {
   sports: { L: 4.45, W: 1.95, acc: 15, max: 58, brake: 22, wb: 2.6, mass: .9, hp: 90, name: '스포츠카' },
   truck: { L: 5.1, W: 1.78, acc: 7, max: 33, brake: 14, wb: 2.6, mass: 1.6, hp: 140, name: '1톤 트럭' },
   bus: { L: 11, W: 2.5, acc: 4.5, max: 26, brake: 10, wb: 6.2, mass: 5, hp: 300, name: '시내버스' },
+  armored: { L: 6.2, W: 2.3, acc: 6, max: 30, brake: 12, wb: 3.6, mass: 3, hp: 420, name: '현금수송차' },
   bike: { L: 2.1, W: .8, acc: 15, max: 52, brake: 20, wb: 1.42, mass: .35, hp: 60, name: '오토바이', bike: 1 },
   scooter: { L: 1.9, W: .78, acc: 8.5, max: 30, brake: 16, wb: 1.3, mass: .3, hp: 50, name: '배달 스쿠터', bike: 1 }
 };
@@ -50,6 +51,11 @@ function buildModel(type) {
     M.roof = new T.BoxGeometry(.001, .001, .001);
     M.wheels.push([0, M.wr, -S.wb / 2], [0, M.wr, S.wb / 2]); M.seatY = .9; return MODEL[type] = M;
   }
+  if (type === 'armored') { const P = [[-hl, .4], [hl - .05, .4], [hl, .55], [hl, 1.2], [hl - .35, 1.35], [hl - 1.2, 1.4], [hl - 1.45, 2.55], [-hl, 2.55], [-hl, .55]]; const cab = [[hl - .4, 1.33], [hl - .95, 2.1], [hl - 1.4, 2.1], [hl - 1.4, 1.38]]; M.wr = .45;
+    M.body = extrudeSide(P, W); M.glass = extrudeSide(cab, W * .9, .03); M.roof = at(new T.BoxGeometry(W * .8, .06, 1), 0, 2.56, -1);
+    const t = M.trim; t.push(vcol(at(new T.BoxGeometry(W + .04, .25, .2), 0, .5, hl), '#141414'), vcol(at(new T.BoxGeometry(W + .04, .25, .2), 0, .5, -hl), '#141414'), vcol(at(new T.BoxGeometry(W * .7, 1.7, .04), 0, 1.5, -hl - .02), '#2a3a2a'));
+    for (const s of [-1, 1]) { M.lights.push(vcol(at(new T.BoxGeometry(.35, .14, .05), s * (W / 2 - .3), .8, hl + .01), '#fff7de'), vcol(at(new T.BoxGeometry(.3, .14, .05), s * (W / 2 - .25), .8, -hl - .01), '#ff1f1f')); }
+    for (const z of [-S.wb / 2, S.wb / 2]) for (const s of [-1, 1]) M.wheels.push([s * (W / 2 - .15), M.wr, z]); return MODEL[type] = M; }
   let P, cab, roofZ;
   if (type === 'sports') { P = [[-hl, .25], [hl - .1, .24], [hl, .42], [hl - .15, .62], [hl - 1.4, .78], [-hl + .7, .82], [-hl + .1, .8], [-hl, .62]]; cab = [[hl - 1.45, .76], [-.1, 1.16], [-.9, 1.17], [-hl + .75, .82]]; roofZ = [-.85, -.12, 1.15]; M.wr = .33; }
   else if (type === 'suv') { P = [[-hl, .3], [hl - .08, .3], [hl, .52], [hl, .82], [hl - .3, .98], [hl - 1.15, 1.05], [-hl + .1, 1.08], [-hl, .92], [-hl, .52]]; cab = [[hl - 1.2, 1.02], [hl - 2.0, 1.66], [-hl + .3, 1.68], [-hl + .05, 1.08]]; roofZ = [-hl + .35, hl - 2.05, 1.66]; M.wr = .38; }
@@ -82,12 +88,13 @@ function makeCar(type, color) {
     const sideT = color === 'green' ? M.busTex.green : M.busTex.blue; const sm = new T.MeshStandardMaterial({ map: sideT, roughness: .5 }), fm = new T.MeshStandardMaterial({ map: M.busFront, roughness: .4 }), wm = new T.MeshStandardMaterial({ color: lin('#d8d8d8'), roughness: .5 });
     const bx = new T.Mesh(new T.BoxGeometry(S.W, 2.9, S.L), [sm, sm, wm, wm, fm, wm]); bx.position.y = .35 + 1.45; bx.castShadow = true; body.add(bx);
   } else {
-    const pm = paintMat(type === 'taxi' ? '#e8792a' : type === 'police' ? '#f4f4f2' : color || pick(PAINT));
+    const pm = paintMat(type === 'taxi' ? '#e8792a' : type === 'police' ? '#f4f4f2' : type === 'armored' ? '#2f4a33' : color || pick(PAINT));
     if (!M.bodyR) M.bodyR = merge([M.body, M.roof]); const b = new T.Mesh(M.bodyR, pm); b.castShadow = true; body.add(b);
     if (M.glass) body.add(new T.Mesh(M.glass, GLASS));
     if (!M.trimG) { M.trimG = merge(M.trim); M.lightG = merge(M.lights); }
     body.add(new T.Mesh(M.trimG, TRIM)); body.add(new T.Mesh(M.lightG, LIGHTM));
     if (type === 'taxi') { if (!M.sign) M.sign = new T.MeshBasicMaterial({ map: decalTex('택시', '#ffd84a', '#1b1b1b', 256, 96) }); const sg = new T.Mesh(new T.BoxGeometry(.5, .22, .28), [M.sign, M.sign, M.sign, M.sign, M.sign, M.sign]); sg.position.set(0, 1.52, -.2); sg.rotation.y = Math.PI / 2; body.add(sg); }
+    if (type === 'armored') { const dm = new T.MeshBasicMaterial({ map: decalTex('현금수송  CASH', null, '#ffd84a', 512, 96), transparent: true }); for (const s of [-1, 1]) { const d = new T.Mesh(new T.PlaneGeometry(3, .55), dm); d.position.set(s * (S.W / 2 + .05), 1.9, -.8); d.rotation.y = s * Math.PI / 2; body.add(d); } }
     if (type === 'police') {
       if (!M.dec) { M.dec = new T.MeshBasicMaterial({ map: decalTex('경찰  POLICE', null, '#16306e', 512, 96), transparent: true }); M.stripe = new T.MeshStandardMaterial({ color: lin('#1d3a8a'), roughness: .4 }); M.lime = new T.MeshStandardMaterial({ color: lin('#b8f03a'), roughness: .4, emissive: lin('#3a5a00'), emissiveIntensity: .3 }); }
       for (const s of [-1, 1]) { const st = new T.Mesh(new T.BoxGeometry(.02, .16, S.L * .9), M.stripe); st.position.set(s * (S.W / 2 + .03), .58, 0); body.add(st); const li = new T.Mesh(new T.BoxGeometry(.02, .06, S.L * .9), M.lime); li.position.set(s * (S.W / 2 + .03), .69, 0); body.add(li); const d = new T.Mesh(new T.PlaneGeometry(1.8, .34), M.dec); d.position.set(s * (S.W / 2 + .045), .78, -.1); d.rotation.y = s * Math.PI / 2; body.add(d); }

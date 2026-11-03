@@ -55,6 +55,11 @@ button{font:inherit;color:inherit;cursor:pointer}
 #speed{position:absolute;right:calc(18px + env(safe-area-inset-right));bottom:calc(84px + env(safe-area-inset-bottom));font:38px var(--disp);text-align:right}
 #speed small{font:700 13px var(--ui);display:block}
 #cross{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px;opacity:0;background:radial-gradient(circle,#fff 0 2px,transparent 3px),linear-gradient(#fff,#fff) 50% 0/2px 6px no-repeat,linear-gradient(#fff,#fff) 50% 100%/2px 6px no-repeat,linear-gradient(#fff,#fff) 0 50%/6px 2px no-repeat,linear-gradient(#fff,#fff) 100% 50%/6px 2px no-repeat;filter:drop-shadow(0 0 2px #000)}
+#sub{position:fixed;left:50%;bottom:calc(130px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(760px,92vw);text-align:center;font:700 18px/1.45 var(--ui);color:#fff;pointer-events:none;z-index:9}
+#bgm{position:fixed;left:calc(14px + env(safe-area-inset-left));bottom:calc(205px + env(safe-area-inset-bottom));z-index:8;background:rgba(0,0,0,.6);border-radius:10px;overflow:hidden;width:200px}
+#bgm .bgmBar{display:flex;justify-content:space-between;align-items:center;padding:3px 8px;font:700 11px var(--ui)}#bgm .bgmBar button{border:0;background:none;color:#fff;font-size:13px}
+#bgm iframe{display:block}
+@media (max-width:700px),(max-height:500px){#bgm{left:50%;transform:translateX(-50%);bottom:auto;top:calc(48px + env(safe-area-inset-top));width:160px;opacity:.85}#bgm iframe{width:160px;height:90px}#sub{bottom:calc(60px + env(safe-area-inset-bottom));font-size:14px}}
 #hurt{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(transparent 45%,rgba(200,0,0,.55))}
 #phone{position:fixed;right:calc(18px + env(safe-area-inset-right));bottom:calc(14px + env(safe-area-inset-bottom));z-index:15}
 .ph{width:min(330px,88vw);height:min(620px,calc(100vh - 28px));border-radius:42px;background:#0c0d11;border:3px solid #33363f;box-shadow:0 30px 80px rgba(0,0,0,.7),inset 0 0 0 2px #000;padding:10px 10px 14px;display:flex;flex-direction:column;animation:phUp .25s ease-out}
@@ -152,6 +157,8 @@ button{font:inherit;color:inherit;cursor:pointer}
  <div id="tTop"><button class="tb" id="bPause">⏸</button><button class="tb" id="bPhone">📱</button><button class="tb" id="bMap">🗺️</button><button class="tb" id="bRadio" hidden>📻</button><button class="tb" id="bCam">🎥</button></div>
 </div>
 <div id="hurt"></div>
+<div id="sub" class="tx" hidden></div>
+<div id="bgm" hidden><div class="bgmBar"><span>🎵 배경음악</span><button id="bgmX">✕</button></div><div id="bgmFrame"></div></div>
 <div id="phone" hidden><div class="ph"><div class="phTop"><span id="phClock">17:00</span><span class="phNotch"></span><span>📶 🔋</span></div><div id="phScr"></div><button id="phX" class="phHomeBtn" aria-label="닫기"></button></div></div>
 <div id="fade"></div>
 <div class="scr" id="title" hidden>
@@ -175,6 +182,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 <script src="js/audio.js"></script>
 <script src="js/weapons.js"></script>
 <script src="js/phone.js"></script>
+<script src="js/voice.js"></script>
+<script src="js/bgm.js"></script>
+<script src="js/heist.js"></script>
 <script src="js/game.js"></script>
 <script src="../common/blip.js" data-game="seoul"></script>
 </body>
