@@ -93,7 +93,7 @@ function kickBall(p, vx, vy, vz, spin) {
 function passVel(p, tx, tz, kind, pow) {
   const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz) || 1; const acc = (100 - p.st.pas) / 100 * (DIFFOF(p).err);
   const ea = (Math.random() - .5) * acc * (kind === 'ground' ? .12 : .2), c = Math.cos(ea), s = Math.sin(ea); const ux = (dx * c - dz * s) / d, uz = (dx * s + dz * c) / d;
-  const pm = pow == null ? 1 : lerp(.93, 1.32, pow); // 세게 누를수록 빠르게
+  const pm = pow ? lerp(1, 1.3, pow) : 1; // 세게 누를수록 빠르게
   if (kind === 'ground') { const v = clamp((Math.sqrt(2 * 3.4 * d) + 3.5 + d * .05) * pm, 7, 34); return [ux * v, .3, uz * v]; }
   const vy = clamp(d * (kind === 'cross' ? .22 : kind === 'through' ? .14 : .2), 3, 13) * (pow == null ? 1 : lerp(.95, 1.08, pow)); const tf = 2 * vy / G; const vh = d / tf * (kind === 'through' ? 1.05 : .9) * (1 + (Math.random() - .5) * acc * .15) * (pow == null ? 1 : lerp(.97, 1.12, pow));
   return [ux * vh, vy, uz * vh];
@@ -295,7 +295,7 @@ function bestPassTarget(p, any) {
   for (const m of team(p.team)) { if (m === p || (m.role === 'GK' && !any)) continue; const d = dist(p, m); if (d < 5 || d > 42) continue;
     const prog = (m.x - p.x) * M.dir[p.team]; let open = 99; for (const q of opp) { const t = clamp(((q.x - p.x) * (m.x - p.x) + (q.z - p.z) * (m.z - p.z)) / (d * d), 0, 1); const ex = p.x + (m.x - p.x) * t - q.x, ez = p.z + (m.z - p.z) * t - q.z; open = Math.min(open, Math.hypot(ex, ez) / (t * 1.5 + .5)); }
     let space = 99; for (const q of opp) space = Math.min(space, dist(q, m));
-    const sc = prog * .85 + Math.min(open, 6) * 2 + Math.min(space, 8) * .9 - d * .06 + (m.role === 'FW' ? 2 : 0) + (Math.random() - .5) * 4 * DIFFOF(p).err;
+    const sc = prog * .55 + Math.min(open, 6) * 2 + Math.min(space, 8) * .9 - d * .11 + (d < 18 ? 1.2 : 0) + (m.role === 'FW' ? 2 : 0) + (Math.random() - .5) * 4 * DIFFOF(p).err;
     if (sc > bs) { bs = sc; best = m; } }
   return best && (any || bs > 4) ? best : null;
 }
@@ -312,10 +312,10 @@ function aiCarrier(p, dt) {
     if (Math.random() < shootP * (block < 3 && dg > 14 ? .5 : 1)) { const gk = gkOf(1 - p.team); doShoot(p, clamp(dg / 24 + rand(-.15, .1), .35, .95), gk ? (gk.z > 0 ? -.85 : .85) * rand(.4, 1) : null); return; }
     if (near && nd < 2.8 && p.st.drb >= 80 && Math.random() < (p.st.drb - 74) / 70) { const ax = p.x - near.x, az = p.z - near.z, al = Math.hypot(ax, az) || 1; const sd = Math.sign(az) || 1; if (doSkill(p, fdx * .7 + (-az / al) * 0 + 0, sd * .9)) return; } // 스타 선수는 개인기로 제쳐요
     const runner = team(p.team).find(q => q.run && q.role !== 'GK' && (q.run.x - p.x) * fdx > 5);
-    if (runner && block < 6 && Math.random() < .5) { doPass(p, runner, 'through'); return; }
+    if (runner && block < 6 && Math.random() < .25) { doPass(p, runner, 'through'); return; }
     const pressured = nd < 2.3; const m = bestPassTarget(p, pressured && p.holdT > .3);
     const open = block > 7 && dg > 18; const want = pressured ? .7 : open ? .03 : block < 4 ? .4 : .1;
-    if (m && (Math.random() < want || p.holdT > 3.2)) { const d = dist(p, m); const ahead = (m.x - p.x) * fdx; const fwdRun = m.role !== 'DF' && ahead > 6 && (m.run || Math.random() < .35); doPass(p, m, fwdRun && d > 10 ? 'through' : d > 30 ? 'long' : 'ground'); return; }
+    if (m && (Math.random() < want || p.holdT > 3.2)) { const d = dist(p, m); const ahead = (m.x - p.x) * fdx; const fwdRun = m.role !== 'DF' && ahead > 8 && m.run && Math.random() < .5; doPass(p, m, fwdRun && d > 12 ? 'through' : d > 32 && Math.random() < .6 ? 'long' : 'ground'); return; }
     // 측면에서 크로스
     if (Math.abs(gx - p.x) < 22 && Math.abs(p.z) > 16 && Math.random() < .45) { const tgt = team(p.team).filter(q => q.role === 'FW' || q.role === 'MF').sort((a, b) => Math.abs(gx - a.x) - Math.abs(gx - b.x))[0]; if (tgt) { const [vx, vy, vz] = passVel(p, gx - M.dir[p.team] * rand(6, 11), rand(-5, 5), 'cross'); p.act = 'cross'; p.actT = 0; kickBall(p, vx, vy, vz, 0); ball.passTo = tgt; M.stats.pa[p.team]++; comm(`${shortName(p)}, 크로스!`); return; } }
   }

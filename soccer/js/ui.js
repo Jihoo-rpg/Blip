@@ -18,7 +18,9 @@ function pushAct(a) {
   if (NET.role === 'guest') { NET.acts.push({ i: ++NET.actId, a, dur }); return; }
   INP[0].acts.push({ a, t: now, dur });
 }
-function holdInfo(I) { let t = 0, k = ''; const now = performance.now(); for (const q of HOLDK) if (I.hold[q]) { const d = (now - I.hold[q]) / 1000; if (d > t) { t = d; k = q; } } return [clamp(t / 1.0, 0, 1), k]; }
+// 슛은 누른 만큼, 패스류는 톡(0.28초 안) = 세기 없이 짧고 정확하게 → 그 뒤로 세기가 차요
+const TAP = .28; function kickPow(a, dur) { if (dur == null) return 0; return /^shoot/.test(a) ? clamp(dur / 1.0, 0, 1) : dur < TAP ? 0 : clamp((dur - TAP) / .85, .05, 1); }
+function holdInfo(I) { let t = 0, k = ''; const now = performance.now(); for (const q of HOLDK) if (I.hold[q]) { const d = (now - I.hold[q]) / 1000; if (d > t) { t = d; k = q; } } return [k ? kickPow(k, t) : 0, k]; }
 const STICK = { on: false, id: null, ox: 0, oy: 0, x: 0, y: 0 };
 function readLocal() {
   let ix = 0, iy = 0; if (KEY.KeyA || KEY.ArrowLeft) ix -= 1; if (KEY.KeyD || KEY.ArrowRight) ix += 1; if (KEY.KeyW || KEY.ArrowUp) iy += 1; if (KEY.KeyS || KEY.ArrowDown) iy -= 1;
@@ -41,7 +43,8 @@ function setupTouch() {
 /* ---------- 사람이 조작 ---------- */
 function dirTarget(p, vx, vz, anyMate, pw) {
   let L = Math.hypot(vx, vz); if (L < .3) { vx = Math.sin(p.yaw); vz = Math.cos(p.yaw); L = 1; } vx /= L; vz /= L; let best = null, bs = -1e9;
-  for (const m of team(p.team)) { if (m === p) continue; const dx = m.x - p.x, dz = m.z - p.z, d = Math.hypot(dx, dz) || 1; const c = (dx * vx + dz * vz) / d; if (c < .45) continue; const s = c * 3 - (pw == null || pw < .2 ? d * .035 : Math.abs(d - (8 + pw * 36)) * .06) - (m.role === 'GK' ? 2 : 0); if (s > bs) { bs = s; best = m; } }
+  for (const m of team(p.team)) { if (m === p) continue; const dx = m.x - p.x, dz = m.z - p.z, d = Math.hypot(dx, dz) || 1; const c = (dx * vx + dz * vz) / d; if (c < .45) continue; let open = 6; for (const q of team(1 - p.team)) open = Math.min(open, Math.hypot(q.x - m.x, q.z - m.z));
+    const s = (pw ? c * 3 : c * 2.2) + open * .3 - (!pw ? d * .12 + (d > 25 ? 2 : 0) : Math.abs(d - (10 + pw * 34)) * .07) - (d < 3.5 ? 1.5 : 0) - (m.role === 'GK' ? 2 : 0); if (s > bs) { bs = s; best = m; } }
   return best || (anyMate ? bestPassTarget(p, true) : null);
 }
 function humanAct(p, a, v, pow, h) {
@@ -58,13 +61,13 @@ function humanAct(p, a, v, pow, h) {
     if (sp.type === 'throw') { const m = dirTarget(p, I.x, I.z, true, pow); if (m) run(() => throwIn(p, m.x, m.z, pow)); return; }
     if (sp.type === 'corner') { if (base === 'pass') { const m = dirTarget(p, I.x, I.z, true, pow); run(() => doPass(p, m, 'ground', pow)); } else { const az = clamp(I.z * 8, -7, 7), far = 4 + pow * 10; run(() => { const gx = goalX(p.team); const [vx, vy, vz] = passVel(p, gx - M.dir[p.team] * far, az, 'cross'); p.act = 'cross'; p.actT = 0; kickBall(p, vx, vy, vz, -Math.sign(sp.z) * Math.sign(sp.x) * 1.5); }); } return; }
     if (base === 'shoot' && (sp.type === 'pen' || sp.type === 'free')) { const aim = Math.abs(I.z) > .25 ? clamp(I.z * 1.4, -1, 1) : 0; run(() => doShoot(p, Math.max(.15, pow), aim)); return; }
-    if (base !== 'shoot') { const m = dirTarget(p, I.x, I.z, true, pow); const k = base === 'pass' ? (dist(p, m) > 30 ? 'long' : 'ground') : base === 'lob' ? 'long' : 'through'; run(() => doPass(p, m, k, pow)); }
+    if (base !== 'shoot') { const m = dirTarget(p, I.x, I.z, true, pow); const k = base === 'pass' ? (dist(p, m) > 30 && pow > .55 ? 'long' : 'ground') : base === 'lob' ? 'long' : 'through'; run(() => doPass(p, m, k, pow)); }
     return;
   }
   if (M.phase !== 'play') return;
   if (own) {
     if (ball.held || !up) return; const gx = goalX(p.team);
-    if (base === 'pass') { const m = dirTarget(p, I.x, I.z, true, pow); if (!m) return; if (Math.abs(gx - p.x) < 26 && Math.abs(p.z) > 15 && Math.abs(gx - m.x) < 19 && Math.abs(m.z) < 18) doCross(p, m, clamp(m.z, -6, 6), pow); else doPass(p, m, dist(p, m) > 32 ? 'long' : 'ground', pow); }
+    if (base === 'pass') { const m = dirTarget(p, I.x, I.z, true, pow); if (!m) return; if (Math.abs(gx - p.x) < 26 && Math.abs(p.z) > 15 && Math.abs(gx - m.x) < 19 && Math.abs(m.z) < 18) doCross(p, m, clamp(m.z, -6, 6), pow); else doPass(p, m, dist(p, m) > 30 && pow > .55 ? 'long' : 'ground', pow); }
     else if (base === 'through') { const m = dirTarget(p, I.x, I.z, true, pow); if (m) doPass(p, m, 'through', pow); }
     else if (base === 'lob') { if (Math.abs(gx - p.x) < 25 && Math.abs(p.z) > 14) doCross(p, null, clamp(I.z * 6, -6, 6), pow); else { const m = dirTarget(p, I.x, I.z, true, pow); if (m) doPass(p, m, 'long', pow); } }
     else if (base === 'shoot') doShoot(p, Math.max(.12, pow), Math.abs(I.z) > .25 ? clamp(I.z * 1.3, -1, 1) : null);
@@ -96,7 +99,7 @@ function humanTick(dt, setMode) {
     const tm = M.human[h]; if (tm < 0) continue; const I = INP[h]; let p = M.ctrl[h];
     if (!p || p.team !== tm) p = M.ctrl[h] = closestTo(team(tm).filter(q => q.role !== 'GK'), ball.x, ball.z);
     const acts = I.acts.splice(0); [p.charge, p.chargeK] = holdInfo(I);
-    for (const A of acts) { const pow = A.dur != null ? clamp(A.dur / 1.0, 0, 1) : 0; humanAct(p, A.a, null, pow, h); }
+    for (const A of acts) { const pow = kickPow(A.a, A.dur); humanAct(p, A.a, null, pow, h); }
     p = M.ctrl[h];
     if (setMode) { const sp = M.sp; if ((sp && sp.taker === p) || (M.phase === 'kickoff' && M.koTaker === p)) { if (Math.hypot(I.x, I.z) > .3 && sp && sp.type !== 'throw') { p.aim = Math.atan2(I.x, I.z); } } continue; }
     if (p.stun > 0 || p.act === 'slide' || p.skill || (p.role === 'GK' && ball.held)) continue;
@@ -240,7 +243,7 @@ function hudTick() {
   const h = M.human[0] >= 0 ? 0 : -1; const p = h >= 0 ? M.ctrl[h] : null;
   const tag = $('#ptag'); if (p) { tag.hidden = false; if (UI.tagP !== p) { UI.tagP = p; const pd = p.d.pid != null ? PDB[p.d.pid] : null; const o = ovrOf(p.d); const r = pd ? pd.r : o >= 88 ? 'W' : o >= 80 ? 'G' : o >= 72 ? 'S' : 'B';
       tag.innerHTML = `<div class="mc r${r}"><div class="fr"></div><div class="in">${pd ? `<img alt="">` : ''}<em>${o}</em></div></div><div class="mt"><b>${p.d.num}</b><span>${esc(p.d.name)}</span><small>${ROLE_NAMES[p.role]}</small></div>`; if (pd) portrait(pd, u => { const im = tag.querySelector('img'); if (im && UI.tagP === p) im.src = u; }); } } else { tag.hidden = true; UI.tagP = null; }
-  const pw = $('#power'); const canKick = p && (ball.owner === p || (M.sp && M.sp.taker === p) || (M.phase === 'kickoff' && M.koTaker === p) || (!ball.owner && Math.hypot(ball.x - p.x, ball.z - p.z) < 4)); const [hc, hk] = canKick ? holdInfo(INP[0]) : [0, '']; const ch = hc > .04 ? hc : 0; pw.hidden = !ch;
+  const pw = $('#power'); const canKick = p && (ball.owner === p || (M.phase === 'set' && M.sp && M.sp.taker === p) || (M.phase === 'kickoff' && M.koTaker === p)); const [hc, hk] = canKick ? holdInfo(INP[0]) : [0, '']; const ch = hc > .04 ? hc : 0; pw.hidden = !ch;
   if (ch) { $('#powerF').style.width = (ch * 100) + '%'; // 누르고 있는 버튼 바로 위에 작게
     const b = IS_MOBILE && $({ pass: '#bPass', shoot: '#bShoot', through: '#bThru', lob: '#bLob' }[hk]); if (b) { const r = b.getBoundingClientRect(); pw.style.cssText = `left:${r.left + r.width / 2}px;top:${r.top - 14}px;bottom:auto;width:${Math.max(56, r.width)}px`; } else pw.style.cssText = ''; }
   // 버튼 이름: 공 있을 때 / 수비할 때
