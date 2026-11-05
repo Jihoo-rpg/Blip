@@ -40,13 +40,14 @@ function humanAct(p, a, v, pow, h) {
   const I = INP[h]; const own = ball.owner === p; const sp = M.sp; const isTaker = (M.phase === 'set' && sp && sp.taker === p) || (M.phase === 'kickoff' && M.koTaker === p);
   if (a === 'sw') { if (!own && !isTaker) switchPlayer(h); return; }
   if (isTaker) {
-    if (M.phase === 'kickoff') { if (a === 'pass' || a === 'through' || a === 'lob') doPass(p, dirTarget(p, I.x, I.z) || M.koMate, 'ground'); return; }
-    sp.done = true;
-    if (sp.type === 'throw') { const m = dirTarget(p, I.x, I.z, true); if (m) throwIn(p, m.x, m.z); return; }
-    if (sp.type === 'corner') { if (a === 'pass') { const m = dirTarget(p, I.x, I.z, true); doPass(p, m, 'ground'); } else { const gx = goalX(p.team); const [vx, vy, vz] = passVel(p, gx - M.dir[p.team] * (a === 'through' ? 11 : 6.5), clamp(I.z * 8, -7, 7), 'cross'); p.act = 'cross'; p.actT = 0; kickBall(p, vx, vy, vz, -Math.sign(sp.z) * Math.sign(sp.x) * 1.5); } return; }
-    if (a === 'shootUp' && (sp.type === 'pen' || sp.type === 'free')) { doShoot(p, pow, Math.abs(I.z) > .25 ? clamp(I.z * 1.4, -1, 1) : 0); return; }
-    if (a === 'pass' || a === 'through' || a === 'lob') { const m = dirTarget(p, I.x, I.z, true); doPass(p, m, a === 'pass' ? (dist(p, m) > 30 ? 'long' : 'ground') : a === 'lob' ? 'long' : 'through'); return; }
-    sp.done = false; return;
+    if (M.phase === 'kickoff') { if (M.koPrep) return; if (a === 'pass' || a === 'through' || a === 'lob') doPass(p, dirTarget(p, I.x, I.z) || M.koMate, 'ground'); return; }
+    if (!sp.ready || sp.pend || sp.done) return; // 아직 공을 놓는 중이에요
+    const run = f => { sp.done = true; setPend(sp, f); };
+    if (sp.type === 'throw') { const m = dirTarget(p, I.x, I.z, true); if (m) run(() => throwIn(p, m.x, m.z)); return; }
+    if (sp.type === 'corner') { if (a === 'pass') { const m = dirTarget(p, I.x, I.z, true); run(() => doPass(p, m, 'ground')); } else { const far = a === 'through', az = clamp(I.z * 8, -7, 7); run(() => { const gx = goalX(p.team); const [vx, vy, vz] = passVel(p, gx - M.dir[p.team] * (far ? 11 : 6.5), az, 'cross'); p.act = 'cross'; p.actT = 0; kickBall(p, vx, vy, vz, -Math.sign(sp.z) * Math.sign(sp.x) * 1.5); }); } return; }
+    if (a === 'shootUp' && (sp.type === 'pen' || sp.type === 'free')) { const aim = Math.abs(I.z) > .25 ? clamp(I.z * 1.4, -1, 1) : 0; run(() => doShoot(p, pow, aim)); return; }
+    if (a === 'pass' || a === 'through' || a === 'lob') { const m = dirTarget(p, I.x, I.z, true); const k = a === 'pass' ? (dist(p, m) > 30 ? 'long' : 'ground') : a === 'lob' ? 'long' : 'through'; run(() => doPass(p, m, k)); return; }
+    return;
   }
   if (M.phase !== 'play') return;
   if (own) {
@@ -90,22 +91,37 @@ function humanTick(dt, setMode) {
   }
 }
 /* ---------- 카메라 ---------- */
-const CAM = { mode: SAVE.cam || 0, x: 0, z: 30, tx: 0, tz: 0, shake: 0, names: ['📺 중계', '🎮 뒤에서', '🛰️ 위에서'] };
+const CAM = { mode: SAVE.cam || 0, tx: 0, tz: 0, shake: 0, look: new T.Vector3(), want: new T.Vector3(), wl: new T.Vector3(), orb: 0, names: ['📺 중계', '🎮 뒤에서', '🛰️ 위에서'] };
 function cycleCam() { CAM.mode = (CAM.mode + 1) % 3; SAVE.cam = CAM.mode; persist(); toast('카메라: ' + CAM.names[CAM.mode]); }
 function shake(s) { CAM.shake = Math.max(CAM.shake, s); }
 function camTick(dt) {
   if (M.phase === 'replay') return replayCam(dt);
-  if (M.phase === 'menu' || UI.screen === 'menu' || UI.screen === 'pick' || UI.screen === 'club') { const t = performance.now() / 1000 * .05; cam.position.set(Math.cos(t) * 46, 16, Math.sin(t) * 28); cam.lookAt(ball.x * .4, 1, ball.z * .4); return; }
-  const port = cam.aspect < 1; const bx = ball.x, bz = ball.z; const k = Math.min(1, dt * 3);
-  CAM.tx = lerp(CAM.tx, bx, k); CAM.tz = lerp(CAM.tz, bz, k);
-  let px, py, pz, lx, ly, lz;
-  if (CAM.mode === 0) { px = clamp(CAM.tx * .88, -PL.hx + 8, PL.hx - 8); pz = CAM.tz * .25 + (port ? 52 : 37); py = port ? 30 : 20; lx = CAM.tx * .96; ly = 0; lz = CAM.tz * .62 - 2; if (port) { pz = CAM.tz * .2 + 30; py = 42; lz = CAM.tz * .6 - 6; } }
-  else if (CAM.mode === 1) { const d = M.human[0] >= 0 ? M.dir[M.human[0]] : 1; const c = M.ctrl[0] || { x: bx, z: bz }; const fx = lerp(c.x, bx, .5), fz = lerp(c.z, bz, .5); px = fx - d * (port ? 22 : 17); py = port ? 16 : 11; pz = fz * .9; lx = fx + d * 12; ly = 0; lz = fz * .95; }
-  else { px = CAM.tx * .95; py = port ? 85 : 62; pz = CAM.tz * .5 + (port ? 6 : 12); lx = CAM.tx; ly = 0; lz = CAM.tz * .55; }
-  cam.position.x = lerp(cam.position.x, px, Math.min(1, dt * 4)); cam.position.y = lerp(cam.position.y, py, Math.min(1, dt * 4)); cam.position.z = lerp(cam.position.z, pz, Math.min(1, dt * 4));
+  const port = cam.aspect < 1; let fov = port ? 58 : 40, speed = 3;
+  if (UI.screen === 'menu') { // 메뉴: 대표 선수 앞으로
+    const hx = -9, hz = PL.hz - .4; if (port) { CAM.want.set(hx + .5, 1.05, hz + 5.2); CAM.wl.set(hx - .45, .3, hz); fov = 52; } else { CAM.want.set(hx + 1.2, 1.25, hz + 4.1); CAM.wl.set(hx + 1.75, 1.05, hz); fov = 38; } speed = 2.5;
+  } else if (UI.screen === 'pick' || UI.screen === 'club' || M.phase === 'menu') { const t = performance.now() / 1000 * .05; CAM.want.set(Math.cos(t) * 46, 16, Math.sin(t) * 28); CAM.wl.set(ball.x * .4, 1, ball.z * .4); speed = 1.5; }
+  else {
+    // 초점: 공 + 내가 조작하는 선수 (선수를 바꾸면 카메라가 자연스럽게 따라가요)
+    const c = M.human[0] >= 0 ? M.ctrl[0] : null; let fx = ball.x, fz = ball.z; if (c && Math.hypot(c.x - ball.x, c.z - ball.z) < 24 && M.phase === 'play') { fx = lerp(ball.x, c.x, .3); fz = lerp(ball.z, c.z, .3); }
+    const sp = M.sp; if (M.phase === 'set' && sp && sp.taker && sp.type !== 'throw') { fx = lerp(sp.taker.x, sp.x, .5); fz = lerp(sp.taker.z, sp.z, .5); }
+    const k = Math.min(1, dt * 2.6); CAM.tx = lerp(CAM.tx, fx, k); CAM.tz = lerp(CAM.tz, fz, k);
+    const near = clamp((Math.abs(CAM.tx) - 28) / 22, 0, 1); // 골문 가까이 가면 살짝 당겨요
+    if (CAM.mode === 0) { if (port) CAM.want.set(clamp(CAM.tx * .88, -PL.hx + 8, PL.hx - 8), 42 - near * 6, CAM.tz * .2 + 30 - near * 4), CAM.wl.set(CAM.tx * .96, 0, CAM.tz * .6 - 6); else CAM.want.set(clamp(CAM.tx * .88, -PL.hx + 8, PL.hx - 8), 20 - near * 3, CAM.tz * .25 + 37 - near * 5), CAM.wl.set(CAM.tx * .96, 0, CAM.tz * .62 - 2); }
+    else if (CAM.mode === 1) { const d = M.human[0] >= 0 ? M.dir[M.human[0]] : 1; const cx = c ? lerp(c.x, CAM.tx, .5) : CAM.tx, cz = c ? lerp(c.z, CAM.tz, .5) : CAM.tz; CAM.want.set(cx - d * (port ? 22 : 17), port ? 16 : 11, cz * .9); CAM.wl.set(cx + d * 12, 0, cz * .95); }
+    else { CAM.want.set(CAM.tx * .95, port ? 85 : 62, CAM.tz * .5 + (port ? 6 : 12)); CAM.wl.set(CAM.tx, 0, CAM.tz * .55); }
+    // 세트피스: 차는 선수 뒤에서 (코너킥 · 프리킥 · 페널티킥)
+    if (M.phase === 'set' && sp && sp.ux != null && !sp.prep && (sp.type === 'corner' || sp.type === 'free' || sp.type === 'pen')) { const back = sp.type === 'pen' ? 6.5 : sp.type === 'corner' ? 6.5 : 9, up = sp.type === 'pen' ? 2.1 : sp.type === 'corner' ? 3 : 3.2, ahead = sp.type === 'pen' ? 8 : sp.type === 'corner' ? 7 : 10; CAM.want.set(sp.x - sp.ux * back, up, sp.z - sp.uz * back); CAM.wl.set(sp.x + sp.ux * ahead, .6, sp.z + sp.uz * ahead); fov = port ? 62 : 46; speed = 2; }
+    // 골: 넣은 선수를 가까이 빙 돌며 보여 줘요
+    if (M.phase === 'goal' && M.celeBy && M.phT > .7) { const p = M.celeBy; CAM.orb += dt * .45; const a = CAM.orb + (p.team ? Math.PI : 0); CAM.want.set(p.x + Math.sin(a) * 6.5, 2.2, p.z + Math.cos(a) * 6.5 + 1); CAM.wl.set(p.x, 1.2, p.z); fov = port ? 55 : 38; speed = 2.2; }
+    else CAM.orb = 0;
+    // 하프타임 · 경기 끝: 높이 올라가요
+    if (M.phase === 'half' || M.phase === 'over') { CAM.want.set(0, 34, 58); CAM.wl.set(0, 0, 0); speed = .8; }
+  }
+  if (CAM.snap) { CAM.snap = 0; cam.position.copy(CAM.want); CAM.look.copy(CAM.wl); cam.fov = fov; cam.updateProjectionMatrix(); }
+  const kk = 1 - Math.exp(-dt * speed); cam.position.lerp(CAM.want, kk); CAM.look.lerp(CAM.wl, kk);
   if (CAM.shake > 0) { CAM.shake -= dt; cam.position.x += (Math.random() - .5) * CAM.shake; cam.position.y += (Math.random() - .5) * CAM.shake; }
-  cam.lookAt(lx, ly, lz); const fov = port ? 58 : 40; if (Math.abs(cam.fov - fov) > .1) { cam.fov = fov; cam.updateProjectionMatrix(); }
-  const S = STAD.sun; if (S) { S.position.set(bx - 30, 70, bz + 40); S.target.position.set(bx, 0, bz); }
+  cam.lookAt(CAM.look); if (Math.abs(cam.fov - fov) > .05) { cam.fov = lerp(cam.fov, fov, Math.min(1, dt * 3)); cam.updateProjectionMatrix(); }
+  const S = STAD.sun; if (S) { S.position.set(CAM.tx - 30, 70, CAM.tz + 40); S.target.position.set(CAM.tx, 0, CAM.tz); }
 }
 /* ---------- 리플레이 ---------- */
 const REC = { frames: [], acc: 0, push() { this.acc += 1 / 60; const f = { b: [ball.x, ball.y, ball.z], p: M.players.map(p => [p.x, p.z, p.yaw, Math.hypot(p.vx, p.vz), p.act, p.actT, p.diveSide || 1, p.diveH || .6, p.celeKind || 0]) }; this.frames.push(f); if (this.frames.length > 60 * 7) this.frames.shift(); } };
@@ -123,7 +139,7 @@ function replayTick(dt) {
 function replayCam(dt) {
   const s = Math.sign(ball.x) || 1; let px, py, pz;
   if (REPLAY.cam === 0) { px = s * (PL.hx + 9); py = 4.5; pz = ball.z * .5 + 9; } else { px = ball.x - s * 9; py = 3; pz = ball.z + 10; }
-  cam.position.lerp(new T.Vector3(px, py, pz), Math.min(1, dt * 3)); cam.lookAt(ball.x, ball.y * .5 + .8, ball.z); if (cam.fov !== 45) { cam.fov = 45; cam.updateProjectionMatrix(); }
+  cam.position.lerp(new T.Vector3(px, py, pz), Math.min(1, dt * 3)); CAM.look.set(ball.x, ball.y * .5 + .8, ball.z); cam.lookAt(CAM.look); if (cam.fov !== 45) { cam.fov = 45; cam.updateProjectionMatrix(); }
 }
 /* ---------- 소리 (직접 만든 소리) ---------- */
 const AU = { ctx: null, crowd: null, cg: null, ex: 0 };
@@ -157,7 +173,7 @@ function audioTick(dt) {
 function vibrate(p) { try { if (navigator.vibrate && IS_MOBILE) navigator.vibrate(p); } catch (e) { } }
 /* ---------- 화면 (HUD) ---------- */
 const UI = { screen: 'menu', paused: false, bannerT: 0 };
-function banner(t, s, col, dur) { const b = $('#banner'); b.innerHTML = `<b style="${col ? `color:${col}` : ''}">${esc(t)}</b>${s ? `<span>${esc(s)}</span>` : ''}`; b.classList.remove('on'); void b.offsetWidth; b.classList.add('on'); clearTimeout(UI.bannerT); UI.bannerT = setTimeout(() => b.classList.remove('on'), (dur || 1.4) * 1000); if (NET.role === 'host') NET.ev.push({ k: 'b', t, s, c: col, d: dur }); }
+function banner(t, s, col, dur, mini) { const b = $('#banner'); b.classList.toggle('mini', !!mini); b.innerHTML = `<b style="${col ? `color:${col}` : ''}">${esc(t)}</b>${s ? `<span>${esc(s)}</span>` : ''}`; b.classList.remove('on'); void b.offsetWidth; b.classList.add('on'); clearTimeout(UI.bannerT); UI.bannerT = setTimeout(() => b.classList.remove('on'), (dur || 1.4) * 1000); if (NET.role === 'host') NET.ev.push({ k: 'b', t, s, c: col, d: dur, m: mini ? 1 : 0 }); }
 function comm(t) { const c = $('#comm'); c.textContent = '🎙️ ' + t; c.classList.remove('on'); void c.offsetWidth; c.classList.add('on'); clearTimeout(comm.t); comm.t = setTimeout(() => c.classList.remove('on'), 2600); if (NET.role === 'host') NET.ev.push({ k: 'c', t }); }
 function clockStr() { const m = Math.floor(M.clock / 60), s = Math.floor(M.clock % 60); return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; }
 const radar = { c: null, g: null };
@@ -171,7 +187,8 @@ function hudTick() {
   if (IS_MOBILE) { const own = p && (ball.owner === p || (M.sp && M.sp.taker === p) || (M.phase === 'kickoff' && M.koTaker === p)); const set = (id, a, b) => { const el = $(id); const t = own ? a : b; if (el.dataset.t !== t) { el.dataset.t = t; el.querySelector('b').textContent = t; } }; set('#bPass', '패스', '태클'); set('#bShoot', '슛', '슬라이딩'); set('#bThru', '스루', '전환'); $('#bLob').hidden = !own; }
   // 내 선수 표시
   for (let k = 0; k < 2; k++) { const r = UI.rings[k]; const c = M.human[k] >= 0 ? M.ctrl[k] : null; r.visible = !!c && M.phase !== 'replay' && (k === 0 || !!NET.role); if (c) { r.position.set(c.x, .03, c.z); r.rotation.y = c.yaw; } }
-  // 레이더
+  // 레이더 (세트피스 카메라일 땐 흐리게)
+  { const sp = M.sp, fade = M.phase === 'set' && sp && !sp.prep && /corner|free|pen/.test(sp.type); if (radar.fade !== fade) { radar.fade = fade; radar.c.style.opacity = fade ? .3 : ''; } }
   const g = radar.g, W = radar.c.width, H = radar.c.height; g.clearRect(0, 0, W, H); g.fillStyle = 'rgba(20,60,30,.72)'; g.fillRect(0, 0, W, H); g.strokeStyle = 'rgba(255,255,255,.55)'; g.lineWidth = 1; g.strokeRect(1, 1, W - 2, H - 2); g.beginPath(); g.moveTo(W / 2, 0); g.lineTo(W / 2, H); g.stroke(); g.beginPath(); g.arc(W / 2, H / 2, H * .13, 0, 7); g.stroke();
   g.strokeRect(1, H * .2, W * .157, H * .6); g.strokeRect(W - 1 - W * .157, H * .2, W * .157, H * .6);
   const X = x => (x / PL.L + .5) * W, Z = z => (z / PL.W + .5) * H;
@@ -179,14 +196,14 @@ function hudTick() {
   g.fillStyle = '#fff'; g.beginPath(); g.arc(X(ball.x), Z(ball.z), 2.5, 0, 7); g.fill();
   // 세트피스 안내
   const hint = $('#hint'); let ht = ''; const me = M.human[0];
-  if (me >= 0 && M.phase === 'set' && M.sp && M.sp.team === me && M.sp.taker === M.ctrl[0]) ht = { throw: IS_MOBILE ? '방향을 정하고 패스 → 스로인' : '방향을 정하고 Space → 스로인', goalkick: IS_MOBILE ? '패스로 골킥' : 'Space로 골킥', corner: IS_MOBILE ? '슛: 문전 크로스 · 패스: 짧게' : 'F: 문전 크로스 · Space: 짧은 패스', free: IS_MOBILE ? '슛 꾹 눌렀다 떼기: 프리킥 슛 · 패스' : 'F 꾹 눌렀다 떼기: 슛 · Space: 패스', pen: IS_MOBILE ? '방향(위·아래)을 정하고 슛 꾹 → 떼기' : '방향(W·S)을 정하고 F 꾹 → 떼기' }[M.sp.type];
-  if (me >= 0 && M.phase === 'kickoff' && M.koTeam === me) ht = IS_MOBILE ? '패스 버튼으로 킥오프' : 'Space(스페이스바)로 킥오프';
+  if (me >= 0 && M.phase === 'set' && M.sp && M.sp.team === me && M.sp.taker === M.ctrl[0] && (M.sp.ready || NET.role === 'guest') && !M.sp.pend && !M.sp.done) ht = { throw: IS_MOBILE ? '방향을 정하고 패스 → 스로인' : '방향을 정하고 Space → 스로인', goalkick: IS_MOBILE ? '패스로 골킥' : 'Space로 골킥', corner: IS_MOBILE ? '슛: 문전 크로스 · 패스: 짧게' : 'F: 문전 크로스 · Space: 짧은 패스', free: IS_MOBILE ? '슛 꾹 눌렀다 떼기: 프리킥 슛 · 패스' : 'F 꾹 눌렀다 떼기: 슛 · Space: 패스', pen: IS_MOBILE ? '방향(위·아래)을 정하고 슛 꾹 → 떼기' : '방향(W·S)을 정하고 F 꾹 → 떼기' }[M.sp.type];
+  if (me >= 0 && M.phase === 'kickoff' && M.koTeam === me && !M.koPrep) ht = IS_MOBILE ? '패스 버튼으로 킥오프' : 'Space(스페이스바)로 킥오프';
   if (hint.textContent !== ht) { hint.textContent = ht; hint.hidden = !ht; }
   if (performance.now() - (UI.sbT || 0) > 1000) { UI.sbT = performance.now(); drawBoard(M.t0, M.t1, M.score, `${clockStr()} ${M.half === 1 ? '전반' : '후반'}`); }
 }
 /* ---------- 메뉴 ---------- */
 const PICK = { t0: SAVE.t0 || 'KOR', t1: SAVE.t1 || 'JPN', f0: SAVE.f0 || '4-3-3', diff: SAVE.diff == null ? 1 : SAVE.diff, len: SAVE.len || 6, side: 0 };
-function show(id) { for (const s of ['#menu', '#pick', '#hud', '#pause', '#result', '#onl', '#club', '#create']) $(s).hidden = true; if (id) $(id).hidden = false; UI.screen = id === '#hud' ? 'game' : id === '#pick' ? 'pick' : id === '#menu' ? 'menu' : id === '#club' ? 'club' : UI.screen; $('#touch').hidden = !(IS_MOBILE && id === '#hud'); }
+function show(id) { for (const s of ['#menu', '#pick', '#hud', '#pause', '#result', '#onl', '#club', '#create']) $(s).hidden = true; if (id) $(id).hidden = false; UI.screen = id === '#hud' ? 'game' : id === '#pick' ? 'pick' : id === '#menu' ? 'menu' : id === '#club' ? 'club' : UI.screen; $('#touch').hidden = !(IS_MOBILE && id === '#hud'); if (id === '#menu') { renderMenu(); renderRecord(); CAM.snap = 1; } }
 function renderPick() {
   const cur = PICK.side === 0 ? PICK.t0 : PICK.t1;
   $('#pickTabs').innerHTML = [0, 1].map(s => { const t = TEAM(s ? PICK.t1 : PICK.t0); return `<button class="ptab ${PICK.side === s ? 'on' : ''}" data-side="${s}"><small>${s ? '상대 팀' : '내 팀'}</small><span>${t.f} ${t.n}</span><em>${teamRating(t)}</em></button>`; }).join('<div class="vs">VS</div>');
@@ -204,7 +221,7 @@ function startGame(o) {
   auInit(); show('#hud'); UI.paused = false; $('#result').hidden = true;
   setupMatch(Object.assign({ t0: PICK.t0, t1: PICK.t1, f0: PICK.f0, f1: pick(Object.keys(FORMS)), diff: PICK.diff, len: PICK.len, mode: 'ai', human: [0, -1] }, o || {}));
   $('#n0').textContent = M.t0.id; $('#n1').textContent = M.t1.id; $('#f0').textContent = M.t0.f; $('#f1').textContent = M.t1.f; $('#k0').style.background = M.kits[0][0]; $('#k1').style.background = M.kits[1][0];
-  CAM.tx = 0; CAM.tz = 0; cam.position.set(0, 30, 60); if (IS_MOBILE && innerHeight > innerWidth) { const r = $('#rot'); r.classList.add('on'); setTimeout(() => r.classList.remove('on'), 4500); } banner('킥오프!', `${M.t0.n} vs ${M.t1.n}`, null, 1.6); comm(`${M.t0.n}와 ${M.t1.n}의 경기, 시작합니다!`); if (window.BLIP) BLIP.setGame('soccer');
+  CAM.tx = 0; CAM.tz = 0; cam.position.set(0, 30, 60); if (IS_MOBILE && innerHeight > innerWidth) { const r = $('#rot'); r.classList.add('on'); setTimeout(() => r.classList.remove('on'), 4500); } banner('킥오프!', `${M.t0.n} vs ${M.t1.n}`, null, 1.8, true); CAM.look.set(0, 0, 0); comm(`${M.t0.n}와 ${M.t1.n}의 경기, 시작합니다!`); if (window.BLIP) BLIP.setGame('soccer');
 }
 function startDemo() { setupMatch({ t0: pick(TEAMS).id, t1: 'BRA', diff: 2, len: 30, mode: 'demo', human: [-1, -1] }); if (M.t0 === M.t1) M.t1 = TEAM('ARG'); }
 function togglePause() { if (UI.screen !== 'game' || NET.role) { if (NET.role && UI.screen === 'game') $('#pause').hidden = !$('#pause').hidden; return; } UI.paused = !UI.paused; $('#pause').hidden = !UI.paused; }
@@ -229,7 +246,7 @@ function setupUI() {
   radar.c = $('#radar'); radar.g = radar.c.getContext('2d');
   UI.rings = [0, 1].map(k => { const w = new T.Group(); const m = new T.MeshBasicMaterial({ color: k ? '#ff4d5e' : '#22d3ee', transparent: true, opacity: .9, depthWrite: false }); const r = new T.Mesh(new T.RingGeometry(.55, .7, 32), m); r.rotation.x = -Math.PI / 2; w.add(r); const ar = new T.Mesh(new T.ConeGeometry(.2, .45, 3), m); ar.rotation.x = Math.PI / 2; ar.position.set(0, .03, .95); w.add(ar); w.visible = false; scene.add(w); return w; });
   $('#bPlay').onclick = () => { auInit(); show('#pick'); renderPick(); };
-  $('#bClub').onclick = () => { auInit(); openClub(); }; $('#clBack').onclick = () => { show('#menu'); }; $$('#clTabs [data-ctab]').forEach(b => b.onclick = () => { sfx('tick'); clubTab(b.dataset.ctab); });
+  $('#bClub').onclick = () => { auInit(); const c = club(); if (!c) return openCreate(); if (c.xi.filter(x => x != null).length < 11) { CL.tab = 'squad'; return openClub(); } startClubMatch(nextOpp(c)); }; $('#clBack').onclick = () => { show('#menu'); }; $$('#clTabs [data-ctab]').forEach(b => b.onclick = () => { sfx('tick'); clubTab(b.dataset.ctab); });
   $('#bKick').onclick = () => startGame();
   $('#bBackPick').onclick = () => show('#menu');
   $('#bOnline').onclick = () => { auInit(); openOnline(); };
@@ -245,18 +262,19 @@ function loop(now) {
   requestAnimationFrame(loop); let dt = Math.min(.05, (now - last) / 1000); last = now; const t = now / 1000;
   if (UI.screen === 'game' || M.mode === 'demo') readLocal();
   if (!UI.paused) {
-    if (NET.role === 'guest') guestTick(dt);
+    if (UI.screen === 'menu' && M.mode === 'demo' && NET.role !== 'guest') { for (const p of M.players) animPlayer(p, dt); } // 메뉴에서는 경기를 멈춰 둬요
+    else if (NET.role === 'guest') guestTick(dt);
     else if (M.phase === 'replay') replayTick(dt);
     else { const steps = dt > .025 ? 2 : 1; for (let i = 0; i < steps; i++) matchTick(dt / steps); }
     if (M.mode === 'demo' && M.phase === 'over') startDemo();
     if (NET.role === 'host') hostSend();
   }
-  syncBallMesh(dt); camTick(dt); stadiumTick(dt, t); hudTick(); audioTick(dt); ren.render(scene, cam);
+  syncBallMesh(dt); heroTick(dt, UI.screen === 'menu'); camTick(dt); stadiumTick(dt, t); hudTick(); audioTick(dt); ren.render(scene, cam);
 }
 async function boot() {
   buildStadium(); buildBall(); setupUI();
   try { await loadChars(); } catch (e) { $('#load').innerHTML = '선수 모델을 못 불러왔어요 😢<br><small>새로고침해 보세요</small>'; return; }
-  startDemo(); show('#menu'); $('#load').classList.add('gone'); setTimeout(() => $('#load').remove(), 700);
+  startDemo(); show('#menu'); $('#mMute').textContent = SAVE.mute ? '🔇' : '🔊'; $('#load').classList.add('gone'); setTimeout(() => $('#load').remove(), 700);
   requestAnimationFrame(loop);
   const fol = new URLSearchParams(location.search).get('room'); if (fol) { auInit(); openOnline(fol); }
 }

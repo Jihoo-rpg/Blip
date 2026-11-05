@@ -316,11 +316,108 @@ const PDB = []; (function () {
 const RAR = k => RARITY.find(r => r.k === k);
 const POSN = { GK: '골키퍼', DF: '수비수', MF: '미드필더', FW: '공격수' };
 /* 선수 생김새: 나라 · 이름으로 정해져요 */
+
+/* 유명 선수 외모 특징 (피부 0~5 · 머리색 · 머리 모양 · 수염) — 3D 모델과 카드 얼굴에 써요
+   머리색 k 검정 · d 진갈색 · b 갈색 · g 붉은빛 · y 금발 · w 회색   모양 short · side · long · buzz · bald · afro · curly · bun · twist · mohawk */
+const FACE_RAW = `리오넬 메시|1|d|side|1
+크리스티아누 호날두|2|k|side|0
+킬리안 음바페|4|k|buzz|0
+엘링 홀란|0|y|bun|0
+해리 케인|0|b|short|0
+비니시우스 주니오르|4|k|twist|0
+모하메드 살라|3|k|afro|1
+라민 야말|3|k|curly|0
+우스만 뎀벨레|5|k|buzz|1
+로베르트 레반도프스키|0|b|short|1
+라우타로 마르티네스|2|k|side|1
+손흥민|1|k|side|0
+하피냐|3|k|short|1
+부카요 사카|5|k|curly|0
+훌리안 알바레스|1|d|short|0
+빅토르 오시멘|5|y|mohawk|1
+네이마르 주니오르|2|b|side|1
+앙투안 그리즈만|1|y|side|1
+플로리안 비르츠|0|b|side|0
+자말 무시알라|3|k|curly|0
+주드 벨링엄|3|k|curly|0
+콜 파머|1|b|side|0
+필 포든|0|y|buzz|0
+케빈 더브라위너|0|g|side|1
+로드리|1|d|short|1
+페드리|1|k|side|0
+마르틴 외데고르|0|d|side|0
+브루노 페르난데스|1|d|short|1
+페데리코 발베르데|1|d|short|1
+루카 모드리치|0|b|long|0
+토니 크로스|0|y|short|1
+버질 반다이크|4|k|buzz|1
+김민재|1|k|short|0
+아슈라프 하키미|3|k|short|1
+알폰소 데이비스|5|k|buzz|0
+마누엘 노이어|0|y|short|0
+티보 쿠르투아|1|d|short|1
+알리송 베케르|1|d|short|1
+이강인|1|k|side|0
+황희찬|1|k|side|0
+조규성|1|k|side|0
+미토마 가오루|0|k|side|0
+구보 다케후사|0|k|side|0
+사디오 마네|5|k|buzz|1
+루이스 디아스|3|k|curly|0
+루이스 수아레스|1|k|short|1
+다르윈 누녜스|2|k|short|1
+즐라탄 이브라히모비치|1|k|bun|1
+펠레|5|k|buzz|0
+디에고 마라도나|2|k|curly|0
+지네딘 지단|1|w|bald|0
+호나우두|3|k|bald|0
+요한 크루이프|0|b|long|0
+호나우지뉴|4|k|long|0
+프란츠 베켄바워|0|b|side|0
+파올로 말디니|1|d|long|0
+티에리 앙리|4|k|bald|0
+잔루이지 부폰|1|d|short|1
+안드레스 이니에스타|0|b|bald|0
+사비 에르난데스|1|k|short|1
+안드레아 피를로|1|d|long|1
+카카|1|d|short|0
+호베르투 카를루스|4|k|bald|0
+웨인 루니|0|b|buzz|0
+스티븐 제라드|0|b|short|0
+차범근|1|k|side|0
+박지성|1|k|side|0
+데이비드 베컴|0|y|side|1
+디디에 드로그바|5|k|buzz|1
+세르히오 라모스|2|d|short|1
+카를레스 푸욜|1|b|curly|0
+에덴 아자르|1|d|short|1
+아르연 로번|0|y|bald|0
+가레스 베일|0|d|bun|1
+로멜루 루카쿠|5|k|buzz|1
+은골로 캉테|5|k|buzz|0
+카제미루|3|k|short|1
+조르지 웨아|5|k|buzz|0
+홍명보|1|k|side|0
+안정환|1|d|long|0
+이영표|1|k|short|0
+이동국|1|k|short|0
+앙헬 디마리아|1|d|bun|0
+세르히오 아구에로|1|d|side|1
+파울로 디발라|1|d|side|1
+잭 그릴리시|0|b|side|0
+마커스 래시퍼드|4|k|short|1
+하파엘 레앙|4|k|twist|0
+에두아르도 카마빙가|5|k|twist|0
+오렐리앵 추아메니|5|k|buzz|0
+엔드릭|3|k|curly|0`;
+const FACE = {}; FACE_RAW.split('\n').forEach(l => { const [n, sk, hc, st, bd] = l.split('|'); FACE[n] = { sk: +sk, hc, st, bd: bd === '1' }; });
+const HAIRC = { k: '#120f0d', d: '#2a1a10', b: '#5a3a20', g: '#b5652a', y: '#d9b56e', w: '#bdbdbd' };
 function lookOf(p) {
   const h = [...p.n].reduce((a, c) => a * 31 + c.charCodeAt(0), 3) >>> 0; const rnd = mulberry(h);
   const dark = ['NGA', 'SEN', 'CMR', 'GHA', 'CIV', 'GUI', 'MLI', 'LBR', 'GAB', 'JAM'], mid = ['BRA', 'MAR', 'ALG', 'EGY', 'COL', 'ECU', 'MEX', 'TUR', 'URU', 'POR', 'ESP', 'ITA', 'ARG', 'FRA', 'USA', 'ENG', 'NED', 'BEL', 'CAN', 'IRN', 'KSA', 'CHI', 'PAR'], asia = ['KOR', 'JPN'];
   let sk; if (dark.includes(p.nat)) sk = S5[4 + Math.floor(rnd() * 2)]; else if (asia.includes(p.nat)) sk = S5[Math.floor(rnd() * 2)]; else if (mid.includes(p.nat)) sk = S5[Math.floor(rnd() * 6)]; else sk = S5[Math.floor(rnd() * 2)];
   const blond = !asia.includes(p.nat) && !dark.includes(p.nat) && rnd() < .18; const hr = rnd();
+  const F = FACE[p.n]; if (F) { const bald = F.st === 'bald', buzz = F.st === 'buzz'; return { w: 0, skin: S5[F.sk], hair: HAIRC[F.hc] || '#120f0d', head: bald ? 'bald' : buzz ? 'buzz' : 'hair', hairStyle: bald || buzz ? 'short' : F.st, beard: F.bd, glasses: false, s: .97 + rnd() * .08, wide: 1 }; }
   return { w: 0, skin: sk, hair: blond ? '#c9a66b' : pick2(rnd, ['#120f0d', '#2a1a10', '#4a2e1a']), head: hr < .15 ? 'buzz' : 'hair', hairStyle: pick2(rnd, ['short', 'short', 'side', 'side', 'long']), beard: rnd() < .35, glasses: false, s: .96 + rnd() * .1, wide: .98 + rnd() * .08 };
 }
 function pick2(rnd, a) { return a[Math.floor(rnd() * a.length)]; }

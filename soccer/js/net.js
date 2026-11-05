@@ -85,7 +85,7 @@ function applySnap(s) {
   const prevPh = M.phase; M.phase = s.ph; M.clock = s.ck; M.half = s.h; M.score = s.sc; M.dir = s.d; if (s.st) M.stats = s.st; if (s.gs) M.scorers = s.gs;
   NET.tgt = s; M.ctrl[0] = M.players[s.c[1]] || M.ctrl[0]; M.ctrl[1] = M.players[s.c[0]] || M.ctrl[1]; if (M.ctrl[0]) M.ctrl[0].charge = s.ch;
   M.sp = s.sp ? { type: s.sp[0], team: s.sp[1], taker: M.players[s.sp[2]] } : null; if (s.ko) { M.koTeam = s.ko[0]; M.koTaker = M.players[s.ko[1]]; }
-  for (const e of (s.ev || [])) if (e.i > NET.evSeen) { NET.evSeen = e.i; if (e.k === 's') sfx(e.n, e.v); else if (e.k === 'b') banner(e.t, e.s, e.c, e.d); else if (e.k === 'c') comm(e.t); }
+  for (const e of (s.ev || [])) if (e.i > NET.evSeen) { NET.evSeen = e.i; if (e.k === 's') sfx(e.n, e.v); else if (e.k === 'b') banner(e.t, e.s, e.c, e.d, e.m); else if (e.k === 'c') comm(e.t); }
   $('#replay').hidden = s.ph !== 'replay'; if (s.ph === 'over' && prevPh !== 'over') setTimeout(showResult, 3000);
   if (s.ph === 'goal' && prevPh !== 'goal') { STAD.jump = 6; vibrate([60, 40, 120]); }
 }
