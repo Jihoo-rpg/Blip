@@ -133,6 +133,6 @@ document.addEventListener('click', e => {
   if (t.dataset.mnav) return menuNav(t.dataset.mnav);
   if (t.id === 'mClub') return menuNav('play'); if (t.id === 'mTeam') return menuNav('squad'); if (t.id === 'mOnl2') { auInit(); return openOnline(); }
   if (t.id === 'mDaily') { const c = club(); if (!c) { toast('먼저 구단을 만들어요!'); return openCreate(); } if (c.daily === today()) { toast('오늘 출석 보상은 이미 받았어요. 내일 또 와요!'); return; } c.daily = today(); coins(300); toast('🎁 출석 보상 🪙300 받았어요!', 2600); sfx('goal'); return renderMenu(); }
-  if (t.id === 'mKeys') return toast(IS_MOBILE ? '왼쪽 화면 끌기: 이동 · 패스 / 슛(꾹) / 스루 / 질주 버튼' : 'WASD 이동 · Shift 질주 · Space 패스 · F 꾹→떼기 슛 · E 스루패스 · C 카메라', 4200);
+  if (t.id === 'mKeys') return toast(IS_MOBILE ? '왼쪽 화면 끌기: 이동 · 패스 / 슛(꾹) / 스루 / 질주 버튼' : 'WASD 이동 · Shift 질주 · Q 개인기 · Space 슛 · E 패스 · F 스루패스 (꾹 = 세게) · C 카메라', 4200);
   if (t.id === 'mMute') { $('#bMute').click(); $('#mMute').textContent = SAVE.mute ? '🔇' : '🔊'; }
 });

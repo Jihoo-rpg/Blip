@@ -2,15 +2,15 @@
 /* ===== 조작 · 카메라 · 화면 · 리플레이 · 소리 · 메뉴 ===== */
 /* ---------- 입력 ---------- */
 const KEY = {}; const INP = [{ x: 0, z: 0, sp: false, acts: [], hold: {} }, { x: 0, z: 0, sp: false, acts: [], hold: {} }];
-const KB = { pass: ['Space', 'KeyJ'], shoot: ['KeyF', 'KeyK'], through: ['KeyE', 'KeyL'], sw: ['KeyQ'] }; const HOLDK = ['pass', 'shoot', 'through', 'lob'];
+const KB = { shoot: ['Space', 'KeyK'], pass: ['KeyE', 'KeyJ'], through: ['KeyF', 'KeyL'] }; const HOLDK = ['pass', 'shoot', 'through', 'lob'];
 addEventListener('keydown', e => {
   if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return; if (KEY[e.code]) return; KEY[e.code] = true;
   for (const a in KB) if (KB[a].includes(e.code)) { pushAct(a === 'sw' ? a : a + 'Down'); e.preventDefault(); }
-  if (e.code === 'ShiftLeft' || e.code === 'ShiftRight') UI.shiftT = performance.now();
+  if (e.code === 'KeyQ' && !e.repeat) pushAct('skill');
   if (e.code === 'Escape' || e.code === 'KeyP') togglePause(); if (e.code === 'KeyC') cycleCam(); if ((e.code === 'KeyR' || e.code === 'Space' || e.code === 'Enter') && M.phase === 'replay') REPLAY.skip = true; if ((e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') && M.phase === 'intro') skipIntro();
 });
 addEventListener('keyup', e => { KEY[e.code] = false; for (const a in KB) if (a !== 'sw' && KB[a].includes(e.code)) pushAct(a + 'Up');
-  if ((e.code === 'ShiftLeft' || e.code === 'ShiftRight') && UI.shiftT && performance.now() - UI.shiftT < 220) pushAct('skill'); }); // Shift 톡 = 개인기
+  }); // 키: Space 슛 · E 패스 · F 스루패스 · Q 개인기 · Shift 질주
 addEventListener('blur', () => { for (const k in KEY) KEY[k] = false; });
 function pushAct(a) {
   if (!M.on || UI.paused || M.phase === 'intro') return; const now = performance.now(), H = INP[0].hold; let dur;
@@ -262,8 +262,8 @@ function hudTick() {
   g.fillStyle = '#fff'; g.beginPath(); g.arc(X(ball.x), Z(ball.z), 2.5, 0, 7); g.fill();
   // 세트피스 안내
   const hint = $('#hint'); let ht = ''; const me = M.human[0];
-  if (me >= 0 && M.phase === 'set' && M.sp && M.sp.team === me && M.sp.taker === M.ctrl[0] && (M.sp.ready || NET.role === 'guest') && !M.sp.pend && !M.sp.done) ht = { throw: IS_MOBILE ? '방향을 정하고 패스(꾹 = 멀리) → 스로인' : '방향 + Space(꾹 = 멀리) → 스로인', goalkick: IS_MOBILE ? '패스 꾹 눌렀다 떼기: 골킥 세기' : 'Space 꾹 눌렀다 떼기: 골킥 세기', corner: IS_MOBILE ? '슛 꾹→떼기: 크로스(길게 누를수록 멀리) · 패스: 짧게' : 'F 꾹→떼기: 크로스(오래 = 멀리) · Space: 짧은 패스', free: IS_MOBILE ? '슛 꾹 눌렀다 떼기: 프리킥 슛 · 패스' : 'F 꾹 눌렀다 떼기: 슛 · Space: 패스', pen: IS_MOBILE ? '방향(위·아래)을 정하고 슛 꾹 → 떼기' : '방향(W·S)을 정하고 F 꾹 → 떼기' }[M.sp.type];
-  if (me >= 0 && M.phase === 'kickoff' && M.koTeam === me && !M.koPrep) ht = IS_MOBILE ? '패스 버튼으로 킥오프' : 'Space(스페이스바)로 킥오프';
+  if (me >= 0 && M.phase === 'set' && M.sp && M.sp.team === me && M.sp.taker === M.ctrl[0] && (M.sp.ready || NET.role === 'guest') && !M.sp.pend && !M.sp.done) ht = { throw: IS_MOBILE ? '방향을 정하고 패스(꾹 = 멀리) → 스로인' : '방향 + E(꾹 = 멀리) → 스로인', goalkick: IS_MOBILE ? '패스 꾹 눌렀다 떼기: 골킥 세기' : 'E 꾹 눌렀다 떼기: 골킥 세기', corner: IS_MOBILE ? '슛 꾹→떼기: 크로스(길게 누를수록 멀리) · 패스: 짧게' : 'Space 꾹→떼기: 크로스(오래 = 멀리) · E: 짧은 패스', free: IS_MOBILE ? '슛 꾹 눌렀다 떼기: 프리킥 슛 · 패스' : 'Space 꾹 눌렀다 떼기: 슛 · E: 패스', pen: IS_MOBILE ? '방향(위·아래)을 정하고 슛 꾹 → 떼기' : '방향(W·S)을 정하고 Space 꾹 → 떼기' }[M.sp.type];
+  if (me >= 0 && M.phase === 'kickoff' && M.koTeam === me && !M.koPrep) ht = IS_MOBILE ? '패스 버튼으로 킥오프' : 'E로 킥오프';
   if (hint.textContent !== ht) { hint.textContent = ht; hint.hidden = !ht; }
   if (performance.now() - (UI.sbT || 0) > 1000) { UI.sbT = performance.now(); drawBoard(M.t0, M.t1, M.score, `${clockStr()} ${M.half === 1 ? '전반' : '후반'}`); }
 }
