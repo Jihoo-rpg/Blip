@@ -70,15 +70,7 @@ function homeRoom(tier) {
   const win_ = new T.Mesh(new T.PlaneGeometry(Math.min(W - 2, 2 + tier * 2.4), Hh * .55), new T.MeshBasicMaterial({ map: view })); win_.position.set(ox, Hh * .55, oz - D / 2 + .12); g.add(win_);
   const box = (w, h, d, c, x, z, y, col) => { const o = add(new T.BoxGeometry(w, h, d), mk(c), x, (y || 0) + h / 2, z); if (col !== false) addBox(ox + x - w / 2, oz + z - d / 2, ox + x + w / 2, oz + z + d / 2, (y || 0) + h); return o; };
   const R_ = { g, ox, oz, W, D, Hh, tier, spots: {} };
-  // 가구
-  const bx = -W / 2 + 1.3, bz = -D / 2 + 1.4; box(1.8, .45, 2.2, '#6d5a4a', bx, bz + .3); box(1.7, .2, 2.0, tier >= 2 ? '#f5f5f5' : '#d8d2c8', bx, bz + .35, .45, false); box(1.6, .15, .5, '#ffffff', bx, bz - .55, .62, false); R_.spots.bed = [ox + bx + 1.4, oz + bz + .3];
-  const fx = W / 2 - .7; box(.8, 1.9, .8, '#e8eaec', fx, -D / 2 + .6); R_.spots.fridge = [ox + fx - .2, oz - D / 2 + 1.6];
-  if (tier >= 1) { box(1.2, 2.1, .6, '#7a5a40', -W / 2 + .7, D / 2 - .5); R_.spots.closet = [ox - W / 2 + .9, oz + D / 2 - 1.5]; }
-  if (tier >= 1) { const dx = W / 2 - 1.2, dz = D / 2 - 1.6; box(1.6, .75, .8, '#3a2c22', dx, dz); const mon = box(.9, .55, .06, '#111', dx, dz - .15, .78, false); box(.5, .5, .5, '#222', dx - .3, dz + .9, 0); R_.spots.pc = [ox + dx, oz + dz - 1.2]; }
-  else { box(.9, .7, .5, '#6a5a4a', 1.2, D / 2 - .4); box(.5, .32, .04, '#111', 1.2, D / 2 - .5, .72, false); R_.spots.pc = [ox + 1.2, oz + D / 2 - 1.3]; }
-  if (tier >= 2) { box(2.4, .45, .9, '#3c4a5a', 0, .8); box(2.4, .5, .25, '#3c4a5a', 0, 1.15, .45, false); const tv = box(Math.min(3.2, W * .25), 1.1, .08, '#050505', 0, -D / 2 + .5, .9, false); R_.spots.tv = [ox, oz - .2]; const rug = add(new T.PlaneGeometry(3.4, 2.4), mk('#8a3a3a'), 0, .02, .2); rug.rotation.x = -Math.PI / 2; }
-  if (tier >= 3) { for (const [x, z] of [[-W / 2 + .6, 0], [W / 2 - .6, 1]]) { box(.5, .5, .5, '#5a4030', x, z); const pt = add(new T.SphereGeometry(.45, 10, 8), mk('#3f7d3a'), x, .95, z); } box(2.4, .76, 1.1, '#5a3a24', W / 2 - 2.4, -D / 2 + 2.2); }
-  if (tier >= 4) { const pool = add(new T.BoxGeometry(5, .05, 3), new T.MeshStandardMaterial({ color: lin('#3fa7d6'), roughness: .1, metalness: .3 }), -W / 2 + 4, .03, D / 2 - 2.4); }
+  homeFurn(R_);
   R_.entry = [ox, oz + D / 2 - 1.2]; R_.door = [ox, oz + D / 2 - .5];
   const door = add(new T.BoxGeometry(1.1, 2.2, .08), mk('#5a3a24'), 0, 1.1, D / 2 - .14);
   HOME.rooms[tier] = R_; return R_;
