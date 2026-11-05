@@ -55,8 +55,8 @@ function clubTab0(t) {
   } else if (t === 'squad') {
     const xi = xiPlayers(); const F = FORMS[c.form]; const bench = owned().filter(p => !c.xi.includes(p.id)).sort((a, b) => b.o - a.o);
     B.innerHTML = `<div class="sqtop"><div class="row">${Object.keys(FORMS).map(f => `<button class="chip ${c.form === f ? 'on' : ''}" data-cform="${f}">${f}</button>`).join('')}</div><button class="chip" id="bAuto">✨ 자동 배치</button></div>
-      <div class="pitch">${F.map((f, i) => `<div class="slot" style="left:${50 + f[2] * 40}%;top:${89 - (f[1] + .95) / 1.0 * 76}%">${cardHTML(xi[i], `data-slot="${i}"`, f[0])}</div>`).join('')}</div>
-      <p class="hintp">선수를 누르고 → 바꿀 선수를 누르면 자리를 바꿔요</p><div class="bench">${bench.map(p => cardHTML(p, `data-bench="${p.id}"`)).join('') || '<p class="hintp">후보 선수가 없어요. 뽑기에서 선수를 얻어요!</p>'}</div>`;
+      <div class="sqwrap"><div class="pitch">${F.map((f, i) => `<div class="slot" style="left:${50 + f[2] * 40}%;top:${89 - (f[1] + .95) / 1.0 * 76}%">${cardHTML(xi[i], `data-slot="${i}"`, f[0])}</div>`).join('')}</div>
+      <div><p class="hintp">선수를 누르고 → 바꿀 선수를 누르면 자리를 바꿔요</p><div class="bench">${bench.map(p => cardHTML(p, `data-bench="${p.id}"`)).join('') || '<p class="hintp">후보 선수가 없어요. 뽑기에서 선수를 얻어요!</p>'}</div></div></div>`;
   } else if (t === 'shop') {
     B.innerHTML = `<div class="packs">${PACKS.map(k => `<button class="pack" data-pack="${k.k}" style="--pc:${k.c}"><div class="pk">${k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div><b>${k.n}</b><small>${k.d}</small><span>${k.k === 'gold' && c.freeGold ? '🎁 무료!' : '🪙 ' + k.p.toLocaleString()}</span></button>`).join('')}</div>
       <p class="hintp">이미 있는 선수가 나오면 코인으로 바꿔 드려요 (브론즈 60 · 실버 120 · 골드 350 · 월드클래스 1,200 · 레전드 3,500)</p>
@@ -94,7 +94,7 @@ function revealCard(p, dup, k) {
   const ov = $('#reveal'), r = RAR(p.r); ov.hidden = false; ov.className = 'r' + p.r; ov.innerHTML = `<div class="rv"><div class="pack big" style="--pc:${k.c}"><div class="pk">${k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div></div></div>`;
   sfx('kick', 1); vibrate(30);
   setTimeout(() => { sfx(p.r === 'W' || p.r === 'L' ? 'goal' : 'save'); if (p.r === 'W' || p.r === 'L') vibrate([60, 40, 120]);
-    ov.innerHTML = `<div class="rv"><div class="glow" style="--rc:${r.c}"></div>${bigCard(p)}<div class="rvt" style="color:${r.c}">${r.n}!</div>${dup ? `<div class="dup">이미 있는 선수 → 🪙 ${DUPC[p.r]} 코인</div>` : '<div class="dup">새 선수 획득! 스쿼드에 넣어 보세요</div>'}<div class="row2" style="margin-top:14px"><button class="btn" id="rvClose">확인</button><button class="btn main" id="rvAgain">한 번 더 🪙${k.p.toLocaleString()}</button></div></div>`;
+    ov.innerHTML = `<div class="rv"><div class="glow" style="--rc:${r.c}"></div>${bigCard(p)}<div class="rvx"><div class="rvt" style="color:${r.c}">${r.n}!</div>${dup ? `<div class="dup">이미 있는 선수 → 🪙 ${DUPC[p.r]} 코인</div>` : '<div class="dup">새 선수 획득! 스쿼드에 넣어 보세요</div>'}<div class="row2" style="margin-top:14px"><button class="btn" id="rvClose">확인</button><button class="btn main" id="rvAgain">한 번 더 🪙${k.p.toLocaleString()}</button></div></div></div>`;
     fillPortraits(ov); $('#rvClose').onclick = () => { ov.hidden = true; if (UI.screen === 'menu') renderMenu(); else clubTab(CL.tab); }; $('#rvAgain').onclick = () => { ov.hidden = true; buyPack(k); };
   }, 1300);
 }

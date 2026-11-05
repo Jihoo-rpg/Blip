@@ -6,11 +6,11 @@ const KB = { pass: ['Space', 'KeyJ'], shoot: ['KeyF', 'KeyK'], through: ['KeyE',
 addEventListener('keydown', e => {
   if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return; if (KEY[e.code]) return; KEY[e.code] = true;
   for (const a in KB) if (KB[a].includes(e.code)) { pushAct(a === 'shoot' ? 'shootDown' : a); e.preventDefault(); }
-  if (e.code === 'Escape' || e.code === 'KeyP') togglePause(); if (e.code === 'KeyC') cycleCam(); if ((e.code === 'KeyR' || e.code === 'Space' || e.code === 'Enter') && M.phase === 'replay') REPLAY.skip = true;
+  if (e.code === 'Escape' || e.code === 'KeyP') togglePause(); if (e.code === 'KeyC') cycleCam(); if ((e.code === 'KeyR' || e.code === 'Space' || e.code === 'Enter') && M.phase === 'replay') REPLAY.skip = true; if ((e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') && M.phase === 'intro') skipIntro();
 });
 addEventListener('keyup', e => { KEY[e.code] = false; if (KB.shoot.includes(e.code)) pushAct('shootUp'); });
 addEventListener('blur', () => { for (const k in KEY) KEY[k] = false; });
-function pushAct(a) { if (!M.on || UI.paused) return; if (NET.role === 'guest') { const H = INP[0].hold; const dur = a === 'shootUp' && H.shoot ? (performance.now() - H.shoot) / 1000 : undefined; NET.acts.push({ i: ++NET.actId, a, dur }); if (a === 'shootDown') H.shoot = performance.now(); if (a === 'shootUp') H.shoot = 0; return; } INP[0].acts.push({ a, t: performance.now() }); if (a === 'shootDown') INP[0].hold.shoot = performance.now(); if (a === 'shootUp') INP[0].hold.shoot = 0; }
+function pushAct(a) { if (!M.on || UI.paused || M.phase === 'intro') return; if (NET.role === 'guest') { const H = INP[0].hold; const dur = a === 'shootUp' && H.shoot ? (performance.now() - H.shoot) / 1000 : undefined; NET.acts.push({ i: ++NET.actId, a, dur }); if (a === 'shootDown') H.shoot = performance.now(); if (a === 'shootUp') H.shoot = 0; return; } INP[0].acts.push({ a, t: performance.now() }); if (a === 'shootDown') INP[0].hold.shoot = performance.now(); if (a === 'shootUp') INP[0].hold.shoot = 0; }
 const STICK = { on: false, id: null, ox: 0, oy: 0, x: 0, y: 0 };
 function readLocal() {
   let ix = 0, iy = 0; if (KEY.KeyA || KEY.ArrowLeft) ix -= 1; if (KEY.KeyD || KEY.ArrowRight) ix += 1; if (KEY.KeyW || KEY.ArrowUp) iy += 1; if (KEY.KeyS || KEY.ArrowDown) iy -= 1;
@@ -23,9 +23,9 @@ function readLocal() {
 const TOUCHB = { sprint: false };
 function setupTouch() {
   const tz = $('#tzone'), knob = $('#knob'), base = $('#kbase');
-  tz.addEventListener('pointerdown', e => { STICK.on = true; STICK.id = e.pointerId; STICK.ox = e.clientX; STICK.oy = e.clientY; STICK.x = STICK.y = 0; base.style.left = e.clientX + 'px'; base.style.top = e.clientY + 'px'; base.classList.add('on'); knob.style.transform = 'translate(-50%,-50%)'; tz.setPointerCapture(e.pointerId); });
+  tz.addEventListener('pointerdown', e => { STICK.on = true; STICK.id = e.pointerId; STICK.ox = e.clientX; STICK.oy = e.clientY; STICK.x = STICK.y = 0; base.style.left = e.clientX + 'px'; base.style.top = e.clientY + 'px'; base.classList.add('on'); document.body.classList.add('stk'); knob.style.transform = 'translate(-50%,-50%)'; tz.setPointerCapture(e.pointerId); });
   tz.addEventListener('pointermove', e => { if (!STICK.on || e.pointerId !== STICK.id) return; const dx = e.clientX - STICK.ox, dy = e.clientY - STICK.oy, L = Math.hypot(dx, dy), R = 52; const k = L > R ? R / L : 1; STICK.x = dx * k / R; STICK.y = dy * k / R; knob.style.transform = `translate(calc(-50% + ${dx * k}px),calc(-50% + ${dy * k}px))`; });
-  const end = e => { if (e.pointerId !== STICK.id) return; STICK.on = false; STICK.x = STICK.y = 0; base.classList.remove('on'); }; tz.addEventListener('pointerup', end); tz.addEventListener('pointercancel', end);
+  const end = e => { if (e.pointerId !== STICK.id) return; STICK.on = false; STICK.x = STICK.y = 0; base.classList.remove('on'); document.body.classList.remove('stk'); }; tz.addEventListener('pointerup', end); tz.addEventListener('pointercancel', end);
   const bind = (id, down, up) => { const b = $(id); b.addEventListener('pointerdown', e => { e.preventDefault(); b.classList.add('dn'); down(); b.setPointerCapture(e.pointerId); }); const u = e => { b.classList.remove('dn'); up && up(); }; b.addEventListener('pointerup', u); b.addEventListener('pointercancel', u); };
   bind('#bShoot', () => pushAct('shootDown'), () => pushAct('shootUp')); bind('#bPass', () => pushAct('pass')); bind('#bThru', () => pushAct('through')); bind('#bLob', () => pushAct('lob'));
   bind('#bSprint', () => TOUCHB.sprint = true, () => TOUCHB.sprint = false); bind('#bSwitch', () => pushAct('sw'));
@@ -98,15 +98,18 @@ function camTick(dt) {
   if (M.phase === 'replay') return replayCam(dt);
   const port = cam.aspect < 1; let fov = port ? 58 : 40, speed = 3;
   if (UI.screen === 'menu') { // 메뉴: 대표 선수 앞으로
-    const hx = -9, hz = PL.hz - .4; if (port) { CAM.want.set(hx + .5, 1.05, hz + 5.2); CAM.wl.set(hx - .45, .3, hz); fov = 52; } else { CAM.want.set(hx + 1.2, 1.3, hz + 4.6); CAM.wl.set(hx + 1.85, 1.22, hz); fov = 38; } speed = 2.5;
+    const hx = -9, hz = PL.hz - .4; if (port) { CAM.want.set(hx + .5, 1.05, hz + 5.2); CAM.wl.set(hx - .45, .3, hz); fov = 52; } else { CAM.want.set(hx + 1.2, 1.3, hz + 4.6); CAM.wl.set(hx + 1.85, 1.22, hz); fov = 38; } speed = 2.5; if (CAM.flyT > 0) { CAM.flyT -= dt; speed = 1.3; }
   } else if (UI.screen === 'pick' || UI.screen === 'club' || M.phase === 'menu') { const t = performance.now() / 1000 * .05; CAM.want.set(Math.cos(t) * 46, 16, Math.sin(t) * 28); CAM.wl.set(ball.x * .4, 1, ball.z * .4); speed = 1.5; }
   else {
+    if (M.phase === 'intro') return introCam(dt, port);
     // 초점: 공 + 내가 조작하는 선수 (선수를 바꾸면 카메라가 자연스럽게 따라가요)
     const c = M.human[0] >= 0 ? M.ctrl[0] : null; let fx = ball.x, fz = ball.z; if (c && Math.hypot(c.x - ball.x, c.z - ball.z) < 24 && M.phase === 'play') { fx = lerp(ball.x, c.x, .3); fz = lerp(ball.z, c.z, .3); }
     const sp = M.sp; if (M.phase === 'set' && sp && sp.taker && sp.type !== 'throw') { fx = lerp(sp.taker.x, sp.x, .5); fz = lerp(sp.taker.z, sp.z, .5); }
     const k = Math.min(1, dt * 2.6); CAM.tx = lerp(CAM.tx, fx, k); CAM.tz = lerp(CAM.tz, fz, k);
     const near = clamp((Math.abs(CAM.tx) - 28) / 22, 0, 1); // 골문 가까이 가면 살짝 당겨요
-    if (CAM.mode === 0) { if (port) CAM.want.set(clamp(CAM.tx * .88, -PL.hx + 8, PL.hx - 8), 42 - near * 6, CAM.tz * .2 + 30 - near * 4), CAM.wl.set(CAM.tx * .96, 0, CAM.tz * .6 - 6); else CAM.want.set(clamp(CAM.tx * .88, -PL.hx + 8, PL.hx - 8), 20 - near * 3, CAM.tz * .25 + 37 - near * 5), CAM.wl.set(CAM.tx * .96, 0, CAM.tz * .62 - 2); }
+    const mob = IS_MOBILE && !port;
+    if (CAM.mode === 0 && mob) { CAM.want.set(clamp(CAM.tx * .9, -PL.hx + 7, PL.hx - 7), 14.5 - near * 2.5, CAM.tz * .28 + 26 - near * 4); CAM.wl.set(CAM.tx * .97, 0, CAM.tz * .66 - 1); fov = 42; }
+    else if (CAM.mode === 0) { if (port) CAM.want.set(clamp(CAM.tx * .88, -PL.hx + 8, PL.hx - 8), 42 - near * 6, CAM.tz * .2 + 30 - near * 4), CAM.wl.set(CAM.tx * .96, 0, CAM.tz * .6 - 6); else CAM.want.set(clamp(CAM.tx * .88, -PL.hx + 8, PL.hx - 8), 20 - near * 3, CAM.tz * .25 + 37 - near * 5), CAM.wl.set(CAM.tx * .96, 0, CAM.tz * .62 - 2); }
     else if (CAM.mode === 1) { const d = M.human[0] >= 0 ? M.dir[M.human[0]] : 1; const cx = c ? lerp(c.x, CAM.tx, .5) : CAM.tx, cz = c ? lerp(c.z, CAM.tz, .5) : CAM.tz; CAM.want.set(cx - d * (port ? 22 : 17), port ? 16 : 11, cz * .9); CAM.wl.set(cx + d * 12, 0, cz * .95); }
     else { CAM.want.set(CAM.tx * .95, port ? 85 : 62, CAM.tz * .5 + (port ? 6 : 12)); CAM.wl.set(CAM.tx, 0, CAM.tz * .55); }
     // 세트피스: 차는 선수 뒤에서 (코너킥 · 프리킥 · 페널티킥)
@@ -122,6 +125,37 @@ function camTick(dt) {
   if (CAM.shake > 0) { CAM.shake -= dt; cam.position.x += (Math.random() - .5) * CAM.shake; cam.position.y += (Math.random() - .5) * CAM.shake; }
   cam.lookAt(CAM.look); if (Math.abs(cam.fov - fov) > .05) { cam.fov = lerp(cam.fov, fov, Math.min(1, dt * 3)); cam.updateProjectionMatrix(); }
   const S = STAD.sun; if (S) { S.position.set(CAM.tx - 30, 70, CAM.tz + 40); S.target.position.set(CAM.tx, 0, CAM.tz); }
+}
+/* ---------- 경기 인트로 ---------- */
+function introCam(dt, port) {
+  const t = M.phT; let speed = 3, fov = port ? 60 : 42;
+  if (t < 3.2) { const a = -.9 + t * .32; CAM.want.set(Math.sin(a) * 44, 30 - t * 5, Math.cos(a) * 30); CAM.wl.set(0, 0, 3); speed = 4; }               // 경기장 위를 돌며 날아와요
+  else if (t < 7.6) { const k = (t - 3.2) / 4.4, x = lerp(-13.6, 13.6, k); CAM.want.set(x, 1.55, port ? 12.5 : 10.4); CAM.wl.set(x + (port ? 0 : .4), 1.3, 7); fov = port ? 46 : 32; speed = t < 3.5 ? 30 : 6; } // 선수들 얼굴을 지나가요
+  else { CAM.want.set(0, 26, 46); CAM.wl.set(0, 0, 0); speed = 1.4; }
+  if (CAM.snap) { CAM.snap = 0; cam.position.copy(CAM.want); CAM.look.copy(CAM.wl); }
+  const kk = 1 - Math.exp(-dt * speed); cam.position.lerp(CAM.want, kk); CAM.look.lerp(CAM.wl, kk); cam.lookAt(CAM.look);
+  if (Math.abs(cam.fov - fov) > .05) { cam.fov = lerp(cam.fov, fov, Math.min(1, dt * 4)); cam.updateProjectionMatrix(); }
+}
+const ovrOf = d => d.o || Math.round((d.st.spd + d.st.sht + d.st.pas + d.st.drb + d.st.def) / 5 * .55 + Math.max(d.st.spd, d.st.sht, d.st.pas, d.st.def, d.st.gk) * .45);
+function introFill() {
+  const tm = ti => { const T_ = ti ? M.t1 : M.t0, L = team(ti); const o = Math.round(L.reduce((a, p) => a + ovrOf(p.d), 0) / L.length); return `<div class="inTm"><i style="background:linear-gradient(135deg,${M.kits[ti][0]} 55%,${M.kits[ti][1]} 55%)">${T_.f}</i><b>${esc(T_.n)}</b><em>OVR ${o}</em></div>`; };
+  $('#inTitle').innerHTML = `<div class="inT">${tm(0)}<div class="inVs">VS</div>${tm(1)}</div><p>${M.mode === 'club' ? '나만의 구단 리그' : '국가대표 친선 경기'} · 블립 스타디움</p>`;
+  $('#intro').hidden = false; $('#inTitle').className = ''; $('#inName').className = ''; UI.inName = null;
+}
+function introTick() {
+  const el = $('#intro'); document.body.classList.toggle('intro', M.phase === 'intro' && UI.screen === 'game'); if (M.phase !== 'intro') { if (!el.hidden) el.hidden = true; return; }
+  const t = M.phT; $('#inTitle').className = t > .3 && t < 3.1 ? 'on' : '';
+  let pl = null; if (t > 3.4 && t < 7.5) { const x = cam.position.x; pl = M.players.reduce((b, p) => Math.abs(p.x - x) < Math.abs(b.x - x) ? p : b, M.players[0]); }
+  if (pl !== UI.inName) { UI.inName = pl; const n = $('#inName'); if (pl) { const T_ = pl.team ? M.t1 : M.t0; n.innerHTML = `<b style="background:${M.kits[pl.team][0]};color:${colDist(M.kits[pl.team][0], '#ffffff') < .6 ? '#111' : '#fff'}">${pl.d.num}</b><div><span>${esc(pl.d.name)}</span><small>${ROLE_NAMES[pl.role]} · ${T_.f} ${esc(T_.n)}</small></div><em>${ovrOf(pl.d)}</em>`; n.className = 'on'; } else n.className = ''; }
+}
+function skipIntro() { if (M.phase === 'intro') M.introSkip = true; }
+/* ---------- 모바일: 경기는 가로로 ---------- */
+function mobileLandscape() {
+  if (!IS_MOBILE) return; try { const d = document.documentElement; const lock = () => screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => { }); if (!document.fullscreenElement && d.requestFullscreen) d.requestFullscreen({ navigationUI: 'hide' }).then(lock).catch(() => { }); else lock(); } catch (e) { }
+}
+function rotTick() {
+  const need = IS_MOBILE && UI.screen === 'game' && innerHeight > innerWidth * 1.05 && !SAVE.portraitOK; const el = $('#rotLock');
+  if (el.hidden === need) el.hidden = !need; UI.rotWait = need && !NET.role;
 }
 /* ---------- 리플레이 ---------- */
 const REC = { frames: [], acc: 0, push() { this.acc += 1 / 60; const f = { b: [ball.x, ball.y, ball.z], p: M.players.map(p => [p.x, p.z, p.yaw, Math.hypot(p.vx, p.vz), p.act, p.actT, p.diveSide || 1, p.diveH || .6, p.celeKind || 0]) }; this.frames.push(f); if (this.frames.length > 60 * 7) this.frames.shift(); } };
@@ -178,7 +212,7 @@ function comm(t) { const c = $('#comm'); c.textContent = '🎙️ ' + t; c.class
 function clockStr() { const m = Math.floor(M.clock / 60), s = Math.floor(M.clock % 60); return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; }
 const radar = { c: null, g: null };
 function hudTick() {
-  if (UI.screen !== 'game') return;
+  rotTick(); if (UI.screen !== 'game') { if (!$('#intro').hidden) { $('#intro').hidden = true; document.body.classList.remove('intro'); } return; } introTick();
   $('#sc0').textContent = M.score[0]; $('#sc1').textContent = M.score[1]; $('#clk').textContent = clockStr() + (M.half === 2 ? '' : ''); $('#half').textContent = M.half === 1 ? '전반' : '후반';
   const h = M.human[0] >= 0 ? 0 : -1; const p = h >= 0 ? M.ctrl[h] : null;
   const tag = $('#ptag'); if (p) { tag.hidden = false; tag.innerHTML = `<b>${p.d.num}</b> ${esc(p.d.name)} <small>${ROLE_NAMES[p.role]}</small>`; } else tag.hidden = true;
@@ -221,7 +255,10 @@ function startGame(o) {
   auInit(); show('#hud'); UI.paused = false; $('#result').hidden = true;
   setupMatch(Object.assign({ t0: PICK.t0, t1: PICK.t1, f0: PICK.f0, f1: pick(Object.keys(FORMS)), diff: PICK.diff, len: PICK.len, mode: 'ai', human: [0, -1] }, o || {}));
   $('#n0').textContent = M.t0.id; $('#n1').textContent = M.t1.id; $('#f0').textContent = M.t0.f; $('#f1').textContent = M.t1.f; $('#k0').style.background = M.kits[0][0]; $('#k1').style.background = M.kits[1][0];
-  CAM.tx = 0; CAM.tz = 0; cam.position.set(0, 30, 60); if (IS_MOBILE && innerHeight > innerWidth) { const r = $('#rot'); r.classList.add('on'); setTimeout(() => r.classList.remove('on'), 4500); } banner('킥오프!', `${M.t0.n} vs ${M.t1.n}`, null, 1.8, true); CAM.look.set(0, 0, 0); comm(`${M.t0.n}와 ${M.t1.n}의 경기, 시작합니다!`); if (window.BLIP) BLIP.setGame('soccer');
+  CAM.tx = 0; CAM.tz = 0; cam.position.set(0, 30, 60); CAM.look.set(0, 0, 0); mobileLandscape();
+  if (M.mode === 'ai' || M.mode === 'club') { startIntro(); CAM.snap = 1; introFill(); }
+  else { banner('킥오프!', `${M.t0.n} vs ${M.t1.n}`, null, 1.8, true); comm(`${M.t0.n}와 ${M.t1.n}의 경기, 시작합니다!`); }
+  if (window.BLIP) BLIP.setGame('soccer');
 }
 function startDemo() { setupMatch({ t0: pick(TEAMS).id, t1: 'BRA', diff: 2, len: 30, mode: 'demo', human: [-1, -1] }); if (M.t0 === M.t1) M.t1 = TEAM('ARG'); }
 function togglePause() { if (UI.screen !== 'game' || NET.role) { if (NET.role && UI.screen === 'game') $('#pause').hidden = !$('#pause').hidden; return; } UI.paused = !UI.paused; $('#pause').hidden = !UI.paused; }
@@ -239,7 +276,7 @@ function showResult() {
   $('#rReward').innerHTML = M.mode === 'club' ? clubReward(w < 0 ? 'd' : w === me ? 'w' : 'l', M.score[me]) : ''; $('#rReward').hidden = M.mode !== 'club';
   $('#rAgain').hidden = M.mode === 'online' && NET.role === 'guest'; $('#result').hidden = false;
 }
-function quitToMenu() { const wasClub = M.mode === 'club'; if (NET.role) netLeave(); UI.paused = false; $('#result').hidden = true; startDemo(); if (wasClub) openClub(); else show('#menu'); renderRecord(); if (window.BLIP) BLIP.setGame('soccer'); }
+function quitToMenu() { try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch (e) { } const wasClub = M.mode === 'club'; if (NET.role) netLeave(); UI.paused = false; $('#result').hidden = true; startDemo(); if (wasClub) openClub(); else show('#menu'); renderRecord(); if (window.BLIP) BLIP.setGame('soccer'); }
 function renderRecord() { const r = SAVE.rec; $('#rec').textContent = r ? `내 전적 ${r.w}승 ${r.d}무 ${r.l}패` : ''; }
 /* ---------- 시작 ---------- */
 function setupUI() {
@@ -253,6 +290,7 @@ function setupUI() {
   $('#bResume').onclick = () => togglePause(); $('#bQuit').onclick = () => quitToMenu();
   $('#bRestart').onclick = () => { UI.paused = false; if (M.mode === 'club') return startClubMatch(CL.vs); startGame(); };
   $('#rAgain').onclick = () => { if (M.mode === 'online') return netRematch(); if (M.mode === 'club') return startClubMatch(CL.vs); startGame(); }; $('#rMenu').onclick = () => quitToMenu();
+  $('#intro').onclick = () => skipIntro(); $('#rlOk').onclick = () => { SAVE.portraitOK = 1; persist(); $('#rotLock').hidden = true; }; $('#rlTry').onclick = () => mobileLandscape();
   $('#bCam').onclick = () => cycleCam(); $('#bPause').onclick = () => togglePause(); $('#bSkip').onclick = () => REPLAY.skip = true;
   $('#bMute').onclick = () => { SAVE.mute = !SAVE.mute; persist(); if (AU.master) AU.master.gain.value = SAVE.mute ? 0 : .8; $('#bMute').textContent = SAVE.mute ? '🔇' : '🔊'; }; $('#bMute').textContent = SAVE.mute ? '🔇' : '🔊';
   $('#keys').hidden = IS_MOBILE || !!SAVE.keysHide; $('#keys').style.pointerEvents = 'auto'; $('#keysX').onclick = () => { SAVE.keysHide = 1; persist(); $('#keys').hidden = true; }; setupTouch(); renderRecord();
@@ -261,7 +299,7 @@ let last = performance.now();
 function loop(now) {
   requestAnimationFrame(loop); let dt = Math.min(.05, (now - last) / 1000); last = now; const t = now / 1000;
   if (UI.screen === 'game' || M.mode === 'demo') readLocal();
-  if (!UI.paused) {
+  if (!UI.paused && !UI.rotWait) {
     if (UI.screen === 'menu' && M.mode === 'demo' && NET.role !== 'guest') { for (const p of M.players) animPlayer(p, dt); } // 메뉴에서는 경기를 멈춰 둬요
     else if (NET.role === 'guest') guestTick(dt);
     else if (M.phase === 'replay') replayTick(dt);
@@ -274,7 +312,7 @@ function loop(now) {
 async function boot() {
   buildStadium(); buildBall(); setupUI();
   try { await loadChars(); } catch (e) { $('#load').innerHTML = '선수 모델을 못 불러왔어요 😢<br><small>새로고침해 보세요</small>'; return; }
-  startDemo(); show('#menu'); $('#mMute').textContent = SAVE.mute ? '🔇' : '🔊'; $('#load').classList.add('gone'); setTimeout(() => $('#load').remove(), 700);
+  startDemo(); show('#menu'); CAM.snap = 0; cam.position.set(30, 60, 110); CAM.look.set(0, 0, 0); CAM.flyT = 3; $('#splash').classList.add('on'); setTimeout(() => $('#splash').classList.add('out'), 1900); setTimeout(() => $('#splash').remove(), 2700); $('#mMute').textContent = SAVE.mute ? '🔇' : '🔊'; $('#load').classList.add('gone'); setTimeout(() => $('#load').remove(), 700);
   requestAnimationFrame(loop);
   const fol = new URLSearchParams(location.search).get('room'); if (fol) { auInit(); openOnline(fol); }
 }

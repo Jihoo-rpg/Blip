@@ -40,12 +40,18 @@ function homeXZ(p, ballX, ballZ, att) {
 /* ---------- 경기 시작 · 재개 ---------- */
 function kickoff(ti, walk) {
   M.phase = 'kickoff'; M.phT = 0; M.koTeam = ti; M.koPrep = !!walk; ball.owner = null; ball.last = null; ball.shot = null; ball.passTo = null; ball.inNet = 0; resetBall(0, 0);
-  const goTo = (p, x, z) => { p.kx = x; p.kz = z; if (walk) { p.x = lerp(p.x, x, .55); p.z = lerp(p.z, z, .55); p.vx = p.vz = 0; p.act = null; p.stun = 0; } else place(p, x, z); p.yaw = M.dir[p.team] > 0 ? Math.PI / 2 : -Math.PI / 2; };
+  const lk = walk === 2 ? .25 : .55; const goTo = (p, x, z) => { p.kx = x; p.kz = z; if (walk) { p.x = lerp(p.x, x, lk); p.z = lerp(p.z, z, lk); p.vx = p.vz = 0; p.act = null; p.stun = 0; } else place(p, x, z); p.yaw = M.dir[p.team] > 0 ? Math.PI / 2 : -Math.PI / 2; };
   for (const p of M.players) { let [x, z] = homeXZ(p, 0, 0, false); x = M.dir[p.team] < 0 ? Math.max(x, 1.2) : Math.min(x, -1.2); if (p.role === 'FW' && Math.abs(p.d.fz) < .1) x = M.dir[p.team] * -.4; if (p.team !== ti) { const r = Math.hypot(x, z); if (r < 9.6) { x *= 9.6 / r; z *= 9.6 / r; } } goTo(p, x, z); }
   const t = team(ti); const a = t.filter(p => p.role === 'FW').sort((a, b) => Math.abs(a.d.fz) - Math.abs(b.d.fz))[0] || t[9]; const b = t.filter(p => p !== a && p.role !== 'GK').sort((q, r) => Math.abs(q.d.fz) + Math.abs(q.d.fx) - Math.abs(r.d.fz) - Math.abs(r.d.fx))[0];
   goTo(a, -M.dir[ti] * .35, 0); goTo(b, -M.dir[ti] * 1.2, 4); M.koTaker = a; M.koMate = b; M.ctrl[ti] = M.human[0] === ti || M.human[1] === ti ? a : M.ctrl[ti];
   for (let h = 0; h < 2; h++) if (M.human[h] >= 0) { const tm = M.human[h]; if (tm === ti) M.ctrl[h] = a; else M.ctrl[h] = closestTo(team(tm).filter(p => p.role !== 'GK'), 0, 0); }
   if (!walk) sfx('whistle');
+}
+/* ---------- 경기 인트로: 하프라인에 두 팀이 나란히 서요 ---------- */
+function startIntro() {
+  M.phase = 'intro'; M.phT = 0; M.introSkip = false; ball.owner = null; resetBall(0, 0); M.ctrl = [null, null];
+  for (const ti of [0, 1]) team(ti).forEach((p, i) => { place(p, (ti ? 1 : -1) * (1.3 + i * 1.1), 7); p.yaw = 0; p.act = null; });
+  if (AU.ctx) AU.ex = 2.5;
 }
 function place(p, x, z) { p.x = x; p.z = z; p.vx = p.vz = 0; p.act = null; p.stun = 0; }
 function resetBall(x, z, y) { ball.inNet = 0; ball.x = x; ball.z = z; ball.y = y || PL.br; ball.vx = ball.vy = ball.vz = 0; ball.spin = 0; }
@@ -378,6 +384,9 @@ function matchTick(dt) {
       const hum = [0, 1].some(h => M.human[h] === M.koTeam); if (hum) humanTick(dt, true);
       if (M.phT > (hum ? 6 : 1.4)) { doPass(M.koTaker, M.koMate, 'ground'); }
     }
+  } else if (P === 'intro') {
+    for (const p of M.players) { p.vx = p.vz = 0; p.yaw = 0; }
+    if (M.phT > 8.2 || M.introSkip) { const sk = M.introSkip; M.introSkip = false; if (sk) kickoff(0); else kickoff(0, 2); banner('킥오프!', `${M.t0.n} vs ${M.t1.n}`, null, 1.8, true); comm(`${M.t0.n}와 ${M.t1.n}의 경기, 시작합니다!`); }
   } else if (P === 'out') {
     for (const p of M.players) { p.vx *= 1 - dt * 2.2; p.vz *= 1 - dt * 2.2; } movePlayers(dt); ballPhys(dt);
     if (M.phT > (M.outNext[0] === 'throw' ? .9 : 1.3)) { const f = M.outNext; M.outNext = null; startSet(f[0], f[1], f[2], f[3]); }

@@ -11,7 +11,7 @@ function kitShader(m, kind, u) {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader.replace(KIT_V[0], KIT_V[1]).replace(KIT_V2[0], KIT_V2[1]);
     let f = 'varying vec3 vBind;\nuniform vec3 uA;uniform vec3 uB;uniform vec3 uC;uniform vec3 uSkin;\n' + sh.fragmentShader;
-    const body = kind === 'top'
+    const body = kind === 'chest' ? `{ if (vBind.y > .955 && vBind.y < 1.585 && abs(vBind.x) < .21) diffuseColor.rgb = uA * .96; }` : kind === 'top'
       ? `{ if (vBind.y < .955) discard; float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); float ax = abs(vBind.x);
           vec3 c = uA * .96;
           if (ax > .2 && ax < .232) c = uB;                      // 소매 끝 줄
@@ -38,7 +38,9 @@ function makeFootballer(pl, kit, numCol, gk) {
   const skin = lin(look.skin); const k = gk ? kit.gk : kit;
   root.traverse(o => {
     if (!o.isMesh) return; const n = o.material.name;
+    if (n === 'Wolf3D_Outfit_Top' || n === 'Wolf3D_Outfit_Bottom' || n === 'Wolf3D_Body') { o.material.normalMap = null; o.material.roughnessMap = null; o.material.roughness = .78; o.material.metalness = 0; o.material.needsUpdate = true; }
     if (n === 'Wolf3D_Outfit_Top') { o.material.color.setRGB(1, 1, 1); kitShader(o.material, 'top', { uA: { value: lin(k[0]) }, uB: { value: lin(k[3] || k[1]) }, uC: { value: lin(k[2]) }, uSkin: { value: skin } }); }
+    if (n === 'Wolf3D_Body') kitShader(o.material, 'chest', { uA: { value: lin(k[0]) }, uB: { value: lin(k[3] || k[1]) }, uC: { value: lin(k[2]) }, uSkin: { value: skin } });
     if (n === 'Wolf3D_Outfit_Bottom') { o.material.color.setRGB(1, 1, 1); kitShader(o.material, 'bot', { uA: { value: lin(k[1]) }, uB: { value: lin(k[3] || k[0]) }, uC: { value: lin(k[2]) }, uSkin: { value: skin } }); }
     if (n === 'Wolf3D_Outfit_Footwear') { o.material.color.copy(lin(look.shoe)).multiplyScalar(look.shoe === '#f2f2f2' ? 1.3 : 1.6); o.material.roughness = .35; }
   });
