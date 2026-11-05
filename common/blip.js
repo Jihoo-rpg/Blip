@@ -38,6 +38,31 @@
   };
   const AVAS = ['😺', '🐶', '🦊', '🐼', '🐸', '🐵', '🦁', '🐯', '🐰', '🐻', '🐧', '🦄', '👾', '🤖', '👻', '🐲'];
 
+
+  /* ---------- 전체화면: 모든 게임에서 처음 터치하면 전체화면으로 ---------- */
+  const FS = (() => {
+    const de = document.documentElement; const can = !!(de.requestFullscreen || de.webkitRequestFullscreen);
+    const isFs = () => !!(document.fullscreenElement || document.webkitFullscreenElement);
+    const pref = () => { try { return localStorage.getItem('blip_fs') !== '0'; } catch (e) { return true; } };
+    let byUser = false; // 사용자가 Esc 등으로 직접 나가면, 이번 접속 동안은 다시 자동으로 켜지 않아요
+    try { byUser = sessionStorage.getItem('blip_fs_off') === '1'; } catch (e) { }
+    function enter() { if (!can || isFs()) return; try { const r = de.requestFullscreen ? de.requestFullscreen({ navigationUI: 'hide' }) : de.webkitRequestFullscreen(); if (r && r.catch) r.catch(() => { }); } catch (e) { } }
+    function exit() { try { const r = document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen && document.webkitExitFullscreen(); if (r && r.catch) r.catch(() => { }); } catch (e) { } }
+    function auto() { if (pref() && !byUser) enter(); }
+    let wanted = false;
+    ['pointerup', 'touchend', 'keydown'].forEach(ev => document.addEventListener(ev, e => { if (ev === 'keydown' && (e.key === 'Escape' || e.key === 'F11')) return; wanted = true; auto(); }, { capture: true, passive: true }));
+    const onCh = () => { if (!isFs() && wanted && !FS._leaving) { byUser = true; try { sessionStorage.setItem('blip_fs_off', '1'); } catch (e) { } } FS._leaving = false; if (window.BLIP && BLIP._onFs) BLIP._onFs(isFs()); };
+    document.addEventListener('fullscreenchange', onCh); document.addEventListener('webkitfullscreenchange', onCh);
+    window.addEventListener('pagehide', () => { FS._leaving = true; });
+    // 아이폰(전체화면 기능이 없어요): 홈 화면에 추가하면 주소창 없이 전체화면으로 열려요
+    const head = document.head; [['apple-mobile-web-app-capable', 'yes'], ['mobile-web-app-capable', 'yes'], ['apple-mobile-web-app-status-bar-style', 'black-translucent']].forEach(([n, c]) => { if (!document.querySelector(`meta[name="${n}"]`)) { const m = document.createElement('meta'); m.name = n; m.content = c; head.appendChild(m); } });
+    const ios = /iPhone|iPod/.test(navigator.userAgent), standalone = navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+    return {
+      can, isFs, enter, exit, needsHomeScreen: ios && !standalone && !can,
+      toggle() { if (isFs()) { FS._leaving = true; exit(); byUser = true; try { sessionStorage.setItem('blip_fs_off', '1'); localStorage.setItem('blip_fs', '0'); } catch (e) { } } else { byUser = false; try { sessionStorage.removeItem('blip_fs_off'); localStorage.setItem('blip_fs', '1'); } catch (e) { } enter(); } },
+      _leaving: false,
+    };
+  })();
   /* ---------- 내 프로필 ---------- */
   function readMe() { try { return JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { return {}; } }
   let me = readMe();
@@ -340,6 +365,7 @@
     document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
     if (UI) {
       setTimeout(pollInbox, 2500); setInterval(pollInbox, 8000); setTimeout(pollMail, 4000); setInterval(pollMail, 30000);
+      if (FS.needsHomeScreen) { let shown = false; try { shown = localStorage.getItem('blip_fs_ios') === '1'; } catch (e) { } if (!shown) setTimeout(() => { notify('아이폰은 전체화면 기능이 없어요', 'Safari 공유 버튼 → "홈 화면에 추가" 후 열면 전체화면으로 돼요', 9000); try { localStorage.setItem('blip_fs_ios', '1'); } catch (e) { } }, 3500); }
       if (validCode(followCode)) {
         req('users/' + followCode).then(u => { if (u) notify(`${String(u.nick || '친구').slice(0, 12)}님을 따라왔어요!`, GAMES[GAME] ? GAMES[GAME].name + '에서 같이 놀아요' : '', 6000); }).catch(() => { });
       }
@@ -348,7 +374,7 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 
   window.BLIP = {
-    get me() { return me; }, GAMES, AVAS, now, isOnline, followCode,
+    fullscreen: FS, get me() { return me; }, GAMES, AVAS, now, isOnline, followCode,
     friendList, requestFriend, accept, decline, removeFriend, invite, inbox, clearInvite, allUsers,
     gameUrl, go, setProfile, saveMe, beat, notify, login, signup, logout, syncAccount, get loggedIn() { return !!me.acc; }, setGame(g) { curGame = g || ''; beat(); },
     mail: { DAY_MS, owner: mailOwner, isOwner: isMailOwner, claim: claimMail, list: mailList, send: mailSend, set: mailSet, del: mailDel, poll: pollMail, seenNow: mailSeenNow },

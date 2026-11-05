@@ -225,6 +225,7 @@
   <a class="logo" href="./"><i>b</i><span>blip</span></a>
   <label class="search">🔍<input id="q" type="search" placeholder="게임 검색" autocomplete="off"></label>
   <button class="tbtn" id="theme" title="밝게 / 어둡게">🌙</button>
+  <button class="tbtn" id="fsBtn" title="전체화면 켜기 / 끄기">⛶</button>
   <button class="gbtn sm" id="loginBtn" style="flex:0 0 auto">로그인</button>
   <button class="me" id="meBtn" title="내 프로필"><span class="av" id="meAva">😺</span><span id="meNick">나</span></button>
 </header>
@@ -708,5 +709,8 @@ if (new URLSearchParams(location.search).get('v') === 'req' || OWNER_MODE) view 
 setTimeout(pollMailHub, 1500); setInterval(pollMailHub, 30000);
 applyTheme(); showMe(); render(); loadCatJump(); pollFriends(); setInterval(pollFriends, 6000);
 </script>
+<script>(function () { const b = document.getElementById('fsBtn'); const F = () => window.BLIP && BLIP.fullscreen; const upd = () => { const f = F(); if (!f) return; b.textContent = f.isFs() ? '🗗' : '⛶'; b.title = f.isFs() ? '전체화면 끄기' : '전체화면 켜기'; if (!f.can) b.hidden = !f.needsHomeScreen; };
+  b.onclick = e => { e.stopPropagation(); const f = F(); if (!f) return; if (!f.can) { BLIP.notify('아이폰은 홈 화면에 추가해야 전체화면이 돼요', 'Safari 공유 버튼 → "홈 화면에 추가"', 8000); return; } f.toggle(); setTimeout(upd, 300); };
+  document.addEventListener('fullscreenchange', upd); document.addEventListener('webkitfullscreenchange', upd); setTimeout(upd, 50); })();</script>
 </body>
 </html>
