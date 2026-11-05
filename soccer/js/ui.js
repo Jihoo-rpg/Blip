@@ -98,7 +98,7 @@ function camTick(dt) {
   if (M.phase === 'replay') return replayCam(dt);
   const port = cam.aspect < 1; let fov = port ? 58 : 40, speed = 3;
   if (UI.screen === 'menu') { // 메뉴: 대표 선수 앞으로
-    const hx = -9, hz = PL.hz - .4; if (port) { CAM.want.set(hx + .5, 1.05, hz + 5.2); CAM.wl.set(hx - .45, .3, hz); fov = 52; } else { CAM.want.set(hx + 1.2, 1.25, hz + 4.1); CAM.wl.set(hx + 1.75, 1.05, hz); fov = 38; } speed = 2.5;
+    const hx = -9, hz = PL.hz - .4; if (port) { CAM.want.set(hx + .5, 1.05, hz + 5.2); CAM.wl.set(hx - .45, .3, hz); fov = 52; } else { CAM.want.set(hx + 1.2, 1.3, hz + 4.6); CAM.wl.set(hx + 1.85, 1.22, hz); fov = 38; } speed = 2.5;
   } else if (UI.screen === 'pick' || UI.screen === 'club' || M.phase === 'menu') { const t = performance.now() / 1000 * .05; CAM.want.set(Math.cos(t) * 46, 16, Math.sin(t) * 28); CAM.wl.set(ball.x * .4, 1, ball.z * .4); speed = 1.5; }
   else {
     // 초점: 공 + 내가 조작하는 선수 (선수를 바꾸면 카메라가 자연스럽게 따라가요)
