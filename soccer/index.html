@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>블립 풋볼 11</title>
+<meta name="theme-color" content="#0b1020">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css">
+<style>
+:root{--ink:#fff;--bg:#0b1020;--glass:rgba(10,16,34,.72);--line:rgba(255,255,255,.14);--acc:#22d3ee;--acc2:#ff4d5e;--gold:#ffd400;--green:#16c784;--grad:linear-gradient(120deg,#16c784,#22d3ee 60%,#5b5bf7)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--ink);font-family:"Pretendard Variable",Pretendard,system-ui,sans-serif;user-select:none;-webkit-user-select:none;touch-action:none}
+#cv{position:fixed;inset:0;width:100%;height:100%;display:block}
+button{font-family:inherit;color:inherit;cursor:pointer;border:0}
+.h{font-family:"Black Han Sans","Pretendard Variable",sans-serif;font-weight:400;letter-spacing:.01em}
+[hidden]{display:none!important}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:52px;padding:0 22px;border-radius:16px;background:rgba(255,255,255,.1);border:1px solid var(--line);font-weight:800;font-size:16px;backdrop-filter:blur(10px);transition:.15s}
+.btn:hover{background:rgba(255,255,255,.18)}.btn:active{transform:scale(.97)}
+.btn.main{background:var(--grad);border:0;box-shadow:0 10px 30px rgba(34,211,238,.35);color:#04121a}
+.btn.red{background:linear-gradient(120deg,#ff4d5e,#ff7a00);border:0;color:#fff}
+.chip{height:36px;padding:0 14px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid var(--line);font-weight:800;font-size:14px}
+.chip.on{background:#fff;color:#0b1020}
+/* 로딩 */
+#load{position:fixed;inset:0;z-index:100;display:grid;place-items:center;text-align:center;background:radial-gradient(circle at 50% 40%,#13306a,#060914 70%);transition:opacity .6s}
+#load.gone{opacity:0;pointer-events:none}
+#load .ball{font-size:64px;animation:bnc .7s ease-in-out infinite alternate}
+@keyframes bnc{from{transform:translateY(0) rotate(0)}to{transform:translateY(-26px) rotate(180deg)}}
+#load p{margin:14px 0 0;font-weight:700;opacity:.8}
+/* 메뉴 */
+.scr{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:max(16px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom))}
+#menu{background:linear-gradient(90deg,rgba(6,9,20,.85),rgba(6,9,20,.25) 60%,transparent);align-items:flex-start;padding-left:max(6vw,24px)}
+.logo{font-size:clamp(46px,8vw,88px);line-height:.92;margin:0 0 6px;text-shadow:0 6px 30px rgba(0,0,0,.6)}
+.logo span{display:block;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tagl{font-weight:700;opacity:.85;margin:0 0 26px;font-size:15px;max-width:420px}
+.mbtns{display:flex;flex-direction:column;gap:12px;width:min(340px,100%)}
+.mbtns .btn{height:60px;font-size:18px;justify-content:flex-start;padding:0 22px}
+.mbtns .btn small{margin-left:auto;font-weight:600;opacity:.75;font-size:12px}
+#rec{margin-top:14px;font-weight:700;opacity:.7;font-size:13px}
+.hubBack{position:fixed;left:max(14px,env(safe-area-inset-left));top:max(14px,env(safe-area-inset-top));z-index:30;display:flex;align-items:center;gap:6px;height:38px;padding:0 14px;border-radius:12px;background:var(--glass);border:1px solid var(--line);color:#fff;text-decoration:none;font-weight:800;font-size:14px;backdrop-filter:blur(10px)}
+#menu .hubBack{position:absolute}
+/* 팀 고르기 */
+#pick{background:rgba(6,9,20,.82);backdrop-filter:blur(6px);justify-content:flex-start;overflow:auto;touch-action:pan-y}
+.pwrap{width:min(980px,100%);padding-top:44px}
+.pwrap h2{margin:0 0 14px;font-size:30px}
+#pickTabs{display:flex;align-items:stretch;gap:10px;margin-bottom:14px}
+.ptab{flex:1;text-align:left;padding:12px 16px;border-radius:18px;background:rgba(255,255,255,.07);border:2px solid var(--line);display:grid;grid-template-columns:1fr auto;align-items:center}
+.ptab small{grid-column:1/3;opacity:.7;font-weight:700;font-size:12px}.ptab span{font-weight:900;font-size:19px}.ptab em{font-style:normal;font-family:"Black Han Sans";font-size:24px;color:var(--gold)}
+.ptab.on{border-color:var(--acc);background:rgba(34,211,238,.12)}
+.vs{align-self:center;font-family:"Black Han Sans";font-size:22px;opacity:.8}
+#teams{display:grid;grid-template-columns:repeat(auto-fill,minmax(132px,1fr));gap:8px}
+.tcard{position:relative;overflow:hidden;padding:12px 10px 16px;border-radius:16px;background:rgba(255,255,255,.06);border:2px solid transparent;display:flex;flex-direction:column;align-items:center;gap:2px}
+.tcard .fl{font-size:34px;line-height:1.1}.tcard b{font-size:15px}.tcard em{font-style:normal;font-family:"Black Han Sans";color:var(--gold);font-size:18px}
+.tcard i{position:absolute;left:0;right:0;bottom:0;height:6px}
+.tcard.on{border-color:var(--acc);background:rgba(34,211,238,.14)}.tcard.other{opacity:.35}
+.opts{display:flex;flex-wrap:wrap;gap:18px;margin:16px 0}
+.opts>div{display:flex;flex-direction:column;gap:8px}.opts label{font-weight:800;font-size:13px;opacity:.75}.opts .row{display:flex;gap:6px;flex-wrap:wrap}
+.pfoot{display:flex;gap:10px;justify-content:flex-end;position:sticky;bottom:0;padding:12px 0;background:linear-gradient(transparent,rgba(6,9,20,.95) 35%)}
+/* 경기 화면 */
+#hud{position:fixed;inset:0;z-index:10;pointer-events:none}
+.sb{position:absolute;left:max(14px,env(safe-area-inset-left));top:max(12px,env(safe-area-inset-top));display:flex;align-items:stretch;border-radius:12px;overflow:hidden;box-shadow:0 8px 24px rgba(0,0,0,.4);font-weight:900}
+.sb .tm{display:flex;align-items:center;gap:6px;padding:0 10px;background:#0c1328;font-size:16px}.sb .tm i{width:5px;align-self:stretch}
+.sb .sc{display:flex;align-items:center;gap:8px;padding:0 12px;background:#fff;color:#0b1020;font-family:"Black Han Sans";font-size:24px}
+.sb .ck{display:flex;flex-direction:column;justify-content:center;padding:4px 10px;background:var(--grad);color:#04121a;font-size:15px;font-variant-numeric:tabular-nums;line-height:1.05}.sb .ck small{font-size:10px;font-weight:800}
+.tr{position:absolute;right:max(12px,env(safe-area-inset-right));top:max(12px,env(safe-area-inset-top));display:flex;gap:8px;pointer-events:auto}
+.ib{width:42px;height:42px;border-radius:12px;background:var(--glass);border:1px solid var(--line);font-size:18px;backdrop-filter:blur(8px)}
+#ptag{position:absolute;left:max(14px,env(safe-area-inset-left));bottom:max(14px,env(safe-area-inset-bottom));padding:8px 14px;border-radius:12px;background:var(--glass);border:1px solid var(--line);font-weight:800;font-size:15px;backdrop-filter:blur(8px)}
+#ptag b{display:inline-grid;place-items:center;min-width:28px;height:28px;border-radius:8px;background:var(--acc);color:#04121a;font-family:"Black Han Sans";margin-right:6px}#ptag small{opacity:.7;margin-left:6px}
+#power{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);width:220px;height:14px;border-radius:8px;background:rgba(0,0,0,.5);border:2px solid #fff;overflow:hidden}
+#powerF{height:100%;background:linear-gradient(90deg,#16c784,#ffd400 60%,#ff4d5e)}
+#radar{position:absolute;left:50%;bottom:max(12px,env(safe-area-inset-bottom));transform:translateX(-50%);width:210px;height:136px;border-radius:10px;opacity:.92}
+#banner{position:absolute;left:0;right:0;top:30%;text-align:center;opacity:0;transform:scale(.8);transition:.25s cubic-bezier(.2,1.6,.4,1)}
+#banner.on{opacity:1;transform:none}
+#banner b{display:block;font-family:"Black Han Sans";font-size:clamp(44px,9vw,96px);text-shadow:0 6px 0 rgba(0,0,0,.35),0 0 40px rgba(0,0,0,.5);line-height:1}
+#banner span{display:inline-block;margin-top:8px;padding:6px 16px;border-radius:999px;background:var(--glass);font-weight:800;font-size:17px}
+#comm{position:absolute;left:50%;top:max(64px,calc(env(safe-area-inset-top) + 56px));transform:translate(-50%,-8px);padding:8px 16px;border-radius:999px;background:var(--glass);font-weight:800;font-size:15px;opacity:0;transition:.3s;white-space:nowrap;max-width:92vw;overflow:hidden;text-overflow:ellipsis}
+#comm.on{opacity:1;transform:translate(-50%,0)}
+#hint{position:absolute;left:50%;bottom:170px;transform:translateX(-50%);padding:8px 16px;border-radius:12px;background:rgba(255,212,0,.92);color:#1a1400;font-weight:900;font-size:15px;white-space:nowrap}
+#replay{position:absolute;left:max(14px,env(safe-area-inset-left));top:70px;display:flex;align-items:center;gap:10px;pointer-events:auto}
+#replay b{padding:6px 12px;border-radius:8px;background:#ff4d5e;font-family:"Black Han Sans";font-size:20px;animation:blink 1s infinite}
+@keyframes blink{50%{opacity:.5}}
+#netTag{position:absolute;right:max(12px,env(safe-area-inset-right));top:62px;padding:5px 10px;border-radius:8px;background:var(--glass);font-weight:800;font-size:12px}
+#keys{position:absolute;right:max(14px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));padding:10px 12px;border-radius:12px;background:var(--glass);font-size:12px;font-weight:700;line-height:1.6;opacity:.85}
+#keys kbd{display:inline-block;min-width:20px;padding:0 5px;border-radius:5px;background:rgba(255,255,255,.18);text-align:center;font-family:inherit;font-weight:900}
+/* 터치 */
+#touch{position:fixed;inset:0;z-index:11;pointer-events:none}
+#tzone{position:absolute;left:0;top:70px;bottom:0;width:48%;pointer-events:auto}
+#kbase{position:fixed;width:120px;height:120px;margin:-60px 0 0 -60px;border-radius:50%;border:2px solid rgba(255,255,255,.35);background:rgba(255,255,255,.06);opacity:0;pointer-events:none}
+#kbase.on{opacity:1}
+#knob{position:absolute;left:50%;top:50%;width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.85);transform:translate(-50%,-50%)}
+.tb{position:absolute;pointer-events:auto;border-radius:50%;display:grid;place-items:center;background:rgba(10,16,34,.6);border:2px solid rgba(255,255,255,.45);backdrop-filter:blur(6px);font-weight:900}
+.tb b{font-size:13px;pointer-events:none}.tb.dn{transform:scale(.92);background:rgba(255,255,255,.3)}
+#bShoot{width:84px;height:84px;right:calc(22px + env(safe-area-inset-right));bottom:calc(30px + env(safe-area-inset-bottom));background:rgba(255,77,94,.75)}
+#bPass{width:70px;height:70px;right:calc(118px + env(safe-area-inset-right));bottom:calc(20px + env(safe-area-inset-bottom));background:rgba(22,199,132,.7)}
+#bThru{width:62px;height:62px;right:calc(110px + env(safe-area-inset-right));bottom:calc(104px + env(safe-area-inset-bottom));background:rgba(34,211,238,.6)}
+#bLob{width:58px;height:58px;right:calc(28px + env(safe-area-inset-right));bottom:calc(128px + env(safe-area-inset-bottom))}
+#bSprint{width:60px;height:60px;right:calc(196px + env(safe-area-inset-right));bottom:calc(24px + env(safe-area-inset-bottom));background:rgba(255,212,0,.55)}
+#bSwitch{width:52px;height:52px;right:calc(186px + env(safe-area-inset-right));bottom:calc(98px + env(safe-area-inset-bottom))}
+body.mob #radar{width:150px;height:97px;left:auto;right:auto;left:50%}
+body.mob #ptag{bottom:auto;top:max(58px,calc(env(safe-area-inset-top) + 52px));font-size:13px;padding:6px 10px}
+body.mob #power{bottom:120px}body.mob #hint{bottom:auto;top:110px}
+@media (orientation:portrait){body.mob #radar{left:auto;right:max(10px,env(safe-area-inset-right));transform:none;bottom:auto;top:max(60px,calc(env(safe-area-inset-top) + 56px));width:112px;height:73px}body.mob #ptag{top:auto;bottom:calc(220px + env(safe-area-inset-bottom))}body.mob .sb .ck{display:none}body.mob #comm{top:auto;bottom:calc(250px + env(safe-area-inset-bottom));white-space:normal;text-align:center}#rot{display:block}}
+#rot{display:none;position:fixed;left:50%;bottom:calc(200px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:12;padding:7px 14px;border-radius:999px;background:var(--glass);font-weight:800;font-size:13px;pointer-events:none;opacity:0;transition:opacity .5s}#rot.on{opacity:1}
+/* 창 */
+.modal{position:fixed;inset:0;z-index:40;display:grid;place-items:center;background:rgba(3,6,14,.7);backdrop-filter:blur(6px);padding:16px;overflow:auto}
+.card{width:min(560px,100%);border-radius:24px;background:#0f1730;border:1px solid var(--line);padding:24px;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.card h2{margin:0 0 14px;font-size:30px}
+.col{display:flex;flex-direction:column;gap:10px}
+#rTitle{font-size:56px;margin:0;text-align:center}#rTitle.win{color:var(--gold)}#rTitle.lose{color:#9aa4bf}#rTitle.draw{color:var(--acc)}
+#rScore{display:flex;align-items:center;justify-content:center;gap:14px;font-weight:900;font-size:17px;margin:6px 0}#rScore b{font-family:"Black Han Sans";font-size:44px}
+#rGoals{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;font-weight:700;opacity:.85;margin-bottom:12px}#rGoals div:last-child{text-align:right}
+.srow{display:grid;grid-template-columns:44px 1fr 44px;align-items:center;gap:8px;font-weight:900;margin:5px 0;position:relative}.srow b:last-of-type{text-align:right}
+.srow span{position:absolute;left:50%;top:-1px;transform:translateX(-50%);font-size:11px;font-weight:800;opacity:.7}
+.sbar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:#222;margin-top:12px}.sbar i{display:block;height:100%}
+#rMvp{margin:14px 0;padding:12px;border-radius:14px;background:rgba(255,212,0,.12);font-weight:700;text-align:center}#rMvp small{display:block;opacity:.75}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+#onlSt{min-height:54px;padding:14px;border-radius:14px;background:rgba(255,255,255,.06);font-weight:800;text-align:center}#onlSt small{display:block;font-weight:600;opacity:.75;margin-top:4px}#onlSt .code{font-family:"Black Han Sans";font-size:34px;letter-spacing:.1em;color:var(--gold)}#onlSt a{color:var(--acc)}
+#onlCode{flex:1;height:52px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;font-size:22px;font-weight:900;text-align:center;letter-spacing:.2em}
+#toast{position:fixed;left:50%;top:18px;z-index:200;transform:translate(-50%,-80px);padding:10px 18px;border-radius:12px;background:#fff;color:#0b1020;font-weight:800;transition:.3s}#toast.on{transform:translate(-50%,0)}
+@media (max-width:640px){.pwrap h2{font-size:24px}.ptab span{font-size:15px}#teams{grid-template-columns:repeat(4,1fr)}.tcard{padding:8px 4px 12px}.tcard .fl{font-size:26px}.tcard b{font-size:12px}.sb .tm{font-size:13px;padding:0 7px}.sb .sc{font-size:20px}}
+@media (max-height:500px){#menu .logo{font-size:44px}.tagl{margin-bottom:12px}.mbtns .btn{height:48px}}
+</style>
+</head>
+<body>
+<canvas id="cv"></canvas>
+<div id="load"><div><div class="ball">⚽</div><p>경기장을 준비하는 중…</p></div></div>
+
+<div id="menu" class="scr" hidden>
+  <a href="../hub/" class="hubBack">🏠 허브</a>
+  <h1 class="logo h">블립 풋볼<span>11</span></h1>
+  <p class="tagl">진짜 같은 선수 22명이 뛰는 11대11 축구! 국가대표 16팀 중 하나를 골라 AI와 붙거나, 온라인으로 친구와 1:1로 대결해요.</p>
+  <div class="mbtns">
+    <button class="btn main" id="bPlay">⚽ 빠른 경기 <small>AI와 대결</small></button>
+    <button class="btn" id="bOnline">🌐 온라인 대결 <small>사람과 1:1</small></button>
+  </div>
+  <div id="rec"></div>
+</div>
+
+<div id="pick" class="scr" hidden>
+  <div class="pwrap">
+    <h2 class="h">팀 고르기</h2>
+    <div id="pickTabs"></div>
+    <div id="teams"></div>
+    <div class="opts">
+      <div><label>내 포메이션</label><div class="row" id="forms"></div></div>
+      <div><label>AI 난이도</label><div class="row" id="diffs"></div></div>
+      <div><label>경기 시간</label><div class="row" id="lens"></div></div>
+    </div>
+    <div class="pfoot"><button class="btn" id="bBackPick">← 뒤로</button><button class="btn main" id="bKick" style="min-width:180px">킥오프 ⚽</button></div>
+  </div>
+</div>
+
+<div id="hud" hidden>
+  <div class="sb"><div class="tm"><i id="k0"></i><span id="f0"></span><span id="n0"></span></div><div class="sc"><span id="sc0">0</span>-<span id="sc1">0</span></div><div class="tm"><span id="n1"></span><span id="f1"></span><i id="k1"></i></div><div class="ck"><span id="clk">00:00</span><small id="half">전반</small></div></div>
+  <div class="tr"><button class="ib" id="bMute">🔊</button><button class="ib" id="bCam" title="카메라 (C)">🎥</button><button class="ib" id="bPause" title="일시정지 (Esc)">⏸</button></div>
+  <div id="netTag" hidden></div>
+  <div id="ptag" hidden></div>
+  <div id="power" hidden><div id="powerF"></div></div>
+  <canvas id="radar" width="210" height="136"></canvas>
+  <div id="banner"></div>
+  <div id="comm"></div>
+  <div id="hint" hidden></div>
+  <div id="replay" hidden><b>REPLAY</b><button class="chip" id="bSkip">건너뛰기 ⏭</button></div>
+  <div id="keys"><kbd>WASD</kbd> 이동 · <kbd>Shift</kbd> 질주<br><kbd>J</kbd>/<kbd>Space</kbd> 패스 · 태클<br><kbd>K</kbd> 꾹 눌렀다 떼기: 슛 · 슬라이딩<br><kbd>L</kbd> 스루패스 · 압박 · <kbd>I</kbd> 크로스/롱패스<br><kbd>Q</kbd> 선수 전환 · <kbd>C</kbd> 카메라</div>
+</div>
+
+<div id="rot">📱 가로로 돌리면 더 넓게 보여요</div>
+<div id="touch" hidden>
+  <div id="tzone"></div><div id="kbase"><div id="knob"></div></div>
+  <button class="tb" id="bShoot"><b>슛</b></button><button class="tb" id="bPass"><b>패스</b></button><button class="tb" id="bThru"><b>스루</b></button>
+  <button class="tb" id="bLob"><b>크로스</b></button><button class="tb" id="bSprint"><b>질주</b></button><button class="tb" id="bSwitch"><b>전환</b></button>
+</div>
+
+<div id="pause" class="modal" hidden><div class="card col"><h2 class="h">일시정지</h2>
+  <button class="btn main" id="bResume">계속하기</button><button class="btn" id="bRestart">처음부터 다시</button><button class="btn" id="bQuit">메뉴로 나가기</button></div></div>
+
+<div id="result" class="modal" hidden><div class="card">
+  <h2 id="rTitle" class="h">승리!</h2><div id="rScore"></div><div id="rGoals"></div><div id="rStats"></div><div id="rMvp"></div>
+  <div class="row2"><button class="btn" id="rMenu">메뉴</button><button class="btn main" id="rAgain">다시 하기</button></div></div></div>
+
+<div id="onl" class="modal" hidden><div class="card col">
+  <h2 class="h">🌐 온라인 대결</h2>
+  <div style="font-weight:700;opacity:.85">내 팀: <span id="onlTeam"></span></div>
+  <div id="onlSt"></div>
+  <div class="col" id="onlBtns">
+    <button class="btn main" id="onlQuick">⚡ 빠른 대결 (아무나)</button>
+    <button class="btn" id="onlHost">🏠 방 만들기 (친구랑)</button>
+    <div class="row2"><input id="onlCode" inputmode="numeric" maxlength="4" placeholder="방 코드"><button class="btn" id="onlJoin" style="flex:0 0 auto">참가</button></div>
+  </div>
+  <button class="btn" id="onlBack">← 뒤로</button>
+</div></div>
+<div id="toast"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="../seoul/lib/GLTFLoader.js"></script>
+<script src="../seoul/lib/SkeletonUtils.js"></script>
+<script src="js/base.js"></script>
+<script src="../seoul/js/chars.js"></script>
+<script src="js/teams.js"></script>
+<script src="js/stadium.js"></script>
+<script src="js/players.js"></script>
+<script src="js/match.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/net.js"></script>
+<script src="../common/p2p.js"></script>
+<script src="../common/blip.js" data-game="soccer"></script>
+<script>if (IS_MOBILE) document.body.classList.add('mob'); setupOnline(); boot();</script>
+</body>
+</html>

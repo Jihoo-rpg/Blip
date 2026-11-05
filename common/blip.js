@@ -34,6 +34,7 @@
     billiards: { name: '당구 마스터 3D', icon: '🎱', path: 'billiards/' },
     seoul: { name: 'STA 1', icon: '🏙️', path: 'seoul/' },
     seoul2: { name: 'STA 2', icon: '🌆', path: 'seoul2/' },
+    soccer: { name: '블립 풋볼 11', icon: '⚽', path: 'soccer/' },
   };
   const AVAS = ['😺', '🐶', '🦊', '🐼', '🐸', '🐵', '🦁', '🐯', '🐰', '🐻', '🐧', '🦄', '👾', '🤖', '👻', '🐲'];
 
@@ -233,7 +234,7 @@
     const st = document.createElement('style');
     st.textContent = '#blipBox{position:fixed;left:max(12px,env(safe-area-inset-left,0px));bottom:max(12px,env(safe-area-inset-bottom,0px));z-index:2147483000;display:flex;flex-direction:column;gap:8px;max-width:min(340px,calc(100vw - 24px));font:600 14px/1.35 system-ui,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}'
       + '#blipBox .bt{display:flex;align-items:center;gap:10px;background:#fff;color:#232527;border-radius:12px;padding:10px 12px;box-shadow:0 8px 28px rgba(0,0,0,.35);animation:blipIn .25s ease-out}'
-      + '#blipBox .bt .a{font-size:24px}#blipBox .bt .x{flex:1;min-width:0}#blipBox .bt small{display:block;color:#606162;font-weight:500}'
+      + '#blipBox .bt{flex-wrap:wrap}#blipBox .bt .a{font-size:24px}#blipBox .bt .x{flex:1 1 170px;min-width:0}#blipBox .bt small{display:block;color:#606162;font-weight:500}'
       + '#blipBox button{border:0;border-radius:8px;padding:7px 11px;font:700 13px system-ui,sans-serif;cursor:pointer}#blipBox .y{background:#00b06f;color:#fff}#blipBox .n{background:#e9ecef;color:#232527}'
       + '@keyframes blipIn{from{transform:translateY(12px);opacity:0}to{transform:none;opacity:1}}';
     document.head.appendChild(st);
@@ -266,7 +267,10 @@
 
   /* ---------- 📮 게임 요청 우편함 (24시간 안에 만들어 줘요) ---------- */
   const DAY_MS = 24 * 3600 * 1000;
-  const MAIL_TO = 'jihoo.you@sieusa.org';   // 새 요청이 오면 이 주소로 이메일이 가요
+  const MAIL_TO = 'jihoo.you@sieusa.org';
+  /** 만들어 준 요청: [보낸 계정 또는 닉네임, 게임 이름에 들어간 말, 게임 id] — 여기 적으면 '완성'으로 보이고 보낸 사람에게 알림이 가요 */
+  const DONE_REQ = [['sj_aydenlee', '축구', 'soccer']];
+  function mailDone(v) { if (!v || v.st === 'done') return {}; const d = DONE_REQ.find(([who, kw]) => (v.acc === who || v.nick === who) && String(v.title || '').includes(kw)); return d ? { st: 'done', game: d[2] } : {}; }   // 새 요청이 오면 이 주소로 이메일이 가요
   let ownerId = null, ownerAt = 0;
   async function mailOwner(force) {
     if (!force && ownerId !== null && Date.now() - ownerAt < 60000) return ownerId;
@@ -281,7 +285,7 @@
   }
   async function mailList(n) {
     const r = await fetch(FB + '/hub/gamereq.json?orderBy=%22$key%22&limitToLast=' + (n || 40)).then(r => r.ok ? r.json() : Promise.reject(r.status));
-    return Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v)).filter(v => v && v.title).sort((a, b) => (b.t || 0) - (a.t || 0));
+    return Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v, mailDone(v))).filter(v => v && v.title).sort((a, b) => (b.t || 0) - (a.t || 0));
   }
   async function mailSend(title, desc, genre) {
     title = String(title || '').trim().slice(0, 40); desc = String(desc || '').trim().slice(0, 600); genre = String(genre || '').slice(0, 12);
