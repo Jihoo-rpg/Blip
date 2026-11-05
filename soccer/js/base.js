@@ -15,9 +15,9 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 const PL = { L: 105, W: 68, hx: 52.5, hz: 34, gw: 7.32, gh: 2.44, br: .11 };
 
 const cv = $('#cv');
-const ren = new T.WebGLRenderer({ canvas: cv, antialias: !IS_MOBILE, powerPreference: 'high-performance' });
-ren.setPixelRatio(Math.min(devicePixelRatio, IS_MOBILE ? 1.3 : 1.6));
-ren.outputEncoding = T.sRGBEncoding; ren.toneMapping = T.ACESFilmicToneMapping; ren.toneMappingExposure = 1.05;
+const ren = new T.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
+ren.setPixelRatio(Math.min(devicePixelRatio, IS_MOBILE ? 1.5 : 1.75));
+ren.outputEncoding = T.sRGBEncoding; ren.toneMapping = T.ACESFilmicToneMapping; ren.toneMappingExposure = 1.12;
 ren.shadowMap.enabled = true; ren.shadowMap.type = T.PCFSoftShadowMap;
 const scene = new T.Scene();
 const cam = new T.PerspectiveCamera(42, 1, .3, 900);

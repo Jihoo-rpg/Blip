@@ -66,6 +66,14 @@ function humanAct(p, a, v, pow, h) {
   else if (a === 'shootDown') { if (ball.owner && ball.owner.team !== p.team) p.yaw = Math.atan2(ball.owner.x - p.x, ball.owner.z - p.z); tryTackle(p, true); }
   else if (a === 'through' || a === 'lob') switchPlayer(h);
 }
+function autoReceive(p, I, mag) {
+  if (ball.owner || ball.y > 2.4) return null; const coming = ball.passTo === p; const d = Math.hypot(ball.x - p.x, ball.z - p.z); const bs = Math.hypot(ball.vx, ball.vz);
+  if (!coming && !(d < 4.5 && bs < 16)) return null;
+  // 공이 언제 어디로 오는지 계산해서 그 자리로
+  let best = null; for (let t = .1; t <= 2; t += .1) { const pr = predictBall(t); const need = Math.hypot(pr[0] - p.x, pr[1] - p.z) / maxSpd(p, true); if (need <= t + .05) { best = pr; break; } } if (!best) best = predictBall(.4);
+  if (mag > .15) { const dx = best[0] - p.x, dz = best[1] - p.z, L = Math.hypot(dx, dz) || 1; if ((I.x * dx + I.z * dz) / (L * mag) < -.35) return null; } // 일부러 반대로 가면 놔둬요
+  return best;
+}
 function switchPlayer(h) {
   const tm = M.human[h], cur = M.ctrl[h]; const pr = predictBall(.3); const L = team(tm).filter(p => p !== cur && p.role !== 'GK').sort((a, b) => Math.hypot(a.x - pr[0], a.z - pr[1]) - Math.hypot(b.x - pr[0], b.z - pr[1]));
   if (L[0]) { M.ctrl[h] = L[0]; L[0].swT = M.t; sfx('tick'); }
@@ -80,7 +88,9 @@ function humanTick(dt, setMode) {
     if (setMode) { const sp = M.sp; if ((sp && sp.taker === p) || (M.phase === 'kickoff' && M.koTaker === p)) { if (Math.hypot(I.x, I.z) > .3 && sp && sp.type !== 'throw') { p.aim = Math.atan2(I.x, I.z); } } continue; }
     if (p.stun > 0 || p.act === 'slide' || (p.role === 'GK' && ball.held)) continue;
     const mag = Math.hypot(I.x, I.z);
-    if (mag > .15) { const s = maxSpd(p, I.sp) * Math.min(1, mag * 1.15); accel(p, I.x / mag * s, I.z / mag * s, dt); }
+    // 알아서 받기: 나한테 오는 패스 · 바로 옆 굴러오는 공은 몸이 먼저 공 쪽으로 가요 (반대로 세게 밀면 그 방향으로)
+    const rcv = autoReceive(p, I, mag); if (rcv) steer(p, rcv[0], rcv[1], maxSpd(p, true), dt);
+    else if (mag > .15) { const s = maxSpd(p, I.sp) * Math.min(1, mag * 1.15); accel(p, I.x / mag * s, I.z / mag * s, dt); }
     else if (p.pressT > 0 && ball.owner && ball.owner.team !== tm) { p.pressT -= dt; const o = ball.owner; steer(p, o.x + o.vx * .25, o.z + o.vz * .25, maxSpd(p, true), dt); }
     else if (ball.passTo === p && !ball.owner) { const pr = predictBall(.3); steer(p, pr[0], pr[1], maxSpd(p, true), dt); }
     else if (!ball.owner && Math.hypot(ball.x - p.x, ball.z - p.z) < 6 && ball.y < 1.2) { const pr = predictBall(.2); steer(p, pr[0], pr[1], maxSpd(p, false), dt); }
@@ -215,7 +225,8 @@ function hudTick() {
   rotTick(); if (UI.screen !== 'game') { if (!$('#intro').hidden) { $('#intro').hidden = true; document.body.classList.remove('intro'); } return; } introTick();
   $('#sc0').textContent = M.score[0]; $('#sc1').textContent = M.score[1]; $('#clk').textContent = clockStr() + (M.half === 2 ? '' : ''); $('#half').textContent = M.half === 1 ? '전반' : '후반';
   const h = M.human[0] >= 0 ? 0 : -1; const p = h >= 0 ? M.ctrl[h] : null;
-  const tag = $('#ptag'); if (p) { tag.hidden = false; tag.innerHTML = `<b>${p.d.num}</b> ${esc(p.d.name)} <small>${ROLE_NAMES[p.role]}</small>`; } else tag.hidden = true;
+  const tag = $('#ptag'); if (p) { tag.hidden = false; if (UI.tagP !== p) { UI.tagP = p; const pd = p.d.pid != null ? PDB[p.d.pid] : null; const o = ovrOf(p.d); const r = pd ? pd.r : o >= 88 ? 'W' : o >= 80 ? 'G' : o >= 72 ? 'S' : 'B';
+      tag.innerHTML = `<div class="mc r${r}"><div class="fr"></div><div class="in">${pd ? `<img alt="">` : ''}<em>${o}</em></div></div><div class="mt"><b>${p.d.num}</b><span>${esc(p.d.name)}</span><small>${ROLE_NAMES[p.role]}</small></div>`; if (pd) portrait(pd, u => { const im = tag.querySelector('img'); if (im && UI.tagP === p) im.src = u; }); } } else { tag.hidden = true; UI.tagP = null; }
   const pw = $('#power'); const ch = p ? (NET.role === 'guest' ? (INP[0].hold.shoot ? clamp((performance.now() - INP[0].hold.shoot) / 1000, 0, 1) : 0) : p.charge) : 0; pw.hidden = !ch; if (ch) $('#powerF').style.width = (ch * 100) + '%';
   // 버튼 이름: 공 있을 때 / 수비할 때
   if (IS_MOBILE) { const own = p && (ball.owner === p || (M.sp && M.sp.taker === p) || (M.phase === 'kickoff' && M.koTaker === p)); const set = (id, a, b) => { const el = $(id); const t = own ? a : b; if (el.dataset.t !== t) { el.dataset.t = t; el.querySelector('b').textContent = t; } }; set('#bPass', '패스', '태클'); set('#bShoot', '슛', '슬라이딩'); set('#bThru', '스루', '전환'); $('#bLob').hidden = !own; }

@@ -106,7 +106,14 @@ function heroTick(dt, on) {
 const _f = new T.Vector3(), _up = new T.Vector3(0, 1, 0), _rt = new T.Vector3();
 function V3(a, b, c) { return new T.Vector3().addScaledVector(_f, a).addScaledVector(_up, b).addScaledVector(_rt, c).normalize(); }
 function arm2(P, S, u, l, w) { aimBone(P, S + 'Arm', S + 'ForeArm', u, w); aimBone(P, S + 'ForeArm', S + 'Hand', l, w); }
-function leg2(P, S, u, l, w) { aimBone(P, S + 'UpLeg', S + 'Leg', u, w); aimBone(P, S + 'Leg', S + 'Foot', l, w); }
+// 다리: 무릎은 뒤로만 굽고, 옆으로 너무 벌어지지 않게 막아요
+function legFix(v, side) { let a = v.dot(_f), b = v.dot(_up), c = v.dot(_rt); c = clamp(c * side, -.12, .3) * side; return [a, b, c]; }
+function leg2(P, S, u, l, w) {
+  const side = S === 'Right' ? 1 : -1; const [ua, ub, uc] = legFix(u, side); let [la, lb, lc] = legFix(l, side);
+  const pt = Math.atan2(ua, -ub), ps = Math.atan2(la, -lb); if (ps > pt) { const L = Math.hypot(la, lb); la = Math.sin(pt) * L; lb = -Math.cos(pt) * L; } // 무릎이 앞으로 꺾이지 않게
+  const U = new T.Vector3().addScaledVector(_f, ua).addScaledVector(_up, ub).addScaledVector(_rt, uc).normalize(), Lw = new T.Vector3().addScaledVector(_f, la).addScaledVector(_up, lb).addScaledVector(_rt, lc).normalize();
+  aimBone(P, S + 'UpLeg', S + 'Leg', U, w); aimBone(P, S + 'Leg', S + 'Foot', Lw, w);
+}
 function footballPose(p) {
   const P = p.P, a = p.act, t = p.actT; const root = P.root; root.position.y = 0; root.rotation.x = 0; root.rotation.z = 0;
   if (!a) return;
@@ -120,7 +127,7 @@ function footballPose(p) {
     if (P.B.Spine1) { P.B.Spine1.rotateX(-.15 * fwd * big); P.B.Spine1.updateMatrixWorld(true); }
   } else if (a === 'slide') {
     const k = Math.min(1, t / .18); root.rotation.x = -1.15 * k; root.position.y = .32 * k;
-    leg2(P, S, V3(1, -.15, s * .1), V3(1, -.05, 0), k); leg2(P, O, V3(.6, -.8, -s * .1), V3(.1, -1, 0), k);
+    leg2(P, S, V3(1, -.15, s * .1), V3(1, -.05, 0), k); leg2(P, O, V3(.75, .05, -s * .08), V3(.35, -.94, 0), k);
     arm2(P, 'Left', V3(-.4, -.7, -.6), V3(-.2, -.9, -.2), k); arm2(P, 'Right', V3(-.4, -.7, .6), V3(-.2, -.9, .2), k);
   } else if (a === 'dive') {
     const k = Math.min(1, t / .25); const ds = p.diveSide || 1; root.rotation.z = -ds * 1.35 * k; root.position.y = Math.sin(Math.min(1, t / .5) * Math.PI) * (p.diveH || .6) + .35 * k;
@@ -131,16 +138,16 @@ function footballPose(p) {
   else if (a === 'throw') { const k = Math.min(1, t / .5); arm2(P, 'Left', V3(-.4 + k, 1, -.25), V3(-.6 + 1.4 * k, 1, 0), 1); arm2(P, 'Right', V3(-.4 + k, 1, .25), V3(-.6 + 1.4 * k, 1, 0), 1); }
   else if (a === 'header') { const k = Math.sin(Math.min(1, t / .5) * Math.PI); root.position.y = k * .55; if (P.B.Spine1) { P.B.Spine1.rotateX(.35 * k); P.B.Spine1.updateMatrixWorld(true); } arm2(P, 'Left', V3(.2, .2, -.9), V3(.4, .3, -.4), k); arm2(P, 'Right', V3(.2, .2, .9), V3(.4, .3, .4), k); }
   else if (a === 'cele') { const k = Math.min(1, t / .3); const j = Math.abs(Math.sin(t * 6)); root.position.y = j * .35 * (p.celeKind === 1 ? 1 : 0);
-    if (p.celeKind === 3) { const kk = Math.min(1, t / .35); root.position.y = -.42 * kk; root.rotation.x = -.35 * kk; leg2(P, 'Left', V3(0, -.2, -.15), V3(-1, -.3, 0), kk); leg2(P, 'Right', V3(0, -.2, .15), V3(-1, -.3, 0), kk); arm2(P, 'Left', V3(-.1, 1, -.7), V3(0, 1, -.3), kk); arm2(P, 'Right', V3(-.1, 1, .7), V3(0, 1, .3), kk); return; } // 무릎 슬라이딩
+    if (p.celeKind === 3) { const kk = Math.min(1, t / .35); root.position.y = -.42 * kk; root.rotation.x = -.35 * kk; leg2(P, 'Left', V3(.15, -1, -.08), V3(-1, -.12, 0), kk); leg2(P, 'Right', V3(.15, -1, .08), V3(-1, -.12, 0), kk); arm2(P, 'Left', V3(-.1, 1, -.7), V3(0, 1, -.3), kk); arm2(P, 'Right', V3(-.1, 1, .7), V3(0, 1, .3), kk); return; } // 무릎 슬라이딩
     if (p.celeKind === 4) { const pump = Math.abs(Math.sin(t * 4)); arm2(P, 'Right', V3(.3, .2 + pump * .8, .4), V3(.1, 1, .1), k); arm2(P, 'Left', V3(.2, -.6, -.6), V3(.6, -.2, -.3), k); if (P.B.Spine1) { P.B.Spine1.rotateX(-.2 * pump); P.B.Spine1.updateMatrixWorld(true); } return; } // 주먹 불끈
     if (p.celeKind === 2) { arm2(P, 'Left', V3(0, .1, -1), V3(0, .1, -1), k); arm2(P, 'Right', V3(0, .1, 1), V3(0, .1, 1), k); } // 비행기
     else { arm2(P, 'Left', V3(.1, 1, -.5), V3(0, 1, -.2), k); arm2(P, 'Right', V3(.1, 1, .5), V3(0, 1, .2), k); } }
-  else if (a === 'sad') { if (P.B.Spine1) { P.B.Spine1.rotateX(.5); P.B.Spine1.updateMatrixWorld(true); } if (P.B.Head) { P.B.Head.rotateX(.5); P.B.Head.updateMatrixWorld(true); } arm2(P, 'Left', V3(.4, .6, -.5), V3(-.2, .7, .5), 1); arm2(P, 'Right', V3(.4, .6, .5), V3(-.2, .7, -.5), 1); }
+  else if (a === 'sad') { if (P.B.Spine1) { P.B.Spine1.rotateX(.22); P.B.Spine1.updateMatrixWorld(true); } if (P.B.Head) { P.B.Head.rotateX(.35); P.B.Head.updateMatrixWorld(true); } arm2(P, 'Left', V3(.4, .6, -.5), V3(-.2, .7, .5), 1); arm2(P, 'Right', V3(.4, .6, .5), V3(-.2, .7, -.5), 1); }
   else if (a === 'stumble') { const k = Math.sin(Math.min(1, t / .6) * Math.PI); if (P.B.Spine1) { P.B.Spine1.rotateX(.6 * k); P.B.Spine1.updateMatrixWorld(true); } arm2(P, 'Left', V3(.6, -.4, -.7), V3(.6, -.4, -.3), k); arm2(P, 'Right', V3(.6, -.4, .7), V3(.6, -.4, .3), k); }
   else if (a === 'place' || a === 'pickup') { // 공 내려놓기 · 줍기 (허리 숙이기)
     const D = a === 'place' ? .75 : .7, k = Math.sin(Math.min(1, t / D) * Math.PI); const up = a === 'pickup' ? Math.max(0, (t - D * .55) / (D * .45)) : 0;
-    if (P.B.Spine) { P.B.Spine.rotateX(.55 * k); P.B.Spine.updateMatrixWorld(true); } if (P.B.Spine1) { P.B.Spine1.rotateX(.35 * k); P.B.Spine1.updateMatrixWorld(true); }
-    leg2(P, 'Left', V3(.35 * k, -1, -.12), V3(-.2 * k, -1, 0), k); leg2(P, 'Right', V3(.35 * k, -1, .12), V3(-.2 * k, -1, 0), k);
+    if (P.B.Spine) { P.B.Spine.rotateX(.32 * k); P.B.Spine.updateMatrixWorld(true); } if (P.B.Spine1) { P.B.Spine1.rotateX(.2 * k); P.B.Spine1.updateMatrixWorld(true); }
+    leg2(P, 'Left', V3(.5 * k, -1, -.1), V3(-.45 * k, -1, 0), k); leg2(P, 'Right', V3(.5 * k, -1, .1), V3(-.45 * k, -1, 0), k); root.position.y = -.12 * k;
     if (up > 0) { arm2(P, 'Left', V3(-.2, 1, -.25), V3(-.4, 1, 0), Math.min(1, up)); arm2(P, 'Right', V3(-.2, 1, .25), V3(-.4, 1, 0), Math.min(1, up)); }
     else { arm2(P, 'Left', V3(.9, -1, -.25), V3(.8, -1, .1), k); arm2(P, 'Right', V3(.9, -1, .25), V3(.8, -1, -.1), k); }
   }

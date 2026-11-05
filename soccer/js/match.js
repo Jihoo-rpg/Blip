@@ -11,12 +11,13 @@ function buildBall() {
 }
 /* ---------- 선수 만들기 ---------- */
 function setupMatch(o) {
-  for (const p of M.players) scene.remove(p.P.root); M.players = [];
+  for (const p of M.players) { scene.remove(p.P.root); if (p.P.blob) scene.remove(p.P.blob); } M.players = [];
   M.t0 = o.T0 || TEAM(o.t0); M.t1 = o.T1 || TEAM(o.t1); M.form = [o.f0 || '4-3-3', o.f1 || '4-3-3']; M.diff = o.diff == null ? 1 : o.diff; M.len = o.len || 6; M.mode = o.mode || 'ai'; M.human = o.human || [0, -1];
   const [k0, k1] = pickKits(M.t0, M.t1); const gkk = [['#1fbf5a', '#141414', '#1fbf5a', '#0b3a1a'], ['#ffd400', '#141414', '#ffd400', '#141414']]; if (colDist(gkk[0][0], k1[0]) < .5) gkk[0] = ['#ff7a00', '#141414', '#ff7a00', '#141414'];
   M.kits = [Object.assign(k0.slice(), { gk: gkk[0] }), Object.assign(k1.slice(), { gk: gkk[1] })];
   [M.t0, M.t1].forEach((t, ti) => roster(t, M.form[ti]).forEach(d => {
     const P = makeFootballer(d, M.kits[ti], t.num, d.role === 'GK'); scene.add(P.root);
+    const blob = new T.Mesh(SHADOW_GEO, SHADOW_MAT); blob.rotation.x = -Math.PI / 2; blob.position.y = .015; blob.renderOrder = 1; P.blob = blob; scene.add(blob);
     M.players.push({ team: ti, d, P, role: d.role, st: d.st, x: 0, z: 0, vx: 0, vz: 0, yaw: 0, act: null, actT: 0, foot: 'Right', stun: 0, tkCd: 0, kCd: 0, think: Math.random() * .3, tx: 0, tz: 0, run: null, goals: 0, rating: 6, touches: 0 });
   }));
   M.score = [0, 0]; M.half = 1; M.clock = 0; M.dir = [1, -1]; M.stats = { sh: [0, 0], ot: [0, 0], pa: [0, 0], pc: [0, 0], tk: [0, 0], fo: [0, 0], co: [0, 0], pos: [0, 0] }; M.scorers = []; M.ctrl = [null, null]; M.on = true; M.t = 0;
@@ -208,7 +209,7 @@ function ballControl(dt) {
   let best = null, bd = 9; const bsp = Math.hypot(ball.vx, ball.vz);
   for (const p of M.players) {
     if (p.stun > 0 || p.kCd > 0 || p.act === 'dive' && p.actT < .3) continue; const d = Math.hypot(p.x - ball.x, p.z - ball.z);
-    const gkHands = p.role === 'GK' && inOwnBox(p, ball.x, ball.z); const reach = gkHands ? 1.25 : .78; const hmax = gkHands ? 2.5 : .95;
+    const gkHands = p.role === 'GK' && inOwnBox(p, ball.x, ball.z); const hum = p === M.ctrl[0] || p === M.ctrl[1]; const reach = gkHands ? 1.25 : ball.passTo === p ? (hum ? 1.25 : 1) : hum ? .95 : .78; const hmax = gkHands ? 2.5 : ball.passTo === p ? 1.3 : .95;
     if (d < reach && ball.y < hmax && d < bd) { best = p; bd = d; }
     else if (!gkHands && d < .9 && ball.y > .95 && ball.y < 2.3 && ball.vy < 2 && p.kCd <= 0 && d < bd) { best = p; bd = d; best.head = true; }
   }
@@ -216,7 +217,8 @@ function ballControl(dt) {
   if (best.head) { best.head = false; header(best); return; }
   if (best.role === 'GK' && inOwnBox(best, ball.x, ball.z) && !(ball.last && ball.last.team === best.team && ball.kickBy === ball.last && M.t - ball.kickT < 2 && ball.last !== best)) { gkCatch(best); return; }
   // 첫 터치: 너무 빠르면 튕길 수도
-  if (bsp > 20 && Math.random() < .35 + (90 - best.st.drb) / 200) { ball.vx *= -.3; ball.vz *= -.3; ball.vy = 1.5; ball.last = best; best.kCd = .3; sfx('kick', .3); return; }
+  const soft = ball.passTo === best && (best === M.ctrl[0] || best === M.ctrl[1]); // 내 선수가 패스 받을 땐 첫 터치를 부드럽게
+  if (bsp > (soft ? 26 : 20) && Math.random() < (soft ? .12 : .35 + (90 - best.st.drb) / 200)) { ball.vx *= -.3; ball.vz *= -.3; ball.vy = 1.5; ball.last = best; best.kCd = .3; sfx('kick', .3); return; }
   gainBall(best);
 }
 function gainBall(p) {
@@ -408,8 +410,9 @@ function endHalf() {
   else { M.phase = 'over'; M.phT = 0; const w = M.score[0] === M.score[1] ? -1 : M.score[0] > M.score[1] ? 0 : 1; for (const p of M.players) { p.act = w < 0 ? null : p.team === w ? 'clap' : 'sad'; p.actT = 0; } banner('경기 종료', `${M.t0.f} ${M.score[0]} : ${M.score[1]} ${M.t1.f}`, '#ffd400', 3); STAD.jump = 3; setTimeout(showResult, 3200); }
 }
 /* ---------- 그리기 ---------- */
+const SHADOW_GEO = new T.CircleGeometry(.62, 20), SHADOW_MAT = new T.MeshBasicMaterial({ map: ctex(64, 64, (g, W) => { const r = g.createRadialGradient(W / 2, W / 2, 0, W / 2, W / 2, W / 2); r.addColorStop(0, 'rgba(0,0,0,.55)'); r.addColorStop(.6, 'rgba(0,0,0,.25)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, W, W); }), transparent: true, depthWrite: false });
 function animPlayer(p, dt) {
-  const P = p.P; P.root.position.set(p.x, 0, p.z); P.root.rotation.y = p.yaw;
+  const P = p.P; P.root.position.set(p.x, 0, p.z); P.root.rotation.y = p.yaw; if (P.blob) P.blob.position.set(p.x, .015, p.z);
   const sp = Math.hypot(p.vx, p.vz); const an = sp > 4.6 ? 'run' : sp > .5 ? 'walk' : 'idle'; setAnim(P, an, an === 'run' ? clamp(sp / 6.4, .8, 1.5) : an === 'walk' ? clamp(sp / 1.6, .6, 2) : 1);
   P.mixer.update(dt); footballPose(p);
 }
