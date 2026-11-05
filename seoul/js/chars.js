@@ -85,7 +85,7 @@ function makePerson(look) {
       if (n === 'Wolf3D_Outfit_Top') mulCol(o.material, look.top, look.top === '#ffffff' ? 1.15 : look.cop ? 2.2 : 1.9);
       if (n === 'Wolf3D_Outfit_Bottom') mulCol(o.material, look.bot, 1.8);
       if (n === 'Wolf3D_Outfit_Footwear') mulCol(o.material, look.shoe, look.shoe === '#f2f2f2' ? 1.4 : 1.6);
-      if (n === 'Wolf3D_Beard') { o.visible = look.beard; mulCol(o.material, look.hair || '#120f0d', 1.4); }
+      if (n === 'Wolf3D_Beard') { o.visible = !!look.beard; mulCol(o.material, look.hair || '#120f0d', 1.4); }
       if (n === 'Wolf3D_Headwear') { o.visible = look.head === 'hat'; if (look.hat) mulCol(o.material, look.hat, 2.2); }
     }
   });

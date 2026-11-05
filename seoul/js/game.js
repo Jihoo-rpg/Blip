@@ -772,7 +772,7 @@ function frame(now) {
   // 플레이어
   if (IN.car && !G.dead) { if (PL.car) exitCar(); else if (PL.ko <= 0) { const c = nearestCar(PL.x, PL.z, 3.6); if (c && (Math.abs(c.v) < 6 || nearestCar(PL.x, PL.z, 1.2) === c)) enterCar(c); } }
   if (PL.car) updatePlayerCar(dt); else if (!G.dead || PL.ko > 0) updatePlayerFoot(dt);
-  placePlayer(dt); PL.P.root.visible = !PL.car || PL.car.S.bike;
+  placePlayer(dt); PL.P.root.visible = !PL.car || !!PL.car.S.bike;
   if (!PL.car) { const c = nearestCar(PL.x, PL.z, 2.4); if (c && !G.dead) setPrompt((IS_MOBILE ? '🚗 ' : 'F: ') + (c.ai || c.drvP ? c.S.name + ' 뺏기' : c.S.name + ' 타기')); }
   // 편의점
   PROMPT.act = null; if (!PL.car) for (const s of BUILD.shops) if ((s.name.startsWith('편의점') || s.name === '총포사' || s.name === '옷가게') && Math.hypot(s.x - PL.x, s.z - PL.z) < 2.4) { PROMPT.act = s.name; setPrompt((IS_MOBILE ? '🏪 버튼: ' : 'E: ') + s.name + ' 들어가기'); break; }
