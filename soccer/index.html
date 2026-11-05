@@ -114,12 +114,61 @@ body.mob #power{bottom:120px}body.mob #hint{bottom:auto;top:110px}
 .srow span{position:absolute;left:50%;top:-1px;transform:translateX(-50%);font-size:11px;font-weight:800;opacity:.7}
 .sbar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:#222;margin-top:12px}.sbar i{display:block;height:100%}
 #rMvp{margin:14px 0;padding:12px;border-radius:14px;background:rgba(255,212,0,.12);font-weight:700;text-align:center}#rMvp small{display:block;opacity:.75}
-.row2{display:flex;gap:10px}.row2 .btn{flex:1}
+.row2{display:flex;gap:10px}.row2 .btn{flex:1;white-space:nowrap}
 #onlSt{min-height:54px;padding:14px;border-radius:14px;background:rgba(255,255,255,.06);font-weight:800;text-align:center}#onlSt small{display:block;font-weight:600;opacity:.75;margin-top:4px}#onlSt .code{font-family:"Black Han Sans";font-size:34px;letter-spacing:.1em;color:var(--gold)}#onlSt a{color:var(--acc)}
 #onlCode{flex:1;height:52px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;font-size:22px;font-weight:900;text-align:center;letter-spacing:.2em}
 #toast{position:fixed;left:50%;top:18px;z-index:200;transform:translate(-50%,-80px);padding:10px 18px;border-radius:12px;background:#fff;color:#0b1020;font-weight:800;transition:.3s}#toast.on{transform:translate(-50%,0)}
 @media (max-width:640px){.pwrap h2{font-size:24px}.ptab span{font-size:15px}#teams{grid-template-columns:repeat(4,1fr)}.tcard{padding:8px 4px 12px}.tcard .fl{font-size:26px}.tcard b{font-size:12px}.sb .tm{font-size:13px;padding:0 7px}.sb .sc{font-size:20px}}
 @media (max-height:500px){#menu .logo{font-size:44px}.tagl{margin-bottom:12px}.mbtns .btn{height:48px}}
+
+/* 구단 */
+#club{background:radial-gradient(circle at 70% 0,rgba(34,211,238,.18),transparent 50%),rgba(6,9,20,.9);backdrop-filter:blur(6px);justify-content:flex-start;overflow:auto;touch-action:pan-y}
+.cwrap{width:min(1000px,100%);padding-bottom:30px}
+.ctop{display:flex;align-items:center;gap:12px;margin:6px 0 12px}
+#clHead{flex:1;display:flex;align-items:center;gap:12px;min-width:0}
+.crest{width:54px;height:54px;border-radius:16px;display:grid;place-items:center;font-size:30px;flex:0 0 auto;box-shadow:inset 0 0 0 3px rgba(255,255,255,.35)}.crest.sm{width:42px;height:42px;font-size:22px;border-radius:12px}
+.cn{flex:1;min-width:0}.cn b{display:block;font-size:22px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.cn small{opacity:.75;font-weight:700}
+.coin{padding:8px 14px;border-radius:999px;background:rgba(255,212,0,.15);border:1px solid rgba(255,212,0,.5);font-weight:900;color:var(--gold);white-space:nowrap}
+#clTabs{display:flex;gap:6px;margin-bottom:14px;overflow:auto}#clTabs button{flex:1;height:44px;border-radius:14px;background:rgba(255,255,255,.07);font-weight:800;white-space:nowrap;padding:0 10px}#clTabs button.on{background:var(--grad);color:#04121a}
+.hintp{opacity:.75;font-weight:700;font-size:13px;margin:6px 0 12px}
+.opps{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:8px}
+.opp{display:flex;align-items:center;gap:12px;padding:12px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid var(--line);text-align:left}.opp:hover{background:rgba(255,255,255,.12)}.opp.lock{opacity:.4}
+.opp .on{flex:1}.opp b{display:block;font-size:16px}.opp small{opacity:.7;font-weight:700}.opp .rw{font-weight:900;color:var(--gold);white-space:nowrap}
+.sqtop{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}.sqtop .row{display:flex;gap:6px}
+.pitch{position:relative;height:min(78vw,520px);margin:12px 0;border-radius:18px;background:repeating-linear-gradient(0deg,#2f7d33 0 9%,#378a3a 9% 18%);border:2px solid rgba(255,255,255,.5);overflow:hidden}
+.pitch:before{content:'';position:absolute;left:30%;right:30%;top:-2px;height:14%;border:2px solid rgba(255,255,255,.5)}.pitch:after{content:'';position:absolute;left:30%;right:30%;bottom:-2px;height:14%;border:2px solid rgba(255,255,255,.5)}
+.slot{position:absolute;transform:translate(-50%,-50%);z-index:1}
+.pcard{position:relative;width:78px;height:96px;border-radius:12px;padding:6px 5px;background:linear-gradient(160deg,color-mix(in srgb,var(--rc) 55%,#1a2238),#121a2e 75%);border:2px solid var(--rc);display:flex;flex-direction:column;align-items:center;justify-content:flex-end;text-align:center;cursor:pointer;box-shadow:0 6px 14px rgba(0,0,0,.35)}
+.pcard em{position:absolute;left:6px;top:4px;font-style:normal;font-family:"Black Han Sans";font-size:20px;color:#fff}.pcard i{position:absolute;right:6px;top:7px;font-style:normal;font-size:10px;font-weight:900;opacity:.85}
+.pcard b{font-size:11px;line-height:1.15;font-weight:900;word-break:keep-all}.pcard small{font-size:9px;opacity:.8;margin-top:2px;white-space:nowrap}
+.pcard.empty{background:rgba(0,0,0,.3);border:2px dashed rgba(255,255,255,.4);justify-content:center}.pcard.empty span{font-weight:900;opacity:.7}
+.pcard.sel{outline:3px solid #fff;transform:scale(1.08)}.pcard[data-miss]{opacity:.22;filter:grayscale(1)}
+.pcard.rW,.pcard.rL{box-shadow:0 0 18px color-mix(in srgb,var(--rc) 70%,transparent)}
+.bench{display:grid;grid-template-columns:repeat(auto-fill,minmax(82px,1fr));gap:8px;justify-items:center}
+.rfilter{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.packs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.pack{position:relative;overflow:hidden;padding:20px 16px;border-radius:20px;background:linear-gradient(160deg,color-mix(in srgb,var(--pc) 40%,#1a2238),#101629);border:2px solid var(--pc);display:flex;flex-direction:column;align-items:center;gap:6px;box-shadow:0 10px 30px color-mix(in srgb,var(--pc) 30%,transparent)}
+.pack .pk{font-size:52px}.pack b{font-size:20px;font-weight:900}.pack small{opacity:.8;font-weight:700}.pack span{margin-top:6px;padding:7px 16px;border-radius:999px;background:var(--pc);color:#111;font-weight:900}
+.pack.big{width:200px;height:270px;justify-content:center;animation:shk .12s infinite}.pack.big .pk{font-size:90px}
+@keyframes shk{0%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}100%{transform:rotate(-3deg)}}
+.odds{margin-top:12px;font-size:12px;opacity:.7;line-height:1.7;font-weight:600}
+#reveal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;background:rgba(3,6,14,.88);backdrop-filter:blur(8px)}
+.rv{position:relative;display:flex;flex-direction:column;align-items:center;padding:16px}
+.glow{position:absolute;inset:-60px;background:radial-gradient(circle,var(--rc),transparent 60%);opacity:.55;animation:spin 6s linear infinite;z-index:-1}
+@keyframes spin{to{transform:rotate(360deg)}}
+.bcard{width:220px;border-radius:22px;padding:18px 16px;background:linear-gradient(160deg,color-mix(in srgb,var(--rc) 60%,#1a2238),#0f1528 80%);border:3px solid var(--rc);box-shadow:0 0 50px color-mix(in srgb,var(--rc) 60%,transparent);animation:pop .6s cubic-bezier(.2,1.6,.4,1)}
+@keyframes pop{from{transform:scale(.55)}60%{transform:scale(1.08)}to{transform:none}}
+.bo{font-family:"Black Han Sans";font-size:56px;line-height:1}.bo small{font-size:18px;margin-left:6px;font-family:inherit;font-weight:900}.bf{font-size:30px}.bn{font-size:22px;font-weight:900;margin:6px 0 10px;word-break:keep-all}
+.bs{display:grid;gap:4px}.bs div{display:flex;justify-content:space-between;font-weight:800;font-size:14px;padding:3px 8px;border-radius:8px;background:rgba(0,0,0,.25)}
+.rvt{font-family:"Black Han Sans";font-size:34px;margin-top:14px;text-shadow:0 0 20px currentColor}.dup{font-weight:800;opacity:.9;margin-top:4px}
+#create input{height:52px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.08);color:#fff;font-size:18px;font-weight:800;padding:0 14px;font-family:inherit}
+.lbl{font-weight:800;font-size:13px;opacity:.75;margin-top:4px}.grid8{display:grid;grid-template-columns:repeat(8,1fr);gap:6px}.grid12{display:grid;grid-template-columns:repeat(12,1fr);gap:5px}
+.emb{height:40px;border-radius:10px;background:rgba(255,255,255,.08);font-size:22px}.emb.on{background:#fff}
+.sw{height:28px;border-radius:8px;border:2px solid rgba(255,255,255,.25)}.sw.on{border:3px solid #fff;transform:scale(1.12)}
+.cprev{display:flex;align-items:center;gap:14px;font-size:22px;font-weight:900}
+#rReward{margin:-4px 0 14px;padding:12px;border-radius:14px;background:rgba(34,211,238,.12);font-weight:900;text-align:center;color:var(--gold)}
+#keys div{margin:2px 0}#keys span{opacity:.6;font-weight:600}#keysX{position:absolute;right:4px;top:2px;background:none;font-size:12px;opacity:.6}
+@media (max-width:640px){.pitch{height:min(132vw,600px)}.slot .pcard{width:58px;height:74px}.slot .pcard b{font-size:9px}.slot .pcard small{display:none}.pcard{width:64px;height:82px}.pcard b{font-size:10px}.pcard em{font-size:16px}.grid12{grid-template-columns:repeat(6,1fr)}.cn b{font-size:17px}.crest{width:44px;height:44px;font-size:24px}#clTabs button{font-size:13px}}
 </style>
 </head>
 <body>
@@ -129,9 +178,10 @@ body.mob #power{bottom:120px}body.mob #hint{bottom:auto;top:110px}
 <div id="menu" class="scr" hidden>
   <a href="../hub/" class="hubBack">🏠 허브</a>
   <h1 class="logo h">블립 풋볼<span>11</span></h1>
-  <p class="tagl">진짜 같은 선수 22명이 뛰는 11대11 축구! 국가대표 16팀 중 하나를 골라 AI와 붙거나, 온라인으로 친구와 1:1로 대결해요.</p>
+  <p class="tagl">메시 · 호날두 · 손흥민 · 음바페… 진짜 선수들로 나만의 구단을 만들어요! AI 구단을 이기고 코인을 모아 선수 뽑기를 하고, 온라인으로 친구와 1:1로도 붙어요.</p>
   <div class="mbtns">
-    <button class="btn main" id="bPlay">⚽ 빠른 경기 <small>AI와 대결</small></button>
+    <button class="btn main" id="bClub">🏟️ 나만의 구단 <small>뽑기 · AI 구단과 경기</small></button>
+    <button class="btn" id="bPlay">⚽ 국가대표 친선전 <small>AI와 대결</small></button>
     <button class="btn" id="bOnline">🌐 온라인 대결 <small>사람과 1:1</small></button>
   </div>
   <div id="rec"></div>
@@ -162,21 +212,21 @@ body.mob #power{bottom:120px}body.mob #hint{bottom:auto;top:110px}
   <div id="comm"></div>
   <div id="hint" hidden></div>
   <div id="replay" hidden><b>REPLAY</b><button class="chip" id="bSkip">건너뛰기 ⏭</button></div>
-  <div id="keys"><kbd>WASD</kbd> 이동 · <kbd>Shift</kbd> 질주<br><kbd>J</kbd>/<kbd>Space</kbd> 패스 · 태클<br><kbd>K</kbd> 꾹 눌렀다 떼기: 슛 · 슬라이딩<br><kbd>L</kbd> 스루패스 · 압박 · <kbd>I</kbd> 크로스/롱패스<br><kbd>Q</kbd> 선수 전환 · <kbd>C</kbd> 카메라</div>
+  <div id="keys"><div><kbd>W A S D</kbd> 이동 &nbsp;<kbd>Shift</kbd> 질주</div><div><kbd>Space</kbd> 패스 <span>(수비: 태클)</span></div><div><kbd>F</kbd> 꾹 → 떼기 슛 <span>(수비: 슬라이딩)</span></div><div><kbd>E</kbd> 스루패스 <span>(수비: 선수 바꾸기)</span></div><button id="keysX">✕</button></div>
 </div>
 
 <div id="rot">📱 가로로 돌리면 더 넓게 보여요</div>
 <div id="touch" hidden>
   <div id="tzone"></div><div id="kbase"><div id="knob"></div></div>
   <button class="tb" id="bShoot"><b>슛</b></button><button class="tb" id="bPass"><b>패스</b></button><button class="tb" id="bThru"><b>스루</b></button>
-  <button class="tb" id="bLob"><b>크로스</b></button><button class="tb" id="bSprint"><b>질주</b></button><button class="tb" id="bSwitch"><b>전환</b></button>
+  <button class="tb" id="bLob"><b>크로스</b></button><button class="tb" id="bSprint"><b>질주</b></button><button class="tb" id="bSwitch" hidden><b>전환</b></button>
 </div>
 
 <div id="pause" class="modal" hidden><div class="card col"><h2 class="h">일시정지</h2>
   <button class="btn main" id="bResume">계속하기</button><button class="btn" id="bRestart">처음부터 다시</button><button class="btn" id="bQuit">메뉴로 나가기</button></div></div>
 
 <div id="result" class="modal" hidden><div class="card">
-  <h2 id="rTitle" class="h">승리!</h2><div id="rScore"></div><div id="rGoals"></div><div id="rStats"></div><div id="rMvp"></div>
+  <h2 id="rTitle" class="h">승리!</h2><div id="rScore"></div><div id="rGoals"></div><div id="rStats"></div><div id="rMvp"></div><div id="rReward" hidden></div>
   <div class="row2"><button class="btn" id="rMenu">메뉴</button><button class="btn main" id="rAgain">다시 하기</button></div></div></div>
 
 <div id="onl" class="modal" hidden><div class="card col">
@@ -190,6 +240,23 @@ body.mob #power{bottom:120px}body.mob #hint{bottom:auto;top:110px}
   </div>
   <button class="btn" id="onlBack">← 뒤로</button>
 </div></div>
+<div id="club" class="scr" hidden>
+  <div class="cwrap">
+    <div class="ctop"><button class="btn" id="clBack" style="height:42px;padding:0 14px">←</button><div id="clHead"></div></div>
+    <div id="clTabs"><button data-ctab="play" class="on">⚽ 경기</button><button data-ctab="squad">📋 스쿼드</button><button data-ctab="shop">🎁 선수 뽑기</button><button data-ctab="all">📖 도감</button></div>
+    <div id="clBody"></div>
+  </div>
+</div>
+<div id="create" class="modal" hidden><div class="card col">
+  <h2 class="h">🏟️ 나만의 구단 만들기</h2>
+  <div id="cPrev" class="cprev"></div>
+  <input id="cName" maxlength="14" placeholder="구단 이름 (예: 지후 FC)" autocomplete="off">
+  <label class="lbl">엠블럼</label><div id="cEmb" class="grid8"></div>
+  <label class="lbl">유니폼 색</label><div id="cC1" class="grid12"></div>
+  <label class="lbl">두 번째 색</label><div id="cC2" class="grid12"></div>
+  <button class="btn main" id="cGo">구단 만들기 → 유망주 18명 + 🪙1,500 + 골드 팩 선물</button>
+</div></div>
+<div id="reveal" hidden></div>
 <div id="toast"></div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -198,11 +265,13 @@ body.mob #power{bottom:120px}body.mob #hint{bottom:auto;top:110px}
 <script src="js/base.js"></script>
 <script src="../seoul/js/chars.js"></script>
 <script src="js/teams.js"></script>
+<script src="js/db.js"></script>
 <script src="js/stadium.js"></script>
 <script src="js/players.js"></script>
 <script src="js/match.js"></script>
 <script src="js/ui.js"></script>
 <script src="js/net.js"></script>
+<script src="js/club.js"></script>
 <script src="../common/p2p.js"></script>
 <script src="../common/blip.js" data-game="soccer"></script>
 <script>if (IS_MOBILE) document.body.classList.add('mob'); setupOnline(); boot();</script>

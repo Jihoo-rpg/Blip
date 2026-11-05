@@ -48,6 +48,16 @@ const TEAM = id => TEAMS.find(t => t.id === id) || TEAMS[0];
 function teamRating(t) { return Math.round((t.r[0] + t.r[1] + t.r[2] + t.r[3]) / 4); }
 /* 같은 팀은 항상 같은 선수 (이름 · 얼굴 · 머리) */
 function roster(t, form) {
+  const F = FORMS[form] || FORMS['4-3-3'], NU = NUMS[form] || NUMS['4-3-3'];
+  let xi = t.xi;
+  if (!xi && typeof PDB !== 'undefined') { // 국가대표: 그 나라 진짜 선수부터
+    const used = new Set(); const pool = PDB.filter(p => p.nat === t.id && !p.leg && !p.prospect).sort((a, b) => b.o - a.o);
+    xi = F.map(f => { const p = pool.find(q => !used.has(q.id) && q.pos === f[0]); if (p) used.add(p.id); return p || null; });
+  }
+  if (xi) { const fake = virtualRoster(t, form); return F.map((f, i) => { const p = xi[i]; if (!p) return fake[i]; const st = Object.assign({}, p.st); if (f[0] === 'GK' && p.pos !== 'GK') st.gk = 35; if (f[0] !== 'GK' && p.pos === 'GK') { st.spd = Math.min(st.spd, 50); st.drb = Math.min(st.drb, 45); } return { i, role: f[0], fx: f[1], fz: f[2], num: NU[i], name: p.n, st, look: lookOf(p), pid: p.id, ovr: p.o }; }); }
+  return virtualRoster(t, form);
+}
+function virtualRoster(t, form) {
   const rnd = mulberry([...t.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 7)); const F = FORMS[form] || FORMS['4-3-3'];
   return F.map((f, i) => {
     const role = f[0], base = role === 'GK' ? t.r[3] : role === 'DF' ? t.r[2] : role === 'MF' ? t.r[1] : t.r[0]; const rv = () => Math.round(clamp(base + (rnd() - .5) * 10, 55, 96));
