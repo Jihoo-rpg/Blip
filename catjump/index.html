@@ -408,7 +408,7 @@ var FIREBASE_URL='https://cat-jump-3afbb-default-rtdb.firebaseio.com';
 <script>
 (function(){
 'use strict';
-const APP_VER='2026-11-04-1200';
+const APP_VER='2026-11-05-1240';
 const W=180;let H=320;
 const LX=16,RX=164,MX=90,FPX=24,CH=132,SEG=160,GRAV=820,CLING=10,GROUND_Y=-13;const CAT_SC=.8;
 let S=2;const sn=v=>Math.round(v*S)/S;
@@ -3109,7 +3109,7 @@ function leafOk(){return mode!=='boss'&&mode!=='versus'&&!EV&&zoneMode!=='hallow
 {const _co=collect;collect=function(){const c=cat;if(!c)return _co();const before=runCoins;
  if(harvestT>0){const R=90,pull=(o)=>{const dx=c.x-o.x,dy=c.y-o.y,d=Math.hypot(dx,dy);if(d<R&&d>1){const s=Math.min(1,(1/60)*9);o.x+=dx*s;o.y+=dy*s;}};coins.forEach(pull);items.forEach(o=>{if(o.type==='gem'||o.type==='candy')pull(o);});LEAFI.forEach(pull);}
  _co();if(harvestT>0&&runCoins>before){runCoins+=runCoins-before;}
- const R=pickR()+3;for(let k=LEAFI.length-1;k>=0;k--){const o=LEAFI[k];if(Math.abs(o.x-c.x)<R&&Math.abs(o.y-c.y)<R+2){LEAFI.splice(k,1);runLeaf++;burst(o.x,o.y,7,['#ff8a1a','#e8401a','#ffc21a'],50,.45,30);sfx('candy');}}
+ const R=pickR()+3;for(let k=LEAFI.length-1;k>=0;k--){const o=LEAFI[k];if(Math.abs(o.x-c.x)<R&&Math.abs(o.y-c.y)<R+2){LEAFI.splice(k,1);{const v=o.g?10:1;runLeaf+=v;aqAdd('leaf',v);if(o.g){burst(o.x,o.y,18,['#ffe14a','#ffffff','#ffc21a'],90,.6,0);const z=$('zone');z.innerHTML='🌟 황금 단풍잎 +10';z.style.display='block';zoneT=1;}}burst(o.x,o.y,7,['#ff8a1a','#e8401a','#ffc21a'],50,.45,30);sfx('candy');}}
  if(mapleT>0){const keep=[];let n=0;for(const h of hz){if(h.type==='cannon'||h.type==='portal'){keep.push(h);continue;}const hy=h.y1!==undefined?(h.y1+h.y2)/2:h.y,hx=h.x!==undefined?h.x:(h.side==='L'?LX+8:h.side==='R'?RX-8:MX),half=h.y1!==undefined?(h.y2-h.y1)/2:0;
   if(Math.abs(hy-c.y)<40+half&&Math.abs(hx-c.x)<60){n++;burst(hx,hy,16,['#e8401a','#ff8a1a','#ffc21a','#ffffff'],120,.7,40);}else keep.push(h);}
   if(n){hz=keep;sfx('boom');shake=Math.max(shake,.15);}}};}
@@ -3128,7 +3128,7 @@ function doHarvest(){harvestT=8;sfx('buy');vib(60);const z=$('zone');z.innerHTML
 {const _us=useSlot;useSlot=function(i){const id=save.slots&&save.slots[i];if(id==='maple'||id==='harvest'){if(!SKILLS[id]||state!=='play'||!cat||cat.mode==='dead'||(cds[id]||0)>0)return;cds[id]=skillCd(id);skillShown='';if(id==='maple')doMaple();else doHarvest();return;}_us(i);};}
 /* 게임 화면에 단풍 그리기 */
 {const _rm=renderMain;renderMain=function(){_rm();if(state==='home'||(EV&&EV.kind==='tag'&&(state==='tag'||state==='evcount')))return;const cy=sn(camY);
- for(const o of LEAFI){const X=sn(o.x),Y=sn(o.y-cy)+sn(Math.sin(gt*3+o.ph)*2);if(Y<-10||Y>H+10)continue;const s=o.k?LEAFB2:LEAFB,w=Math.max(2,Math.round(9*Math.abs(Math.cos(gt*2+o.ph))));ctx.drawImage(s,X-(w>>1),Y-4,w,9);if(((gt*4+o.ph)|0)%4===0)px(X+3,Y-5,1,1,'#ffffff');}
+ for(const o of LEAFI){if(o.g)continue;const X=sn(o.x),Y=sn(o.y-cy)+sn(Math.sin(gt*3+o.ph)*2);if(Y<-10||Y>H+10)continue;const s=o.k?LEAFB2:LEAFB,w=Math.max(2,Math.round(9*Math.abs(Math.cos(gt*2+o.ph))));ctx.drawImage(s,X-(w>>1),Y-4,w,9);if(((gt*4+o.ph)|0)%4===0)px(X+3,Y-5,1,1,'#ffffff');}
  if(cat&&mapleT>0){const X=sn(cat.x),Y=sn(cat.y-cy);for(let k=0;k<10;k++){const a=gt*6+k/10*Math.PI*2,rr=20+Math.sin(gt*4+k)*4;ctx.globalAlpha=Math.min(1,mapleT);ctx.drawImage(LEAFS[k%5],sn(X+Math.cos(a)*rr)-3,sn(Y+Math.sin(a)*rr*.8)-3);}ctx.globalAlpha=1;}
  if(cat&&harvestT>0){const X=sn(cat.x),Y=sn(cat.y-cy),a=.12+.06*Math.sin(gt*8);ctx.strokeStyle='rgba(255,210,90,'+(a*2)+')';ctx.lineWidth=1;ctx.beginPath();ctx.arc(X,Y,30+((gt*40)%60),0,7);ctx.stroke();ctx.fillStyle='rgba(255,200,80,'+a+')';ctx.beginPath();ctx.arc(X,Y,16,0,7);ctx.fill();}
  const fl=runFloor;if(zoneMode!=='halloween'&&fl<700)drawFall(fl<600?.85:.85*(700-fl)/100,camY);else fallCam=camY;};}
@@ -3146,6 +3146,59 @@ ACT.buyAut=id=>{const price=id==='maple'?120:80;if(!SKILLS[id]||ownSkill(id)||(s
 ACT.leafEx=()=>{if((save.leaf||0)<30)return;save.leaf-=30;save.coins+=150;persist();sfx('coin');toast('🪙150 받았어요!');rerender();refreshWallet();};
 ACT.autPlay=()=>{if(ACT.closeModal)ACT.closeModal();if(ACT.play)ACT.play();};
 {const _rw=refreshWallet;refreshWallet=function(){_rw();document.querySelectorAll('.wl').forEach(e=>e.textContent=fmt(save.leaf||0));const hb=$('homeBest');if(hb)hb.textContent=save.best>1?'최고 '+fmt(save.best)+'m':'';};}
+
+/* ================= 🍁 가을 업데이트 2 ================= */
+/* 단풍잎 아이콘 + 단풍잎으로 사는 가을 한정 옷 */
+ICON.l=iconURL(LEAFB);
+{const _sp=spend;spend=function(cur,n){if(cur!=='l')return _sp(cur,n);if((save.leaf||0)<n){toast('단풍잎이 부족해요');return false;}save.leaf-=n;return true;};}
+HAT.beret={ax:7,ay:6,pal:{K:'#3a0a0a',R:'#d8381a',r:'#9a1e0a',S:'#5a2a10'},rows:["......SS.......",".......S.......","...KKKKKKKKK...",".KKRRRRRRRRRKK.","KRRRRRRRRRRRRRK","KRRrRRRRRRRRrRK",".KKrrrrrrrrrKK.","...KKKKKKKKK..."]};
+HAT.rainhat={ax:9,ay:5,pal:{K:'#5a3a00',Y:'#ffd23f',y:'#d89a00',W:'#fff6c0'},rows:[".....KKKKKKKK......","....KYYYYYYYYK.....","...KYYYWYYYYYYK....","...KYYYYYYYYYyK....",".KKyyyyyyyyyyyyKK..","KYYYYYYYYYYYYYYYYK.",".KKKKKKKKKKKKKKKK.."]};
+HAT.knit={ax:9,ay:7,pal:{K:'#3b2314',B:'#8a4a2a',b:'#6a3418',W:'#f4e6d0'},rows:[".......KKK.........","......KWWWK........",".......KKK.........","....KKKKKKKKKK.....","...KBBbBBbBBbBK....","..KBBBbBBbBBbBBK...","..KBBBbBBbBBbBBK...","..KWWWWWWWWWWWWK...","..KKKKKKKKKKKKKK..."]};
+const AUT_OUT=[
+ {id:'a_beret',name:'단풍 화가',desc:'가을 한정 · 빨간 베레모와 니트',price:60,cur:'l',limited:true,autumn:true,hat:HAT.beret,body:{c:['#e8a02a','#f2b84a'],s:'stripes',sc:'#c8501a'}},
+ {id:'a_rain',name:'은행잎 우비',desc:'가을 한정 · 노란 비옷과 모자',price:90,cur:'l',limited:true,autumn:true,hat:HAT.rainhat,body:{c:['#ffd23f','#ffe27a'],s:'buttons',sc:'#3b2314'}},
+ {id:'a_potato',name:'군고구마 장수',desc:'가을 한정 · 털모자와 따뜻한 목도리',price:140,cur:'l',limited:true,autumn:true,hat:HAT.knit,body:{c:['#a8402a','#c8502a'],s:'band',sc:'#ffd23f'}}];
+for(const o of AUT_OUT){if(!OUTFIT[o.id]){OUTFITS.push(o);OUTFIT[o.id]=o;}}
+/* 오늘의 가을 미션 */
+const AQ=[{id:'leaf',e:'🍁',t:'단풍잎 25장 모으기',n:25,r:'g',v:3},{id:'skill',e:'🌰',t:'가을 스킬 3번 쓰기',n:3,r:'l',v:20},{id:'run',e:'🧗',t:'한 판에 400m 오르기',n:400,r:'c',v:300},{id:'sq',e:'🐿️',t:'다람쥐 5마리 피하기',n:5,r:'l',v:15}];
+function aq(){const d=today();if(!save.autQ||save.autQ.d!==d)save.autQ={d,leaf:0,skill:0,run:0,sq:0,cl:{}};return save.autQ;}
+function aqAdd(k,n){const q=aq();if(k==='run')q.run=Math.max(q.run,n);else q[k]=(q[k]||0)+n;}
+function aqOk(x){const q=aq();return !q.cl[x.id]&&(q[x.id]||0)>=x.n;}
+ACT.aqClaim=id=>{const x=AQ.find(a=>a.id===id);if(!x||!aqOk(x))return;const q=aq();q.cl[id]=1;if(x.r==='g')save.gems+=x.v;else if(x.r==='c')save.coins+=x.v;else save.leaf=(save.leaf||0)+x.v;
+ if(AQ.every(a=>q.cl[a.id])&&!q.cl.all){q.cl.all=1;save.leaf=(save.leaf||0)+30;setTimeout(()=>toast('🎉 오늘 미션 전부 완료! 보너스 🍁30'),600);}persist();sfx('buy');toast('보상을 받았어요!');rerender();refreshWallet();badges();};
+function aqHTML(){const q=aq(),R={g:'💎',c:'🪙',l:'🍁'};return '<div class="note" style="margin:calc(var(--u)*4) 0 calc(var(--u)*2)">📋 오늘의 가을 미션 (매일 새로 시작 · 전부 끝내면 보너스 🍁30)</div><div style="display:flex;flex-direction:column;gap:calc(var(--u)*2)">'+
+ AQ.map(x=>{const v=Math.min(x.n,q[x.id]||0),done=q.cl[x.id];return '<div class="li'+(done?' done':'')+'"><span class="em">'+x.e+'</span><div class="tx"><b>'+x.t+'</b><small>'+fmt(v)+' / '+fmt(x.n)+' · 보상 '+R[x.r]+x.v+'</small><div style="height:calc(var(--u)*2.5);background:#ead6b8;border-radius:9px;margin-top:calc(var(--u)*1);overflow:hidden"><i style="display:block;height:100%;width:'+(v/x.n*100)+'%;background:linear-gradient(90deg,#ff9a3a,#d8541e)"></i></div></div>'+
+ (done?'<button class="gb sm cream" disabled>완료</button>':'<button class="gb sm green" data-act="aqClaim" data-arg="'+x.id+'"'+(aqOk(x)?'':' disabled')+'>받기</button>')+'</div>';}).join('')+'</div>';}
+{const _pa=PANELS.autumn;PANELS.autumn=function(){const r=_pa();const outs='<div class="note" style="margin:calc(var(--u)*4) 0 calc(var(--u)*2)">👕 가을 한정 옷 (단풍잎으로 사요)</div><div class="grid">'+AUT_OUT.map(o=>cardHTML('o',o)).join('')+'</div>';
+ const i=r[1].lastIndexOf('<div class="row"');r[1]=r[1].slice(0,i)+aqHTML()+outs+r[1].slice(i);return r;};}
+/* 할로윈 상점·뱃지에는 가을 옷이 안 섞이게 */
+{const _ev=PANELS.event;PANELS.event=function(){const keep=OUTFITS.slice();const a=OUTFITS.filter(o=>!o.autumn);OUTFITS.length=0;OUTFITS.push(...a);try{return _ev();}finally{OUTFITS.length=0;OUTFITS.push(...keep);}};}
+{const _bg=badges;badges=function(){_bg();const e=$('bd-event');if(!e)return;const L=save.leaf||0;
+ e.classList.toggle('on',AQ.some(aqOk)||(!ownSkill('harvest')&&L>=80)||(!ownSkill('maple')&&L>=120)||AUT_OUT.some(o=>!save.outfits.includes(o.id)&&L>=o.price));};}
+/* 미션 집계 */
+{const _b=bank;bank=function(){if(mode!=='boss'&&leafOk())aqAdd('run',runFloor);_b();};}
+{const _m=doMaple,_h=doHarvest;doMaple=function(){aqAdd('skill',1);_m();};doHarvest=function(){aqAdd('skill',1);_h();};}
+/* 황금 단풍잎 (+10) */
+const LEAFG=(()=>{const c=mk(9,9),g=c.getContext('2d');g.drawImage(LEAFB,0,0);const d=g.getImageData(0,0,9,9);for(let i=0;i<d.data.length;i+=4){if(d.data[i+3]&&d.data[i]>120){const l=(d.data[i]+d.data[i+1])/2;d.data[i]=255;d.data[i+1]=Math.min(255,200+l*.2);d.data[i+2]=60+l*.2;}}g.putImageData(d,0,0);return c;})();
+{const _gc=genChunk;genChunk=function(y0){const n0=LEAFI.length;_gc(y0);if(LEAFI.length>n0&&Math.random()<.09)LEAFI[LEAFI.length-1].g=1;
+ if(leafOk()&&y0<-700&&Math.random()<.13){const y=y0-CH/2;if(midFree(y)){const sd=Math.random()<.5?'L':'R';hz.push({type:'squirrel',side:sd,x:sd==='L'?LX+7:RX-7,y,by:y,st:'sit',t:1+Math.random()*1.5,p:0,ph:Math.random()*6});midD.push({y});}}};}
+/* 다람쥐: 벽에 앉아 있다가 반대쪽 벽으로 점프 (점프할 때만 위험) */
+const SQ=(()=>{const R=[".TTT..........","TtttT....K.K..","TttttT..KBBK..","TtttT..KBBEBK.",".TttT.KBBBBBBN","..TtTKBBBBBBK.","...TKBBBBbK...","....KBBBBbK...","....KbK.KbK..."],pal={T:'#c86a2a',t:'#f0a05a',K:'#3b2314',B:'#b8682e',b:'#8a4a1e',E:'#1a0a04',N:'#3b2314'};
+ const c=mk(14,9),g=c.getContext('2d');R.forEach((row,y)=>[...row].forEach((ch,x)=>{if(pal[ch]){g.fillStyle=pal[ch];g.fillRect(x,y,1,1);}}));
+ const f=mk(14,9),h=f.getContext('2d');h.translate(14,0);h.scale(-1,1);h.drawImage(c,0,0);return[c,f];})();
+{const _up=updParts;updParts=function(dt){_up(dt);if(state!=='play'||!cat)return;const c=cat;
+ for(const h of hz){if(h.type!=='squirrel')continue;h.ph+=dt;
+  if(h.st==='sit'){h.t-=dt;if(Math.abs(c.y-h.y)<14&&Math.abs(c.x-h.x)<16)h.t=Math.min(h.t,0);if(h.t<=0&&Math.abs(c.y-h.y)<H){h.st='warn';h.t=.55;}}
+  else if(h.st==='warn'){h.t-=dt;if(h.t<=0){h.st='jump';h.p=0;h.hit=false;if(Math.abs(c.y-h.y)<H*.6)sfx('click');}}
+  else{h.p+=dt/.9;const x0=h.side==='L'?LX+7:RX-7,x1=h.side==='L'?RX-7:LX+7,p=Math.min(1,h.p);h.x=x0+(x1-x0)*p;h.y=h.by-Math.sin(p*Math.PI)*30;
+   if(!h.hit&&h.p>.15&&h.p<.85&&pumpkinT<=0&&c.mode!=='dead'&&Math.hypot(h.x-c.x,h.y-c.y)<10){h.hit=true;hit();}
+   if(p>=1){if(!h.hit&&Math.abs(c.y-h.by)<60){aqAdd('sq',1);}h.side=h.side==='L'?'R':'L';h.x=x1;h.y=h.by;h.st='sit';h.t=1.6+Math.random()*1.4;}}}};}
+{const _rm=renderMain;renderMain=function(){_rm();if(state==='home'||(EV&&EV.kind==='tag'))return;const cy=sn(camY);
+ for(const h of hz){if(h.type!=='squirrel')continue;const X=sn(h.x),Y=sn(h.y-cy);if(Y<-20||Y>H+20)continue;
+  const face=h.st==='jump'?(h.side==='L'?0:1):(h.side==='L'?0:1),img=SQ[face],j=h.st==='warn'?sn(Math.sin(gt*40)):0;
+  ctx.save();ctx.translate(X+j,Y);if(h.st==='jump')ctx.rotate((face?-1:1)*Math.sin(h.p*Math.PI)*.4);ctx.drawImage(img,-7,-5);ctx.restore();
+  if(h.st==='warn'&&((gt*10)|0)%2){px(X-1,Y-14,2,5,'#ff3a1a');px(X-1,Y-8,2,2,'#ff3a1a');}}
+ for(const o of LEAFI){if(!o.g)continue;const X=sn(o.x),Y=sn(o.y-cy)+sn(Math.sin(gt*3+o.ph)*2);if(Y<-10||Y>H+10)continue;ctx.fillStyle='rgba(255,220,80,'+(.25+.15*Math.sin(gt*6))+')';ctx.beginPath();ctx.arc(X,Y,9,0,7);ctx.fill();ctx.drawImage(LEAFG,X-4,Y-4);if(((gt*8)|0)%3===0)px(X+4,Y-6,1,1,'#ffffff');}};}
 
 resetRun('normal');grantPast();goHome();
 if(session&&FB)fbReq('bans/'+fbKey(session.id),'DELETE').catch(()=>{});
