@@ -37,11 +37,12 @@ function rayBlock(ax, ay, az, bx, by, bz) {
   } return 1;
 }
 function blockAt(x, z) { const bi = Math.floor(x / P), bj = Math.floor(z / P); if (bi < -NR || bi >= NR || bj < -NR || bj >= NR) return null; const lx = x - bi * P, lz = z - bj * P; if (lx > RH && lx < P - RH && lz > RH && lz < P - RH) return { bi, bj }; return null; }
-function groundY(x, z) { if (blockAt(x, z)) return .18; if (z > LIM + RH && z < RIVER.z0 && Math.abs(x) > RH) return .18; if (z >= BRIDGE.z0 + 14 && Math.abs(x) <= BRIDGE.hw + 1) return bridgeY(z); return 0; }
+function groundY(x, z) { if (x > LIM + RH && x < 1950 && typeof GW !== 'undefined' && GW.h) return gwH(x, z); if (blockAt(x, z)) return .18; if (z > LIM + RH && z < RIVER.z0 && Math.abs(x) > RH) return .18; if (z >= BRIDGE.z0 + 14 && Math.abs(x) <= BRIDGE.hw + 1) return bridgeY(z); return 0; }
 function bridgeY(z) { const a = clamp((z - BRIDGE.z0 - 14) / 30, 0, 1), b = clamp((BRIDGE.z1 - z) / 30, 0, 1); return Math.min(a, b) * 4; }
 function onRoad(x, z) { const fx = ((x % P) + P) % P, fz = ((z % P) + P) % P; return (fx < RH || fx > P - RH || fz < RH || fz > P - RH) && Math.abs(x) <= LIM + RH && Math.abs(z) <= LIM + RH; }
 function inBounds(p, r) { // 도시 경계
-  if (p.x > 1500) return; // 건물 안 (은행 · 보석상 · 편의점)
+  if (p.x > 1950) return; // 건물 안 (은행 · 보석상 · 편의점 · 집)
+  if (p.x > LIM + RH - r - .5 && (p.x > LIM + RH + 1 || Math.abs(p.z) < 34) && typeof gwBounds === 'function') { gwBounds(p, r); return; }
   const onBr = Math.abs(p.x) < BRIDGE.hw - r + .2 && p.z > LIM + RH - 1;
   if (onBr) { p.z = Math.min(p.z, BRIDGE.z1 - 2 - r); return; }
   p.x = clamp(p.x, -LIM - RH + r, LIM + RH - r); p.z = clamp(p.z, -LIM - RH + r, RIVER.z0 - 1 - r);
@@ -503,7 +504,7 @@ function genRiver() {
 function genBackdrop() {
   // 도시 바깥 (북 · 동 · 서) 빌딩 숲: 막혀 있어요
   const ext = LIM + RH;
-  for (const [x0, z0, x1, z1] of [[-ext - 160, -ext - 160, ext + 160, -ext], [-ext - 160, -ext, -ext, RIVER.z0 - 2], [ext, -ext, ext + 160, RIVER.z0 - 2]]) {
+  for (const [x0, z0, x1, z1] of [[-ext - 160, -ext - 160, ext + 160, -ext], [-ext - 160, -ext, -ext, RIVER.z0 - 2], [ext, -ext, ext + 160, -34], [ext, 34, ext + 160, RIVER.z0 - 2]]) {
     addBox(x0, z0, x1, z1, 300);
     for (let x = x0; x < x1 - 10; x += rr(20, 34)) for (let z = z0; z < z1 - 10; z += rr(20, 34)) {
       const w = rr(12, 20), d = rr(12, 20), near = Math.min(Math.abs(Math.abs(x) - ext), Math.abs(Math.abs(z) - ext)); const h = rr(12, 50) + (near < 40 ? 0 : rr(0, 40));
@@ -523,7 +524,7 @@ function genBackdrop() {
   // 산 능선 (북한산 느낌)
   for (let k = 0; k < 26; k++) { const a = Math.PI * (1.05 + k / 25 * .9), r = rr(950, 1150); const m = new T.Mesh(new T.ConeGeometry(rr(160, 260), rr(120, 260), 7), MATS.hill); m.position.set(Math.cos(a) * r, 40, Math.sin(a) * r); scene.add(m); }
   // 동쪽 초고층 (배경)
-  const st = new T.Mesh(new T.CylinderGeometry(6, 26, 420, 4), MATS.glassS); st.position.set(780, 210, 120); st.rotation.y = Math.PI / 4; scene.add(st);
+  
 }
 
 /* ---------- 합치기 ---------- */

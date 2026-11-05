@@ -168,13 +168,50 @@ button{font:inherit;color:inherit;cursor:pointer}
 #title.slam .logo{animation:slam .55s cubic-bezier(.2,1.6,.4,1)}@keyframes slam{from{transform:scale(2.4);opacity:0}}
 .logo .l3{font:700 13px var(--ui);color:#ffd27a;margin-top:10px;letter-spacing:.1em}
 @media (max-width:700px){#lvl i{width:90px}#speed{top:calc(150px + env(safe-area-inset-top))!important}#nos{width:110px;bottom:auto;top:calc(205px + env(safe-area-inset-top))}#note{top:calc(208px + env(safe-area-inset-top));font-size:13px}#race{font-size:13px;top:calc(44px + env(safe-area-inset-top))}#xpPop{top:calc(180px + env(safe-area-inset-top))}}
+
+/* ===== STA 2 생활 ===== */
+#needs{display:flex;gap:4px;margin-top:3px}#needs .nd{flex:1;display:flex;align-items:center;gap:3px;font-size:11px}#needs i{flex:1;height:7px;border-radius:3px;background:rgba(0,0,0,.6);overflow:hidden;border:1px solid rgba(0,0,0,.6)}#needs b{display:block;height:100%;width:80%;background:linear-gradient(180deg,#ffd66b,#e0a020)}#needs .nd+.nd b{background:linear-gradient(180deg,#9fd7ff,#3b8fd9)}#needs .low i{animation:fl .6s steps(2) infinite}
+#tired{position:fixed;inset:0;pointer-events:none;opacity:0;background:radial-gradient(transparent 35%,rgba(0,0,0,.85));transition:opacity 1s}
+#win{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:16}
+#win .wbox{width:min(720px,96vw);max-height:92vh;display:flex;flex-direction:column;background:linear-gradient(180deg,#171b24,#0e1118);border:1px solid rgba(255,255,255,.14);border-radius:18px;box-shadow:0 30px 90px rgba(0,0,0,.7);overflow:hidden}
+#win .whd{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;background:rgba(255,255,255,.05);border-bottom:1px solid rgba(255,255,255,.08)}#win .whd b{font:24px var(--disp)}#winX{border:0;background:rgba(255,255,255,.12);color:#fff;width:36px;height:36px;border-radius:50%;font-size:18px}
+#winB{padding:16px 18px 20px;overflow:auto;display:grid;gap:10px;font-size:15px;line-height:1.5;color:#dfe3ea}#winB h3{margin:6px 0 0;font:18px var(--disp)}#winB p{margin:0}
+#winB .btn{font-size:15px;padding:11px 14px}#winB .btn[disabled]{opacity:.45}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;background:rgba(255,255,255,.05);border-radius:12px;padding:10px 14px}.kv b{color:#ffcc33;font-weight:800}
+.dim{color:#9aa3b2;font-size:13px}.news p{background:rgba(255,255,255,.06);border-left:3px solid #ff4d6d;padding:8px 12px;border-radius:6px;margin:0 0 6px}
+.bigNum{font:64px var(--disp);text-align:center}.bigNum.ok{color:#7ee08a}.bigNum.no{color:#ff6b6b}
+.qn{color:#9aa3b2;font-size:13px}.qq{font-size:19px;font-weight:800;color:#fff}.qopts{display:grid;gap:8px}.qopts .btn{text-align:left}
+.btn.good{background:#2e9d4f!important;color:#fff}.btn.bad{background:#c0392b!important;color:#fff}
+.cust{font-size:44px;display:flex;align-items:center;gap:12px}.cust span{font-size:16px;background:#fff;color:#111;border-radius:14px 14px 14px 2px;padding:8px 12px}
+.belt{display:flex;flex-wrap:wrap;gap:8px;background:repeating-linear-gradient(90deg,#2a2f3a 0 18px,#232733 18px 36px);padding:12px;border-radius:12px}
+.item{width:78px;height:78px;border-radius:14px;border:0;background:#fff;font-size:34px;display:grid;place-items:center;line-height:1}.item small{font-size:11px;color:#333;font-weight:700}.item.done{opacity:.3;transform:scale(.9)}
+.pos{display:flex;justify-content:space-between;align-items:center;background:#0a0d12;border:1px solid #2a3140;border-radius:10px;padding:8px 14px;font-family:monospace}.pos b{font:28px var(--disp);color:#7ee08a}
+.coins{display:flex;flex-wrap:wrap;gap:6px}.coins .btn{flex:1;min-width:70px}
+.tbar{height:6px;background:rgba(255,255,255,.1);border-radius:3px;overflow:hidden}.tbar i{display:block;height:100%;background:#ffcc33}
+.xl{border-collapse:collapse;width:100%;font-family:monospace;font-size:15px}.xl td{border:1px solid #2f3746;padding:5px 10px;background:#0f1520}.xl td:last-child{text-align:right}
+.rule{background:rgba(255,204,51,.12);border-radius:8px;padding:8px 12px}.doc{background:#f4f1e8;color:#222;border-radius:8px;padding:14px;font-size:16px;line-height:1.7;box-shadow:inset 0 0 0 1px #d8d2c0}
+.tin{width:100%;padding:12px;border-radius:10px;border:1px solid #39404d;background:#0b0e14;color:#fff;font:600 16px var(--ui)}
+.fish{display:flex;gap:14px;align-items:stretch;justify-content:center}.fbar{position:relative;width:70px;height:300px;border-radius:12px;background:linear-gradient(#1b4d73,#0d2a40);overflow:hidden;border:2px solid #2f6a96}.fbar i{position:absolute;left:4px;right:4px;height:30%;border-radius:8px;background:rgba(126,224,138,.35);border:2px solid #7ee08a}.fbar i.on{background:rgba(126,224,138,.65)}.fbar b{position:absolute;left:0;right:0;text-align:center;font-size:28px;line-height:1}
+.fprog{width:14px;height:300px;background:#222;border-radius:7px;overflow:hidden;display:flex;align-items:flex-end}.fprog i{display:block;width:100%!important;background:#ffcc33}
+.fhold{user-select:none;touch-action:none;font-size:18px!important;padding:18px!important}
+.tabs{display:flex;flex-wrap:wrap;gap:6px}.tabs button{border:0;border-radius:20px;padding:7px 12px;background:rgba(255,255,255,.08);color:#fff;font:700 13px var(--ui)}.tabs button.on{background:#ffcc33;color:#111}
+.chart{display:flex;align-items:flex-end;gap:6px;height:120px;background:rgba(255,255,255,.04);border-radius:10px;padding:8px}.chart div{flex:1;display:flex;gap:2px;align-items:flex-end;height:100%;position:relative}.chart i{flex:1;display:block;border-radius:3px 3px 0 0;min-height:2px}.chart small{position:absolute;bottom:-16px;left:0;font-size:10px;color:#9aa3b2}
+.slot{display:grid;gap:6px;background:rgba(255,255,255,.05);border-radius:10px;padding:8px 10px}.slot>div{display:flex;flex-wrap:wrap;gap:5px}.slot>div button{border:0;border-radius:8px;padding:6px 9px;background:#2a303c;color:#fff;font:700 12px var(--ui)}.slot>div button.on{background:#ffcc33;color:#111}.slot>div button[disabled]{opacity:.3}
+.pbar{height:10px;border-radius:5px;background:rgba(255,255,255,.1);overflow:hidden}.pbar i{display:block;height:100%;background:linear-gradient(90deg,#3aa0ff,#7ee08a)}
+.prod{background:rgba(255,255,255,.05);border-radius:10px;padding:10px;display:grid;gap:6px}.prod.old{opacity:.7}.prod small{color:#9aa3b2}.row2{display:flex;flex-wrap:wrap;align-items:center;gap:6px}.row2 input{flex:1;min-width:120px}.row2 .btn{flex:1;font-size:13px!important;padding:8px!important}
+.share{display:grid;grid-template-columns:150px 1fr 44px;align-items:center;gap:8px;font-size:13px}.share i{display:block;height:12px;border-radius:6px}
+.inds{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:8px}.inds button{border:2px solid transparent;border-radius:12px;padding:12px;background:#222833;color:#fff;display:grid;gap:4px;text-align:left}.inds button.on{border-color:#ffcc33;background:#2f2a14}.inds small{color:#9aa3b2}
+.pc{display:grid;gap:8px}.pc .btn{display:flex;justify-content:space-between}
+#phScr .phRow .phBtn{flex:none;white-space:nowrap;padding:8px 12px}
+#tycoon{position:fixed;inset:0;z-index:30;background:#000;display:flex;flex-direction:column}#tycoon iframe{flex:1;border:0;width:100%}#tyX{border-radius:0}
+@media (max-width:700px){#needs{width:150px}.share{grid-template-columns:100px 1fr 40px}.item{width:64px;height:64px;font-size:28px}}
 </style>
 </head>
 <body>
 <canvas id="cv"></canvas>
 <div class="ol" id="hud" hidden>
  <div id="hudR" class="tx"><div id="clock">17:00</div><div id="money">₩0</div><div id="lvl"><div class="lr"><b>Lv.1</b><span>동네 양아치</span></div><i><u></u></i></div><div id="stars"></div><div id="weap"><i>👊</i>주먹</div></div>
- <div id="radarW"><canvas id="radar" width="420" height="300"></canvas><div id="bars"><div id="hpB"><b></b></div><div id="arB"><b></b></div></div></div>
+ <div id="radarW"><canvas id="radar" width="420" height="300"></canvas><div id="bars"><div id="hpB"><b></b></div><div id="arB"><b></b></div></div><div id="needs"><div class="nd"><span>🍚</span><i><b id="ndF"></b></i></div><div class="nd"><span>⚡</span><i><b id="ndS"></b></i></div></div></div>
  <div id="area" class="tx" style="opacity:0"><b></b><small></small></div>
  <div id="obj" class="tx"></div>
  <div id="timer" class="tx" hidden></div>
@@ -195,16 +232,18 @@ button{font:inherit;color:inherit;cursor:pointer}
  </div>
  <div id="tTop"><button class="tb" id="bPause">⏸</button><button class="tb" id="bPhone">📱</button><button class="tb" id="bMap">🗺️</button><button class="tb" id="bRadio" hidden>📻</button><button class="tb" id="bCam">🎥</button><button class="tb" id="bVig" hidden>🚨</button></div>
 </div>
-<div id="hurt"></div><div id="wet"></div>
+<div id="hurt"></div><div id="wet"></div><div id="tired"></div>
 <div id="sub" class="tx" hidden></div>
 <div id="bgm" hidden><div class="bgmBar"><span>🎵 배경음악</span><button id="bgmX">✕</button></div><div id="bgmFrame"></div></div>
 <div id="phone" hidden><div class="ph"><div class="phTop"><span id="phClock">17:00</span><span class="phNotch"></span><span>📶 🔋</span></div><div id="phScr"></div><button id="phX" class="phHomeBtn" aria-label="닫기"></button></div></div>
 <div id="fade"></div>
+<div id="win" hidden><div class="wbox"><div class="whd"><b id="winT"></b><button id="winX" aria-label="닫기">✕</button></div><div id="winB"></div></div></div>
+<div id="tycoon" hidden><button id="tyX" class="btn y">✕ STA 2로 돌아가기</button><iframe id="tyF" title="폰 공장 타이쿤"></iframe></div>
 <div id="press" hidden><div><div class="pl">STA <span>2</span></div><div class="ps">▶ 화면을 누르거나 아무 키나 눌러 시작</div></div></div>
 <div id="cine" hidden><div class="lb t"></div><div class="lb b"></div><div id="cred"></div><button id="skip">건너뛰기 ▶▶</button></div>
 <div class="scr" id="title" hidden>
  <div style="display:grid;justify-items:center">
-  <div class="logo"><div class="l1">STA <span>2</span></div><div class="l2">SEOUL THEFT AUTO</div><div class="l3">레이스 · 스턴트 · 광란 · 자경단 · 부동산 · 새 무기 · 날씨 · 치트</div></div>
+  <div class="logo"><div class="l1">STA <span>2</span></div><div class="l2">SEOUL THEFT AUTO</div><div class="l3">강원도 · 직업 · 집 · 회사 · 고급 차 · 레이스 · 광란 · 날씨</div></div>
   <div id="titleBtns"></div>
  </div>
 </div>
@@ -233,6 +272,13 @@ button{font:inherit;color:inherit;cursor:pointer}
 <script src="js/s2_act.js"></script>
 <script src="js/s2_phone.js"></script>
 <script src="js/intro.js"></script>
+<script src="js/s3_world.js"></script>
+<script src="js/s3_cars.js"></script>
+<script src="js/s3_life.js"></script>
+<script src="js/s3_jobs.js"></script>
+<script src="js/s3_company.js"></script>
+<script src="js/s3_phone.js"></script>
+<script src="js/start.js"></script>
 <script src="../common/blip.js" data-game="seoul2"></script>
 </body>
 </html>

@@ -1,7 +1,7 @@
 'use strict';
 /* ===== 게임: 플레이어 · 행인 · 교통 · 경찰 · 미션 · HUD ===== */
 const SAVE_KEY = 'sta2_save_v1';
-function loadSave() { try { return Object.assign({ money: 30000, story: 0, stolen: 0, deliveries: 0, fares: 0, busted: 0, wasted: 0, best: {} }, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) { return { money: 30000, story: 0, stolen: 0, deliveries: 0, fares: 0, busted: 0, wasted: 0, best: {} }; } }
+function loadSave() { try { return Object.assign({ money: 200000, story: 0, stolen: 0, deliveries: 0, fares: 0, busted: 0, wasted: 0, best: {} }, JSON.parse(localStorage.getItem(SAVE_KEY) || '{}')); } catch (e) { return { money: 30000, story: 0, stolen: 0, deliveries: 0, fares: 0, busted: 0, wasted: 0, best: {} }; } }
 let SV = loadSave(); const hadSave = !!localStorage.getItem(SAVE_KEY);
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(SV)); } catch (e) { } }
 const G = { on: false, paused: false, t: 0, wanted: 0, wantFlash: false, evadeT: 0, lastSeen: 0, crimeCD: 0, shake: 0, camMode: 1, help: !IS_MOBILE };
@@ -708,7 +708,7 @@ function mapIcons() {
   return out;
 }
 function drawRadar() {
-  const c = $('#radar'), g = c.getContext('2d'), W = c.width, H = c.height; if (INSIDE) { g.fillStyle = '#20252c'; g.fillRect(0, 0, W, H); g.fillStyle = '#fff'; g.font = `bold 34px ${FONT}`; g.textAlign = 'center'; g.fillText({ mart: '🏪 편의점 안', jewel: '💎 보석상 안', bank: '🏦 은행 안' }[INSIDE], W / 2, H / 2 + 12); return; } const S = MAP.S; const zoom = PL.car ? 1.05 - clamp(Math.abs(PL.car.v) / 60, 0, .45) : 1.4;
+  const c = $('#radar'), g = c.getContext('2d'), W = c.width, H = c.height; if (INSIDE) { g.fillStyle = '#20252c'; g.fillRect(0, 0, W, H); g.fillStyle = '#fff'; g.font = `bold 34px ${FONT}`; g.textAlign = 'center'; g.fillText({ mart: '🏪 편의점 안', jewel: '💎 보석상 안', bank: '🏦 은행 안' }[INSIDE] || '🏠 실내', W / 2, H / 2 + 12); return; } const S = MAP.S; const zoom = (PL.car ? 1.05 - clamp(Math.abs(PL.car.v) / 60, 0, .45) : 1.4) * 2 / S;
   g.save(); g.fillStyle = '#20252c'; g.fillRect(0, 0, W, H); g.translate(W / 2, H * .62); g.scale(zoom, zoom);
   const fx_ = Math.sin(CAMS.yaw), fz_ = Math.cos(CAMS.yaw); const rot = -Math.PI / 2 - Math.atan2(fz_, fx_); g.rotate(rot);
   g.drawImage(MAP.img, -(PL.x - MAP.minX) * S, -(PL.z - MAP.minZ) * S);
@@ -852,9 +852,8 @@ function showTitle() {
     setTimeout(() => note(SV.story < STORY.length ? '🏙️ <b>STA 2에 온 걸 환영해요!</b><br>노란 <b>B</b>(박 사장)에게 가거나 <b>📱 휴대폰</b>(Tab)으로 전화하면 일을 줘요.<br>🎮 휴대폰 <b>활동</b> 앱에 레이스 · 광란 · 스턴트가 있어요!' : '🏙️ 다시 서울이에요! 📱 <b>활동</b> 앱에서 할 일을 찾아봐요.', 9000), 3600);
     if (!IS_MOBILE) { G.help = true; setTimeout(() => G.help = false, 25000); } };
   if ($('#tCont')) $('#tCont').onclick = go;
-  $('#tNew').onclick = () => { if (hadSave && !confirmNew()) return; SV = { money: 30000, story: 0, stolen: 0, deliveries: 0, fares: 0, busted: 0, wasted: 0, best: {} }; s2Def(); save(); G.newGame = true; for (const p of (typeof PKG !== 'undefined' ? PKG.list : [])) p.m.visible = true; go(); };
+  $('#tNew').onclick = () => { if (hadSave && !confirmNew()) return; SV = { money: 200000, story: 0, stolen: 0, deliveries: 0, fares: 0, busted: 0, wasted: 0, best: {} }; s2Def(); save(); G.newGame = true; for (const p of (typeof PKG !== 'undefined' ? PKG.list : [])) p.m.visible = true; go(); };
   $('#tKeys').onclick = () => { menu(`<h2>🎮 조작법</h2><div class="keys"><b>PC 이동</b><span>WASD · Shift 전력질주 · Space 점프</span><b>둘러보기</b><span>화면 클릭 후 마우스</span><b>펀치</b><span>마우스 클릭 · J</span><b>차</b><span>F 타기·내리기 (운전자가 있으면 끌어내요)</span><b>운전</b><span>W 가속 · S 브레이크/후진 · A/D 핸들 · Space 드리프트 · H 경적 · R 라디오</span><b>기타</b><span>M 지도 · C 카메라 · E 편의점 · T 택시 알바 · Esc 일시정지</span><b>폰</b><span>왼쪽 조이스틱 · 오른쪽 화면 드래그로 둘러보기 · 버튼</span></div><p>👮 나쁜 짓을 하면 별(수배)이 생겨요. 경찰 눈에 안 띄면 별이 줄고, 🔧 정비소에 차를 넣으면 바로 지워져요.</p><button class="btn y" id="mClose">닫기</button>`); $('#mClose').onclick = () => $('#menu').hidden = true; };
 }
 function confirmNew() { return window.confirm('저장된 게임을 지우고 새로 시작할까요?'); }
-boot();
 window.__sc = { G, PL, NPCS, CARS, SV, STORY, get MI() { return MI; }, enterCar, exitCar, setWanted, spawnNPC, BUILD };
