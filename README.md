@@ -17,6 +17,7 @@ This is blip company.
 | 🏙️ STA 1 | /Blip/seoul/ | `seoul/index.html` + `seoul/js/` (3D 오픈월드 · 서울 배경 · 차/오토바이 · 총 · 경찰/특공대/헬기 · 휴대폰 · 옷 · 은행 털기 등 작전 · NPC 음성(Kokoro TTS로 미리 만듦) · 유튜브 배경음악) |
 | 🌆 STA 2 | /Blip/seoul2/ | `seoul2/index.html` + `seoul2/js/` (STA 1 코드를 복사해 키운 버전 · 모델/음성/라이브러리는 `seoul/` 것을 같이 씀 · `intro.js` 오프닝 · `s2_core.js` 레벨/업적/날씨/치트 · `s2_drive.js` 니트로/스턴트/튜닝 · `s2_weap.js` 새 무기/폭발 · `s2_act.js` 레이스/광란/자경단/청부/꾸러미/수출/거리 사건/부동산 · `s2_phone.js` 새 앱 · `s3_world.js` 강원도 지형/도로/마을/교통 · `s3_cars.js` 새 차 모델/대리점/내 차 · `s3_life.js` 배고픔/피로/날짜/은행/집 · `s3_jobs.js` 직업 7개/면허/시험 · `s3_company.js` 회사 경영/폰 공장 타이쿤 연결 · `s3_phone.js` 생활 앱 · `s4_city.js` 공원 4곳/거리 소품 · `s4_shops.js` 모든 가게 실내 · `start.js` 시작) |
 
+- 📮 허브의 「게임 요청」 우편함: 누구나 만들고 싶은 게임을 보내고(24시간 안에 만들어 줌), 받는 계정에는 허브·모든 게임 화면에서 알림이 와요. 받는 계정 등록은 `hub/?owner`에서 로그인 후 한 번 누르면 돼요(Firebase `hub/gamereq`, `hub/gamereqOwner`).
 - 모든 게임 화면에 「🏠 허브」 버튼이 있어요.
 - 예전 냥냥 점프 주소(`/CatJump/CatJump.html`)는 새 주소로 자동 이동해요.
 - 새 게임은 폴더를 하나 만들고 `hub/index.html`의 `GAMES` 목록에 한 줄 추가하면 돼요.

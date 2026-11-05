@@ -157,6 +157,28 @@
   .fbtns{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
   .msg{min-height:20px;margin-top:8px;font-size:14px;font-weight:800}
   .msg.ok{color:var(--green)}.msg.err{color:#ff4d6d}
+  /* 📮 게임 요청 우편함 */
+  .mbox{position:relative;overflow:hidden;border-radius:26px;padding:26px 24px;background:var(--grad);color:#fff;box-shadow:var(--shadow2);margin-bottom:22px}
+  .mbox h1{margin:0 0 6px;font-size:28px;font-weight:900;letter-spacing:-.02em}
+  .mbox p{margin:0;font-size:15px;font-weight:600;opacity:.95;max-width:560px}
+  .mbox .promise{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:9px 16px;border-radius:999px;background:rgba(255,255,255,.95);color:#2a1d5c;font-weight:900;font-size:15px}
+  .mbox .env{position:absolute;right:18px;top:12px;font-size:84px;transform:rotate(-12deg);opacity:.9;pointer-events:none}
+  .mform{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;box-shadow:var(--shadow);display:grid;gap:12px}
+  .mform input,.mform textarea{width:100%;box-sizing:border-box;border-radius:14px;border:2px solid var(--line);background:var(--panel2);color:var(--text);padding:12px 14px;font-size:16px;font-weight:700;font-family:inherit}
+  .mform textarea{min-height:110px;resize:vertical;font-weight:600;line-height:1.5}
+  .mform .lbl{font-weight:800;font-size:14px;margin-bottom:-4px}
+  .mform .cnt{font-size:12px;color:var(--sub);text-align:right;margin-top:-6px}
+  .mlist{display:grid;gap:10px}
+  .mitem{padding:14px 16px;border-radius:18px;background:var(--panel);border:1px solid var(--line);display:grid;gap:6px}
+  .mitem .h{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+  .mitem .h b{font-size:16px;flex:1;min-width:140px}
+  .mitem .d{color:var(--sub);font-size:14px;font-weight:600;white-space:pre-wrap;word-break:break-word}
+  .mitem .who{font-size:12px;color:var(--sub);font-weight:700}
+  .st{padding:4px 10px;border-radius:999px;font-size:12px;font-weight:900;white-space:nowrap}
+  .st.new{background:#fff1c2;color:#8a5a00}.st.make{background:#dbe8ff;color:#1e4fd8}.st.done{background:#d3f7e6;color:#0b7a4b}.st.late{background:#ffe0e6;color:#c2184b}
+  .mown{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
+  .mown select{height:36px;border-radius:12px;border:2px solid var(--line);background:var(--panel2);color:var(--text);font-weight:700;padding:0 8px}
+  .claim{margin-top:18px;padding:14px;border-radius:16px;border:2px dashed var(--line);color:var(--sub);font-weight:700;font-size:14px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
   .accbox{margin-top:16px;padding:14px;border-radius:16px;background:var(--panel2);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .accbox .tx{flex:1;min-width:0}
   .field{display:grid;gap:6px;margin-top:12px}
@@ -214,6 +236,7 @@
     <button class="nav" data-v="friends"><span class="ic">👥</span>친구<span class="n" id="nFr"></span></button>
     <button class="nav" data-v="fav"><span class="ic">⭐</span>즐겨찾기<span class="n" id="nFav"></span></button>
     <button class="nav" data-v="recent"><span class="ic">🕒</span>최근 플레이<span class="n" id="nRec"></span></button>
+    <button class="nav" data-v="req"><span class="ic">📮</span>게임 요청<span class="n" id="nReq"></span></button>
     <div class="sideFoot">🎮 모든 게임 무료 · 설치 없음<br>© blip company</div>
   </aside>
 
@@ -226,6 +249,7 @@
   <button data-v="friends"><span>👥</span>친구</button>
   <button data-v="fav"><span>⭐</span>즐겨찾기</button>
   <button data-v="recent"><span>🕒</span>최근</button>
+  <button data-v="req"><span>📮</span>요청</button>
 </nav>
 
 <div class="ov" id="ov"><div class="det" id="det"></div></div>
@@ -377,7 +401,7 @@ function render() {
   document.getElementById('nRec').textContent = rec.length || '';
   const nr = FR.reqs.length, nOn = FR.list.filter(f => f.online).length;
   document.getElementById('nFr').innerHTML = nr ? `<span class="badge">${nr}</span>` : (nOn ? `<span class="playing">● ${nOn}</span>` : (FR.list.length || ''));
-  document.querySelectorAll('[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === view));
+  document.querySelectorAll('[data-v]').forEach(b => b.classList.toggle('on', b.dataset.v === view)); if (typeof mailBadge === 'function') mailBadge();
   const chips = `<div class="chips">${GENRES.map(x => `<button class="chip ${genre === x ? 'on' : ''}" data-g="${x}">${x}</button>`).join('')}</div>`;
   if (query.trim()) {
     m.innerHTML = `<div class="sec"><div class="sech"><h2>“${esc(query)}” 검색 결과</h2></div>${grid(filtered(GAMES), '찾는 게임이 없어요')}</div>`; return;
@@ -394,6 +418,8 @@ function render() {
     m.innerHTML = `<div class="sec"><div class="sech"><h2>🎮 모든 게임</h2><span>${GAMES.length}개</span></div>${chips}${grid(filtered(GAMES), '이 장르의 게임이 아직 없어요')}</div>`;
   } else if (view === 'friends') {
     m.innerHTML = friendsViewHTML(); bindFriendsView();
+  } else if (view === 'req') {
+    m.innerHTML = mailViewHTML(); bindMailView(); if (MAIL.list === null && !MAIL.loading) { MAIL.loading = true; loadMail(true).finally(() => MAIL.loading = false); } else if (BLIP.mail.isOwner() && MAIL.unseen) { BLIP.mail.seenNow(MAIL.list); MAIL.unseen = 0; }
   } else if (view === 'fav') {
     m.innerHTML = `<div class="sec"><div class="sech"><h2>⭐ 즐겨찾기</h2></div>${grid(fav, '아직 즐겨찾기한 게임이 없어요.<br>게임을 열고 ☆ 즐겨찾기를 눌러 보세요.')}</div>`;
   } else {
@@ -617,6 +643,62 @@ document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetail(
 function applyTheme() { document.documentElement.classList.toggle('dark', !!ME.dark); document.getElementById('theme').textContent = ME.dark ? '☀️' : '🌙'; }
 document.getElementById('theme').onclick = () => { ME.dark = !ME.dark; saveMe(); applyTheme(); };
 
+
+/* ===================== 📮 게임 요청 우편함 ===================== */
+const MAIL = { list: null, err: '', unseen: 0 };
+const OWNER_MODE = new URLSearchParams(location.search).has('owner');
+function ago(t) { const d = Math.max(0, BLIP.now() - t) / 60000; return d < 1 ? '방금' : d < 60 ? Math.floor(d) + '분 전' : d < 1440 ? Math.floor(d / 60) + '시간 전' : Math.floor(d / 1440) + '일 전'; }
+function left(t) { const ms = t + BLIP.mail.DAY_MS - BLIP.now(); if (ms <= 0) return null; if (ms > BLIP.mail.DAY_MS - 60000) return '24시간'; const h = Math.floor(ms / 3600000), m = Math.floor(ms % 3600000 / 60000); return h ? `${h}시간 ${m}분` : `${m}분`; }
+function stBadge(v) { if (v.st === 'done') return '<span class="st done">✅ 완성</span>'; const l = v.t ? left(v.t) : '24시간'; if (!l) return `<span class="st late">⏰ 곧 나와요</span>`; return v.st === 'make' ? `<span class="st make">🔨 만드는 중 · ${l} 남음</span>` : `<span class="st new">📬 접수 · ${l} 안에</span>`; }
+function mailItemHTML(v) {
+  const own = BLIP.mail.isOwner(), g = v.game && G(v.game), mine = (BLIP.me.myMail || []).includes(v.id);
+  return `<div class="mitem"><div class="h"><b>${esc(v.title)}</b>${v.genre ? `<span class="chip" style="padding:3px 10px;font-size:12px">${esc(v.genre)}</span>` : ''}${stBadge(v)}</div>
+    <div class="d">${esc(v.desc)}</div>
+    <div class="who">${esc(v.ava || '🎮')} ${esc(v.nick || '익명')}${v.acc ? ' (@' + esc(v.acc) + ')' : ''} · ${v.t ? ago(v.t) : ''}${mine ? ' · <b style="color:var(--g2)">내 요청</b>' : ''}</div>
+    ${g ? `<div><button class="gbtn sm" data-play="${g.id}">${g.icon} ${esc(g.name)} 하러 가기</button></div>` : ''}
+    ${own ? `<div class="mown"><button class="gbtn sm blue" data-mst="${v.id}" data-s="make">🔨 만드는 중</button><select data-mg="${v.id}"><option value="">완성된 게임 고르기</option>${GAMES.map(x => `<option value="${x.id}" ${v.game === x.id ? 'selected' : ''}>${x.icon} ${esc(x.name)}</option>`).join('')}</select><button class="gbtn sm" data-mst="${v.id}" data-s="done">✅ 완성</button><button class="gbtn sm gray" data-mdel="${v.id}">🗑️ 지우기</button></div>` : ''}</div>`;
+}
+function mailViewHTML() {
+  const own = BLIP.mail.isOwner(), L = MAIL.list;
+  const open = (L || []).filter(v => v.st !== 'done'), done = (L || []).filter(v => v.st === 'done');
+  return `<div class="mbox"><div class="env">📮</div><h1>게임 우편함</h1><p>“이런 게임 있었으면 좋겠다!” 하는 게임을 보내 주세요. blip이 직접 만들어서 허브에 올려 드려요.</p><div class="promise">⏰ 24시간 안에 만들어 드려요!</div></div>
+    <div class="sec"><div class="sech"><h2>✉️ 요청 보내기</h2></div>
+      <form class="mform" id="mForm" autocomplete="off">
+        <div class="lbl">게임 이름</div><input id="mTitle" maxlength="40" placeholder="예: 좀비 피하기 달리기">
+        <div class="lbl">어떤 게임이에요?</div><textarea id="mDesc" maxlength="600" placeholder="어떻게 하는 게임인지, 꼭 있었으면 하는 것들을 자유롭게 적어 주세요. 자세할수록 원하는 대로 나와요!"></textarea><div class="cnt" id="mCnt">0 / 600</div>
+        <div class="chips" id="mGenre" style="margin:0">${['액션', '캐주얼', '퍼즐', '레이싱', '스포츠', '전략', 'RPG', '공포', '기타'].map(x => `<button type="button" class="chip" data-mgn="${x}">${x}</button>`).join('')}</div>
+        <div class="addrow"><button class="gbtn" type="submit" id="mSend" style="flex:1">📮 우편함에 넣기</button></div>
+        <div class="msg ${MAIL.flash ? 'ok' : ''}" id="mMsg">${MAIL.flash || ''}</div>
+      </form></div>
+    <div class="sec"><div class="sech"><h2>📬 만들고 있는 요청</h2><span>${open.length}개</span>${own ? `<span class="chip" style="padding:4px 10px;font-size:12px">📥 @${esc(BLIP.me.acc)} 계정으로 받는 중</span>` : ''}</div>${L === null ? `<div class="empty">불러오는 중…</div>` : open.length ? `<div class="mlist">${open.map(mailItemHTML).join('')}</div>` : `<div class="empty">${MAIL.err || '아직 요청이 없어요. 첫 번째로 보내 보세요!'}</div>`}</div>
+    ${done.length ? `<div class="sec"><div class="sech"><h2>🎉 완성된 요청</h2><span>${done.length}개</span></div><div class="mlist">${done.map(mailItemHTML).join('')}</div></div>` : ''}
+    ${OWNER_MODE && !own ? `<div class="claim">📮 이 우편함으로 오는 요청을 내 계정으로 받기 ${BLIP.me.acc ? `<button class="gbtn sm" id="mClaim">@${esc(BLIP.me.acc)} 계정으로 받기</button>` : '<button class="gbtn sm" id="mLogin">먼저 로그인</button>'}<span id="mCl"></span></div>` : ''}`;
+}
+let mGenre = '';
+function bindMailView() {
+  const f = document.getElementById('mForm'); if (!f) return;
+  const d = document.getElementById('mDesc'), c = document.getElementById('mCnt'); d.oninput = () => c.textContent = d.value.length + ' / 600';
+  document.querySelectorAll('[data-mgn]').forEach(b => { b.classList.toggle('on', b.dataset.mgn === mGenre); b.onclick = () => { mGenre = mGenre === b.dataset.mgn ? '' : b.dataset.mgn; document.querySelectorAll('[data-mgn]').forEach(x => x.classList.toggle('on', x.dataset.mgn === mGenre)); }; });
+  f.onsubmit = async e => {
+    e.preventDefault(); const msg = document.getElementById('mMsg'), btn = document.getElementById('mSend'); btn.disabled = true; msg.className = 'msg'; msg.textContent = '보내는 중…';
+    try { await BLIP.mail.send(document.getElementById('mTitle').value, d.value, mGenre); MAIL.flash = '📮 보냈어요! 24시간 안에 만들어 드릴게요. 완성되면 알림으로 알려 드려요.'; setTimeout(() => MAIL.flash = '', 15000); msg.className = 'msg ok'; msg.textContent = MAIL.flash; document.getElementById('mTitle').value = ''; d.value = ''; mGenre = ''; c.textContent = '0 / 600'; loadMail(true); }
+    catch (er) { msg.className = 'msg err'; msg.textContent = er && er.message ? er.message : '보내지 못했어요. 잠시 뒤 다시 해 보세요.'; }
+    btn.disabled = false;
+  };
+  const cl = document.getElementById('mClaim'); if (cl) cl.onclick = async () => { try { await BLIP.mail.claim(); BLIP.notify('📮 이제 이 계정으로 게임 요청을 받아요'); loadMail(true); } catch (er) { document.getElementById('mCl').textContent = er.message; } };
+  const lg = document.getElementById('mLogin'); if (lg) lg.onclick = () => openLogin('login');
+  document.querySelectorAll('[data-mst]').forEach(b => b.onclick = async () => { const id = b.dataset.mst, st = b.dataset.s; const sel = document.querySelector(`[data-mg="${id}"]`); const patch = { st }; if (st === 'done') { if (!sel.value) { BLIP.notify('완성된 게임을 먼저 골라 주세요'); return; } patch.game = sel.value; patch.doneT = { '.sv': 'timestamp' }; } try { await BLIP.mail.set(id, patch); loadMail(true); } catch (er) { BLIP.notify(er.message); } });
+  document.querySelectorAll('[data-mdel]').forEach(b => b.onclick = async () => { if (b.dataset.sure !== '1') { b.dataset.sure = '1'; b.textContent = '정말 지울까요?'; return; } try { await BLIP.mail.del(b.dataset.mdel); loadMail(true); } catch (er) { BLIP.notify(er.message); } });
+}
+function mailBadge() { const el = document.getElementById('nReq'); if (el) el.innerHTML = MAIL.unseen ? `<span class="badge">${MAIL.unseen}</span>` : ''; }
+async function loadMail(rerender) {
+  try { await BLIP.mail.owner(true); MAIL.list = await BLIP.mail.list(60); MAIL.err = ''; } catch (e) { MAIL.list = MAIL.list || []; MAIL.err = '요청 목록을 불러오지 못했어요'; }
+  if (BLIP.mail.isOwner()) { const seen = Number(BLIP.me.mailSeen || 0); MAIL.unseen = MAIL.list.filter(v => (v.t || 0) > seen && v.st !== 'done').length; if (view === 'req') { BLIP.mail.seenNow(MAIL.list); MAIL.unseen = 0; } } else MAIL.unseen = 0;
+  mailBadge(); if (view === 'req' && (rerender || !document.activeElement || !document.activeElement.closest('#mForm'))) { const y = window.scrollY; render(); window.scrollTo(0, y); }
+}
+async function pollMailHub() { if (BLIP.mail.isOwner() && view !== 'req') await BLIP.mail.poll(() => { }); loadMail(false); }
+if (new URLSearchParams(location.search).get('v') === 'req' || OWNER_MODE) view = 'req';
+setTimeout(pollMailHub, 1500); setInterval(pollMailHub, 30000);
 applyTheme(); showMe(); render(); loadCatJump(); pollFriends(); setInterval(pollFriends, 6000);
 </script>
 </body>

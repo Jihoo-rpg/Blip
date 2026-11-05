@@ -264,6 +264,61 @@
     } catch (e) { }
   }
 
+  /* ---------- 📮 게임 요청 우편함 (24시간 안에 만들어 줘요) ---------- */
+  const DAY_MS = 24 * 3600 * 1000;
+  let ownerId = null, ownerAt = 0;
+  async function mailOwner(force) {
+    if (!force && ownerId !== null && Date.now() - ownerAt < 60000) return ownerId;
+    try { ownerId = String(await req('gamereqOwner') || ''); ownerAt = Date.now(); } catch (e) { if (ownerId === null) ownerId = ''; }
+    return ownerId;
+  }
+  const isMailOwner = () => !!me.acc && !!ownerId && me.acc === ownerId;
+  async function claimMail() {
+    if (!me.acc) throw new Error('먼저 로그인하세요');
+    const cur = await mailOwner(true); if (cur && cur !== me.acc) throw new Error('이미 @' + cur + ' 계정이 받고 있어요');
+    await req('gamereqOwner', 'PUT', me.acc); ownerId = me.acc; return true;
+  }
+  async function mailList(n) {
+    const r = await fetch(FB + '/hub/gamereq.json?orderBy=%22$key%22&limitToLast=' + (n || 40)).then(r => r.ok ? r.json() : Promise.reject(r.status));
+    return Object.entries(r || {}).map(([id, v]) => Object.assign({ id }, v)).filter(v => v && v.title).sort((a, b) => (b.t || 0) - (a.t || 0));
+  }
+  async function mailSend(title, desc, genre) {
+    title = String(title || '').trim().slice(0, 40); desc = String(desc || '').trim().slice(0, 600); genre = String(genre || '').slice(0, 12);
+    if (title.length < 2) throw new Error('게임 이름을 2자 이상 적어 주세요');
+    if (desc.length < 5) throw new Error('어떤 게임인지 조금만 더 적어 주세요');
+    const last = Number(me.mailT || 0); if (Date.now() - last < 60000) throw new Error('1분 뒤에 다시 보낼 수 있어요');
+    const r = await req('gamereq', 'POST', { title, desc, genre, nick: me.nick, ava: me.ava, code: me.code, acc: me.acc || '', st: 'new', t: { '.sv': 'timestamp' } });
+    me.mailT = Date.now(); me.myMail = [r && r.name, ...(me.myMail || [])].filter(Boolean).slice(0, 30); saveMe();
+    return r && r.name;
+  }
+  async function mailSet(id, patch) { if (!isMailOwner()) throw new Error('받는 사람만 할 수 있어요'); await req('gamereq/' + id, 'PATCH', patch); }
+  async function mailDel(id) { if (!isMailOwner()) throw new Error('받는 사람만 할 수 있어요'); await req('gamereq/' + id, 'DELETE'); }
+  /** 새 요청 (주인) · 완성 소식 (보낸 사람) 알림 */
+  let mailBusy = false;
+  async function pollMail(onNew) {
+    if (mailBusy) return []; mailBusy = true;
+    try {
+      await mailOwner(); const mine = me.myMail || []; const owner = isMailOwner();
+      if (!owner && !mine.length) return [];
+      const list = await mailList(40); const seen = Number(me.mailSeen || 0); const out = [];
+      if (owner) {
+        const fresh = list.filter(v => (v.t || 0) > seen);
+        if (fresh.length) {
+          if (!me.mailSeen) { me.mailSeen = Math.max(...list.map(v => v.t || 0)); saveMe(); }
+          else for (const v of fresh.slice(0, 3)) { out.push(v); if (UI || onNew) card('m' + v.id, `<span class="a">📮</span><span class="x">새 게임 요청: ${esc(v.title)}<small>${esc(v.nick || '누군가')} · 24시간 안에 만들어 주세요</small></span><button class="y">보기</button><button class="n">닫기</button>`, () => { location.href = ROOT + 'hub/?v=req'; }); }
+        }
+      }
+      const done = me.mailDone || [];
+      for (const v of list) if (mine.includes(v.id) && v.st === 'done' && !done.includes(v.id)) {
+        me.mailDone = [...done, v.id]; saveMe(); const g = GAMES[v.game];
+        card('d' + v.id, `<span class="a">🎉</span><span class="x">요청한 게임이 완성됐어요!<small>${esc(v.title)}${g ? ' → ' + g.icon + ' ' + esc(g.name) : ''}</small></span>${g ? '<button class="y">하러 가기</button>' : ''}<button class="n">닫기</button>`, () => { if (g) go(v.game); }, null, 20000);
+      }
+      if (onNew) onNew(list, out);
+      return list;
+    } catch (e) { return []; } finally { mailBusy = false; }
+  }
+  function mailSeenNow(list) { const m = Math.max(Number(me.mailSeen || 0), ...(list || []).map(v => v.t || 0)); me.mailSeen = m; saveMe(); }
+
   /* ---------- 시작 ---------- */
   const followCode = (new URLSearchParams(location.search).get('follow') || '').toUpperCase();
   function start() {
@@ -272,7 +327,7 @@
     window.addEventListener('pagehide', leave);
     document.addEventListener('visibilitychange', () => { if (!document.hidden) beat(); });
     if (UI) {
-      setTimeout(pollInbox, 2500); setInterval(pollInbox, 8000);
+      setTimeout(pollInbox, 2500); setInterval(pollInbox, 8000); setTimeout(pollMail, 4000); setInterval(pollMail, 30000);
       if (validCode(followCode)) {
         req('users/' + followCode).then(u => { if (u) notify(`${String(u.nick || '친구').slice(0, 12)}님을 따라왔어요!`, GAMES[GAME] ? GAMES[GAME].name + '에서 같이 놀아요' : '', 6000); }).catch(() => { });
       }
@@ -284,5 +339,6 @@
     get me() { return me; }, GAMES, AVAS, now, isOnline, followCode,
     friendList, requestFriend, accept, decline, removeFriend, invite, inbox, clearInvite, allUsers,
     gameUrl, go, setProfile, saveMe, beat, notify, login, signup, logout, syncAccount, get loggedIn() { return !!me.acc; }, setGame(g) { curGame = g || ''; beat(); },
+    mail: { DAY_MS, owner: mailOwner, isOwner: isMailOwner, claim: claimMail, list: mailList, send: mailSend, set: mailSet, del: mailDel, poll: pollMail, seenNow: mailSeenNow },
   };
 })();
