@@ -708,7 +708,7 @@ function mapIcons() {
   return out;
 }
 function drawRadar() {
-  const c = $('#radar'), g = c.getContext('2d'), W = c.width, H = c.height; if (INSIDE) { g.fillStyle = '#20252c'; g.fillRect(0, 0, W, H); g.fillStyle = '#fff'; g.font = `bold 34px ${FONT}`; g.textAlign = 'center'; g.fillText({ mart: '🏪 편의점 안', jewel: '💎 보석상 안', bank: '🏦 은행 안' }[INSIDE] || '🏠 실내', W / 2, H / 2 + 12); return; } const S = MAP.S; const zoom = (PL.car ? 1.05 - clamp(Math.abs(PL.car.v) / 60, 0, .45) : 1.4) * 2 / S;
+  const c = $('#radar'), g = c.getContext('2d'), W = c.width, H = c.height; if (INSIDE) { g.fillStyle = '#20252c'; g.fillRect(0, 0, W, H); g.fillStyle = '#fff'; g.font = `bold 34px ${FONT}`; g.textAlign = 'center'; g.fillText({ mart: '🏪 편의점 안', jewel: '💎 보석상 안', bank: '🏦 은행 안' }[INSIDE] || (INT[INSIDE] && INT[INSIDE].label) || '🏠 실내', W / 2, H / 2 + 12); return; } const S = MAP.S; const zoom = (PL.car ? 1.05 - clamp(Math.abs(PL.car.v) / 60, 0, .45) : 1.4) * 2 / S;
   g.save(); g.fillStyle = '#20252c'; g.fillRect(0, 0, W, H); g.translate(W / 2, H * .62); g.scale(zoom, zoom);
   const fx_ = Math.sin(CAMS.yaw), fz_ = Math.cos(CAMS.yaw); const rot = -Math.PI / 2 - Math.atan2(fz_, fx_); g.rotate(rot);
   g.drawImage(MAP.img, -(PL.x - MAP.minX) * S, -(PL.z - MAP.minZ) * S);
@@ -775,8 +775,8 @@ function frame(now) {
   placePlayer(dt); PL.P.root.visible = !PL.car || !!PL.car.S.bike;
   if (!PL.car) { const c = nearestCar(PL.x, PL.z, 2.4); if (c && !G.dead) setPrompt((IS_MOBILE ? '🚗 ' : 'F: ') + (c.ai || c.drvP ? c.S.name + ' 뺏기' : c.S.name + ' 타기')); }
   // 편의점
-  PROMPT.act = null; if (!PL.car) for (const s of BUILD.shops) if ((s.name.startsWith('편의점') || s.name === '총포사' || s.name === '옷가게') && Math.hypot(s.x - PL.x, s.z - PL.z) < 2.4) { PROMPT.act = s.name; setPrompt((IS_MOBILE ? '🏪 버튼: ' : 'E: ') + s.name + ' 들어가기'); break; }
-  if (IN.act && PROMPT.act) { if (PROMPT.act === '총포사') gunShop(); else if (PROMPT.act === '옷가게') wardrobe(true); else shopMenu(); }
+  PROMPT.act = null;
+  /* 가게 들어가기는 s4_shops.js */
   if (IN.wsw) { switchWeapon(IN.wsw); IN.wsw = 0; } if (IN.wsel) { selectWeapon(IN.wsel); IN.wsel = null; }
   // 차들
   const people = NPCS.filter(n => n.ko <= 0).map(n => n); people.push(PL);

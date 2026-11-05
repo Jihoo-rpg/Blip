@@ -133,7 +133,7 @@ shopMenu = function () {
 const FOOD = [{ id: 'chicken', shop: '서울치킨', n: '🍗 서울치킨 반반', p: 19000, f: 75, h: 30 }, { t: 'chun', n: '🍲 춘천 닭갈비 + 볶음밥', p: 16000, f: 90, h: 40 }, { t: 'rest', n: '🥔 휴게소 감자 + 호두과자', p: 7000, f: 40, h: 10 }, { t: 'pc', n: '🥩 평창 한우 정식', p: 45000, f: 100, h: 60 }, { t: 'gn', n: '☕ 강릉 핸드드립 커피', p: 6500, f: 5, h: 0, e: 35 }, { t: 'sc', n: '🐟 속초 물회', p: 18000, f: 80, h: 30 }];
 const FOODM = [];
 S2TICK.push(() => {
-  if (!FOODM.length && G.on && GW.built) for (const f of FOOD) { let p; if (f.shop) { const s = BUILD.shops.find(q => q.name === f.shop); if (!s) continue; p = [s.x, s.z]; } else { const t = GW_TOWNS.find(q => q.id === f.t); if (!t || !t.door) continue; p = t.door; } FOODM.push({ f, M: mkMarker(p[0], p[1], '#ff9f1c', { r: .8 }), x: p[0], z: p[1] }); }
+  if (!FOODM.length && G.on && GW.built) for (const f of FOOD) { let p; if (f.shop) continue; else { const t = GW_TOWNS.find(q => q.id === f.t); if (!t || !t.door) continue; p = t.door; } FOODM.push({ f, M: mkMarker(p[0], p[1], '#ff9f1c', { r: .8 }), x: p[0], z: p[1] }); }
   if (INSIDE || PL.car || G.dead) return;
   for (const m of FOODM) { if (Math.hypot(PL.x - m.x, PL.z - m.z) > 2.2) continue; setPrompt((IS_MOBILE ? '🏪 버튼: ' : 'E: ') + m.f.n + ' ' + won(m.f.p)); PROMPT.act = 'food'; if (IN.act) { if (SV.money < m.f.p) { toast('💸 돈이 부족해요'); continue; } if (SV.need.food > 92 && m.f.f > 10) { toast('배불러요!'); continue; } addMoney(-m.f.p, '식사'); eat(m.f.f, m.f.h); if (m.f.e) rest(m.f.e); if (m.f.f >= 80) toast('😋 맛있다! 든든해요'); } }
 });
