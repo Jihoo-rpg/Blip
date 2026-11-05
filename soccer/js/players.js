@@ -154,5 +154,14 @@ function footballPose(p) {
   else if (a === 'trap') { const k = Math.sin(Math.min(1, t / .3) * Math.PI); leg2(P, S, V3(.55 * k, -1, s * .15), V3(.15 * k, -1, 0), k); arm2(P, O, V3(.1, -.5, -s * .8), V3(.3, -.4, -s * .5), k * .8); }
   else if (a === 'cheer') { const k = Math.min(1, t / .3); const j = Math.abs(Math.sin(t * 5)); root.position.y = j * .18; arm2(P, 'Left', V3(.2, 1, -.35), V3(.1, 1, -.1 - j * .2), k); arm2(P, 'Right', V3(.2, 1, .35), V3(.1, 1, .1 + j * .2), k); }
   else if (a === 'point') { const k = Math.min(1, t / .25); arm2(P, 'Right', V3(.6, .5, .6), V3(.7, .5, .5), k); }
+  else if (a === 'skill') { // 개인기: 팔 벌려 균형 + 발 동작
+    const sk = p.skill, k = sk ? Math.min(1, sk.t / sk.d) : Math.min(1, t / .5), w = Math.sin(k * Math.PI);
+    arm2(P, 'Left', V3(0, -.35, -1), V3(.2, -.35, -.8), w); arm2(P, 'Right', V3(0, -.35, 1), V3(.2, -.35, .8), w);
+    const kk = sk ? sk.k : 'roulette';
+    if (kk === 'stepover' || kk === 'elastico') { const c = Math.sin(k * Math.PI * 2); leg2(P, S, V3(.35 * Math.abs(c), -1, s * (.08 + .25 * Math.max(0, c))), V3(.12, -1, 0), w); }
+    else if (kk === 'drag') leg2(P, S, V3(.45 - k * .6, -1, 0), V3(.25 - k * .6, -1, 0), w);
+    else if (kk === 'flick') { const b = Math.sin(Math.min(1, k * 2.2) * Math.PI); leg2(P, S, V3(-.3 * b, -1, 0), V3(-1.2 * b, -.6 * b - .25, 0), b); }
+    else leg2(P, S, V3(.3, -1, s * .15), V3(.12, -1, 0), w);
+  }
   else if (a === 'clap') { const k = Math.abs(Math.sin(t * 7)); arm2(P, 'Left', V3(.8, .3, -.15 - k * .3), V3(.6, .3, .2), 1); arm2(P, 'Right', V3(.8, .3, .15 + k * .3), V3(.6, .3, -.2), 1); }
 }

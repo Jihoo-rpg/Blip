@@ -90,18 +90,20 @@ function kickBall(p, vx, vy, vz, spin) {
   sfx('kick', Math.min(1, Math.hypot(vx, vy, vz) / 30));
   if (M.phase === 'set' || M.phase === 'kickoff') { M.phase = 'play'; M.phT = 0; M.sp = null; }
 }
-function passVel(p, tx, tz, kind) {
+function passVel(p, tx, tz, kind, pow) {
   const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz) || 1; const acc = (100 - p.st.pas) / 100 * (DIFFOF(p).err);
   const ea = (Math.random() - .5) * acc * (kind === 'ground' ? .12 : .2), c = Math.cos(ea), s = Math.sin(ea); const ux = (dx * c - dz * s) / d, uz = (dx * s + dz * c) / d;
-  if (kind === 'ground') { const v = clamp(Math.sqrt(2 * 3.4 * d) + 3.5 + d * .05, 7, 30); return [ux * v, .3, uz * v]; }
-  const vy = clamp(d * (kind === 'cross' ? .22 : kind === 'through' ? .14 : .2), 3, 13); const tf = 2 * vy / G; const vh = d / tf * (kind === 'through' ? 1.05 : .9) * (1 + (Math.random() - .5) * acc * .15);
+  const pm = pow == null ? 1 : lerp(.93, 1.32, pow); // 세게 누를수록 빠르게
+  if (kind === 'ground') { const v = clamp((Math.sqrt(2 * 3.4 * d) + 3.5 + d * .05) * pm, 7, 34); return [ux * v, .3, uz * v]; }
+  const vy = clamp(d * (kind === 'cross' ? .22 : kind === 'through' ? .14 : .2), 3, 13) * (pow == null ? 1 : lerp(.95, 1.08, pow)); const tf = 2 * vy / G; const vh = d / tf * (kind === 'through' ? 1.05 : .9) * (1 + (Math.random() - .5) * acc * .15) * (pow == null ? 1 : lerp(.97, 1.12, pow));
   return [ux * vh, vy, uz * vh];
 }
-function doPass(p, target, kind) {
+function doCross(p, m, az, pow) { const gx = goalX(p.team); const [vx, vy, vz] = passVel(p, gx - M.dir[p.team] * (pow == null ? 8 : 4 + pow * 9), az, 'cross'); p.act = 'cross'; p.actT = 0; p.yaw = Math.atan2(gx - M.dir[p.team] * 8 - p.x, az - p.z); kickBall(p, vx, vy, vz, 0); ball.passTo = m || team(p.team).filter(q => q !== p && q.role !== 'GK').sort((a, b) => Math.abs(gx - a.x) - Math.abs(gx - b.x))[0]; ball.passKind = 'cross'; ball.passT = 0; M.stats.pa[p.team]++; comm(`${shortName(p)}, 크로스!`); for (let k = 0; k < 2; k++) if (M.human[k] === p.team && ball.passTo) M.ctrl[k] = ball.passTo; }
+function doPass(p, target, kind, pow) {
   kind = kind || 'ground'; let tx = target.x, tz = target.z; const lead = kind === 'through' ? 1.2 : .55;
   const d = Math.hypot(tx - p.x, tz - p.z); const tf = kind === 'ground' ? d / 16 : d / 13; tx += target.vx * tf * lead; tz += target.vz * tf * lead;
-  if (kind === 'through') { tx += M.dir[target.team] * 5; } tx = clamp(tx, -PL.hx + 1, PL.hx - 1); tz = clamp(tz, -PL.hz + 1, PL.hz - 1);
-  const [vx, vy, vz] = passVel(p, tx, tz, kind); p.act = kind === 'ground' ? 'pass' : 'kick'; p.actT = 0; p.yaw = Math.atan2(tx - p.x, tz - p.z);
+  if (kind === 'through') { tx += M.dir[target.team] * (pow == null ? 5 : 2.5 + pow * 8); } tx = clamp(tx, -PL.hx + 1, PL.hx - 1); tz = clamp(tz, -PL.hz + 1, PL.hz - 1);
+  const [vx, vy, vz] = passVel(p, tx, tz, kind, pow); p.act = kind === 'ground' ? 'pass' : 'kick'; p.actT = 0; p.yaw = Math.atan2(tx - p.x, tz - p.z);
   kickBall(p, vx, vy, vz, 0); ball.passTo = target; ball.passT = 0; ball.passKind = kind; M.stats.pa[p.team]++; target.run = null;
   for (let h = 0; h < 2; h++) if (M.human[h] === p.team && M.ctrl[h] === p) M.ctrl[h] = target;
 }
@@ -171,7 +173,7 @@ function goal(ti) {
   vibrate([60, 40, 120]);
 }
 /* ---------- 선수 움직임 ---------- */
-function maxSpd(p, sprint) { const s = p.st.spd / 100; return (sprint ? 6.6 + s * 3 : 5 + s * 1.9) * (ball.owner === p ? .82 + p.st.drb / 1000 : 1); }
+function maxSpd(p, sprint) { const s = p.st.spd / 100; return (sprint ? 6.6 + s * 3 : 5 + s * 1.9) * (ball.owner === p ? .82 + p.st.drb / 1000 : 1) * (p.boostT > 0 ? 1.1 : 1); }
 function steer(p, tx, tz, spd, dt, face) {
   const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz); let wx = 0, wz = 0; if (d > .25) { const s = Math.min(spd, d * 2.2); wx = dx / d * s; wz = dz / d * s; }
   accel(p, wx, wz, dt); if (face != null) p.yaw += angDiff(p.yaw, face) * Math.min(1, dt * 8);
@@ -181,11 +183,12 @@ function movePlayers(dt) {
   for (const p of M.players) {
     if (p.stun > 0) { p.stun -= dt; p.vx *= 1 - dt * 4; p.vz *= 1 - dt * 4; }
     if (p.act === 'slide') { p.vx *= 1 - dt * 1.6; p.vz *= 1 - dt * 1.6; }
+    if (p.skill) { if (ball.owner !== p && p.skill.k !== 'flick') { p.skill = null; p.act = null; } else skillTick(p, dt); } if (p.boostT > 0) p.boostT -= dt;
     p.x += p.vx * dt; p.z += p.vz * dt; const sp = Math.hypot(p.vx, p.vz);
     if (sp > .6 && p.act !== 'slide' && p.act !== 'dive' && !(p.faceLock > 0)) p.yaw += angDiff(p.yaw, Math.atan2(p.vx, p.vz)) * Math.min(1, dt * (ball.owner === p ? 9 : 7));
     if (p.faceLock > 0) p.faceLock -= dt;
     p.x = clamp(p.x, -PL.hx - 4, PL.hx + 4); p.z = clamp(p.z, -PL.hz - 3, PL.hz + 3);
-    p.kCd -= dt; p.tkCd -= dt; if (p.act) { p.actT += dt; const D = { kick: .5, pass: .38, cross: .5, slide: .8, dive: 1.3, throw: .7, header: .55, stumble: .7, catch: .4, trap: .3, place: .75, pickup: .7, point: 1.2 }[p.act]; if (D && p.actT > D) p.act = null; }
+    p.kCd -= dt; p.tkCd -= dt; if (p.act) { p.actT += dt; const D = { skill: 1.5, kick: .5, pass: .38, cross: .5, slide: .8, dive: 1.3, throw: .7, header: .55, stumble: .7, catch: .4, trap: .3, place: .75, pickup: .7, point: 1.2 }[p.act]; if (D && p.actT > D) p.act = null; }
   }
   // 몸끼리 겹치지 않게
   const L = M.players; for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i], b = L[j]; const dx = b.x - a.x, dz = b.z - a.z, d2 = dx * dx + dz * dz; if (d2 < .49 && d2 > 1e-6) { const d = Math.sqrt(d2), o = (.7 - d) / 2; a.x -= dx / d * o; a.z -= dz / d * o; b.x += dx / d * o; b.z += dz / d * o; } }
@@ -196,7 +199,8 @@ function ballControl(dt) {
   const o = ball.owner;
   if (o) {
     if (o.role === 'GK' && ball.held) { ball.x = o.x + Math.sin(o.yaw) * .35; ball.z = o.z + Math.cos(o.yaw) * .35; ball.y = 1.1; return; }
-    const sp = Math.hypot(o.vx, o.vz); const lead = .42 + sp * .05; const tx = o.x + Math.sin(o.yaw) * lead, tz = o.z + Math.cos(o.yaw) * lead; const k = Math.min(1, dt * 14);
+    const sp = Math.hypot(o.vx, o.vz); const sk = o.skill; const by = sk ? Math.atan2(sk.dx, sk.dz) : o.yaw; const lead = sk ? (sk.k === 'roulette' ? .22 : sk.k === 'drag' && sk.t / sk.d < .45 ? .15 : .38 + sp * .04) : .42 + sp * .05;
+    const tx = o.x + Math.sin(by) * lead + (sk && sk.k === 'stepover' && sk.t / sk.d < .55 ? Math.cos(by) * .0 : 0), tz = o.z + Math.cos(by) * lead; const k = Math.min(1, dt * (sk ? 18 : 14));
     const nx = lerp(ball.x, tx, k), nz = lerp(ball.z, tz, k); ball.vx = (nx - ball.x) / dt; ball.vz = (nz - ball.z) / dt; ball.x = nx; ball.z = nz; ball.y = PL.br; ball.vy = 0;
     M.stats.pos[o.team] += dt; return;
   }
@@ -235,12 +239,34 @@ function header(p) {
   if (dg < 16) { const tz = (Math.random() - .5) * PL.gw * 1.1; const d = Math.hypot(gx - p.x, tz - p.z); const v = 13 + p.st.sht / 10; const ux = (gx - p.x) / d, uz = (tz - p.z) / d; kickBall(p, ux * v, rand(-1, 2.5), uz * v, 0); M.stats.sh[p.team]++; const onT = Math.abs(tz) < PL.gw / 2; if (onT) M.stats.ot[p.team]++; planSave(1 - p.team, onT); comm(`${shortName(p)}의 헤더!`); sfx('kick', .5); }
   else { const mate = bestPassTarget(p, true); if (mate) { const dx = mate.x - p.x, dz = mate.z - p.z, d = Math.hypot(dx, dz) || 1; const v = Math.min(14, d * .9 + 4); kickBall(p, dx / d * v, 3, dz / d * v, 0); ball.passTo = mate; } else kickBall(p, M.dir[p.team] * 10, 4, rand(-4, 4), 0); }
 }
+/* ---------- 개인기 (질주 버튼 톡) ---------- */
+const SKILLS = { roulette: { d: .62, n: '마르세유 룰렛' }, stepover: { d: .58, n: '헛다리' }, elastico: { d: .48, n: '엘라스티코' }, drag: { d: .5, n: '드래그 백' }, flick: { d: .55, n: '레인보우 플릭' } };
+function doSkill(p, ix, iz, k) {
+  if (ball.owner !== p || ball.held || p.skill || (p.skillCd || 0) > M.t || p.role === 'GK') return false;
+  const fx = Math.sin(p.yaw), fz = Math.cos(p.yaw); const L = Math.hypot(ix, iz); let dx = fx, dz = fz;
+  if (L > .3) { dx = ix / L; dz = iz / L; const dot = dx * fx + dz * fz; k = k || (dot < -.45 ? 'drag' : dot < .55 ? pick(['stepover', 'elastico']) : (Math.hypot(p.vx, p.vz) > 5 && Math.random() < .5 ? 'flick' : 'roulette')); }
+  else k = k || pick(['roulette', 'stepover', 'elastico']);
+  const slow = clamp(1 + (85 - p.st.drb) / 90, .85, 1.35); const side = Math.sign(fx * dz - fz * dx) || (Math.random() < .5 ? 1 : -1);
+  p.skill = { k, t: 0, d: SKILLS[k].d * slow, dx, dz, y0: p.yaw, side }; p.skillCd = M.t + p.skill.d + .45; p.act = 'skill'; p.actT = 0; p.faceLock = p.skill.d; p.foot = side > 0 ? 'Right' : 'Left';
+  if (k === 'flick') { ball.owner = null; ball.last = p; ball.vx = dx * 8 + p.vx * .3; ball.vz = dz * 8 + p.vz * .3; ball.vy = 5.4; ball.y = .4; p.kCd = .45; for (const q of team(1 - p.team)) if (dist(q, p) < 4) q.kCd = Math.max(q.kCd, .75); }
+  comm(`${shortName(p)}, ${SKILLS[k].n}!`); sfx('kick', .15); return true;
+}
+function skillTick(p, dt) {
+  const s = p.skill; s.t += dt; const k = Math.min(1, s.t / s.d), px = -s.dz, pz = s.dx; let vx = 0, vz = 0;
+  if (s.k === 'roulette') { p.yaw = s.y0 + s.side * k * Math.PI * 2; const v = 4.2; vx = s.dx * v + px * s.side * Math.sin(k * Math.PI) * 1.6; vz = s.dz * v + pz * s.side * Math.sin(k * Math.PI) * 1.6; }
+  else if (s.k === 'stepover') { if (k < .55) { vx = -s.dx * 1.2; vz = -s.dz * 1.2; } else { vx = s.dx * 8; vz = s.dz * 8; } p.yaw += angDiff(p.yaw, Math.atan2(s.dx, s.dz)) * Math.min(1, dt * (k < .55 ? 1 : 10)); }
+  else if (s.k === 'elastico') { if (k < .4) { vx = -s.dx * 2.2; vz = -s.dz * 2.2; } else { vx = s.dx * 8.4; vz = s.dz * 8.4; } p.yaw += angDiff(p.yaw, Math.atan2(s.dx, s.dz)) * Math.min(1, dt * 8); }
+  else if (s.k === 'drag') { if (k < .45) { vx = p.vx * .8; vz = p.vz * .8; } else { vx = s.dx * 6; vz = s.dz * 6; p.yaw += angDiff(p.yaw, Math.atan2(s.dx, s.dz)) * Math.min(1, dt * 12); } }
+  else if (s.k === 'flick') { vx = s.dx * 7.6; vz = s.dz * 7.6; }
+  p.vx = vx; p.vz = vz;
+  if (s.t >= s.d) { p.skill = null; if (p.act === 'skill') p.act = null; p.boostT = .8; p.faceLock = 0; }
+}
 /* ---------- 태클 ---------- */
 function tryTackle(p, slide) {
   const o = ball.owner; if (p.tkCd > 0 || p.stun > 0) return false; p.tkCd = slide ? 1.4 : .7;
   if (slide) { p.act = 'slide'; p.actT = 0; const f = p.yaw; p.vx = Math.sin(f) * 8.5; p.vz = Math.cos(f) * 8.5; p.faceLock = .8; return true; }
   if (!o || o.team === p.team || o.held) return false; const d = dist(p, o); if (d > 1.5) return false;
-  const pr = clamp(.45 + (p.st.def - o.st.drb) / 120 + (p.team === M.human[0] || p.team === M.human[1] ? .03 : DIFFOF(p).tk), .12, .9);
+  const pr = clamp(.45 + (p.st.def - o.st.drb) / 120 + (p.team === M.human[0] || p.team === M.human[1] ? .03 : DIFFOF(p).tk), .12, .9) * (o.skill ? .25 : o.boostT > 0 ? .7 : 1); // 개인기 중엔 잘 안 뺏겨요
   p.act = 'pass'; p.actT = .08; p.yaw = Math.atan2(o.x - p.x, o.z - p.z);
   if (Math.random() < pr) { looseBall(o, p); M.stats.tk[p.team]++; sfx('tackle'); comm(pick([`${shortName(p)}, 깔끔한 태클!`, '공을 빼앗았어요!'])); return true; }
   p.stun = .45; return false;
@@ -249,6 +275,7 @@ function slideHit(p) { // 슬라이딩 중 공 · 사람에 닿기
   if (p.act !== 'slide' || p.actT > .55) return; const fx_ = p.x + Math.sin(p.yaw) * .7, fz_ = p.z + Math.cos(p.yaw) * .7;
   const o = ball.owner; const dB = Math.hypot(ball.x - fx_, ball.z - fz_);
   if (dB < .9 && ball.y < .6) {
+    if (o && o.team !== p.team && !o.held && o.skill && Math.random() < .6) { p.act = 'slide'; return; } // 개인기로 피했어요
     if (o && o.team !== p.team && !o.held) { const behind = Math.cos(angDiff(o.yaw, Math.atan2(p.x - o.x, p.z - o.z))) < -.55; looseBall(o, p); ball.vx = Math.sin(p.yaw) * 7; ball.vz = Math.cos(p.yaw) * 7; M.stats.tk[p.team]++; sfx('tackle');
       if (behind && Math.random() < .55) { foul(p, o); return; } comm(pick(['멋진 슬라이딩 태클!', `${shortName(p)}의 슬라이딩!`])); p.act = 'slide'; return; }
     if (!o) { ball.vx = Math.sin(p.yaw) * 9; ball.vz = Math.cos(p.yaw) * 9; ball.last = p; sfx('kick', .5); }
@@ -283,6 +310,7 @@ function aiCarrier(p, dt) {
     const ang = Math.abs(p.z) / Math.max(1, Math.abs(gx - p.x));
     const shootP = dg < 12 ? .95 : dg < 20 ? (ang < 1.3 ? .65 : .25) : dg < 29 ? (ang < .8 ? .3 : .06) : 0;
     if (Math.random() < shootP * (block < 3 && dg > 14 ? .5 : 1)) { const gk = gkOf(1 - p.team); doShoot(p, clamp(dg / 24 + rand(-.15, .1), .35, .95), gk ? (gk.z > 0 ? -.85 : .85) * rand(.4, 1) : null); return; }
+    if (near && nd < 2.8 && p.st.drb >= 80 && Math.random() < (p.st.drb - 74) / 70) { const ax = p.x - near.x, az = p.z - near.z, al = Math.hypot(ax, az) || 1; const sd = Math.sign(az) || 1; if (doSkill(p, fdx * .7 + (-az / al) * 0 + 0, sd * .9)) return; } // 스타 선수는 개인기로 제쳐요
     const runner = team(p.team).find(q => q.run && q.role !== 'GK' && (q.run.x - p.x) * fdx > 5);
     if (runner && block < 6 && Math.random() < .5) { doPass(p, runner, 'through'); return; }
     const pressured = nd < 2.3; const m = bestPassTarget(p, pressured && p.holdT > .3);
@@ -337,7 +365,7 @@ function teamAI(ti, dt) {
     const hc = humanCtrl[0]; const hcClose = hc && Math.hypot(hc.x - pr[0], hc.z - pr[1]) < 8; press = hcClose ? [null, cand[0]] : [cand[0], cand[1]]; if (free) { press = [cand[0]]; if (hc && hcClose) press = []; } }
   for (const p of T_) {
     if (humanCtrl.includes(p)) continue; if (p.stun > 0 || p.act === 'slide') continue;
-    if (o === p) { aiCarrier(p, dt); continue; }
+    if (p.skill) continue; if (o === p) { aiCarrier(p, dt); continue; }
     if (free && press[0] === p) { const pr = predictBall(.35); steer(p, pr[0], pr[1], maxSpd(p, true), dt); continue; }
     if (!att && !free) { const r = press[0] === p ? 1 : press[1] === p ? 2 : 0; aiDef(p, dt, r); } else aiOff(p, dt, att || free, o && o.team === ti);
   }
@@ -365,7 +393,7 @@ function aiSetPiece(tk, sp) {
   if (sp.type === 'throw') { const m = closestTo(team(sp.team).filter(q => q !== tk && q.role !== 'GK'), tk.x, tk.z); throwIn(tk, m.x, m.z); return; }
   const m = bestPassTarget(tk, true) || closestTo(team(sp.team).filter(q => q !== tk), tk.x, tk.z); doPass(tk, m, sp.type === 'goalkick' ? 'long' : dist(tk, m) > 26 ? 'long' : 'ground');
 }
-function throwIn(tk, tx, tz) { const dx = tx - tk.x, dz = tz - tk.z, d = Math.hypot(dx, dz) || 1; const v = clamp(d * .9 + 3, 6, 15); tk.act = 'throw'; tk.actT = .35; kickBall(tk, dx / d * v, 2.4, dz / d * v, 0); ball.y = 2.1; tk.kCd = .5; M.stats.pa[tk.team]++; const m = closestTo(team(tk.team).filter(q => q !== tk), tx, tz); ball.passTo = m; for (let h = 0; h < 2; h++) if (M.human[h] === tk.team) M.ctrl[h] = m; }
+function throwIn(tk, tx, tz, pow) { const dx = tx - tk.x, dz = tz - tk.z, d = Math.hypot(dx, dz) || 1; const v = clamp((d * .9 + 3) * (pow == null ? 1 : lerp(.9, 1.3, pow)), 6, 18); tk.act = 'throw'; tk.actT = .35; kickBall(tk, dx / d * v, 2.4, dz / d * v, 0); ball.y = 2.1; tk.kCd = .5; M.stats.pa[tk.team]++; const m = closestTo(team(tk.team).filter(q => q !== tk), tx, tz); ball.passTo = m; for (let h = 0; h < 2; h++) if (M.human[h] === tk.team) M.ctrl[h] = m; }
 /* ---------- 한 프레임 ---------- */
 function matchTick(dt) {
   if (!M.on) return; M.t += dt; M.phT += dt;
