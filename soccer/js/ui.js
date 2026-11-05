@@ -134,12 +134,15 @@ function camTick(dt) {
     const k = Math.min(1, dt * 2.6); CAM.tx = lerp(CAM.tx, fx, k); CAM.tz = lerp(CAM.tz, fz, k);
     const near = clamp((Math.abs(CAM.tx) - 28) / 22, 0, 1); // 골문 가까이 가면 살짝 당겨요
     const mob = IS_MOBILE && !port;
-    if (CAM.mode === 0 && mob) { CAM.want.set(clamp(CAM.tx * .9, -PL.hx + 7, PL.hx - 7), 14.5 - near * 2.5, CAM.tz * .28 + 26 - near * 4); CAM.wl.set(CAM.tx * .97, 0, CAM.tz * .66 - 1); fov = 42; }
+    if (CAM.mode === 0 && mob) { const ns = Math.max(0, CAM.tz - 8); CAM.want.set(clamp(CAM.tx * .9, -PL.hx + 7, PL.hx - 7), 14.5 - near * 2.5 + ns * .2, CAM.tz * .28 + 26 - near * 4 + ns * .36); CAM.wl.set(CAM.tx * .97, 0, CAM.tz * .66 - 1); fov = 42; }
     else if (CAM.mode === 0) { if (port) CAM.want.set(clamp(CAM.tx * .88, -PL.hx + 8, PL.hx - 8), 42 - near * 6, CAM.tz * .2 + 30 - near * 4), CAM.wl.set(CAM.tx * .96, 0, CAM.tz * .6 - 6); else CAM.want.set(clamp(CAM.tx * .88, -PL.hx + 8, PL.hx - 8), 20 - near * 3, CAM.tz * .25 + 37 - near * 5), CAM.wl.set(CAM.tx * .96, 0, CAM.tz * .62 - 2); }
     else if (CAM.mode === 1) { const d = M.human[0] >= 0 ? M.dir[M.human[0]] : 1; const cx = c ? lerp(c.x, CAM.tx, .5) : CAM.tx, cz = c ? lerp(c.z, CAM.tz, .5) : CAM.tz; CAM.want.set(cx - d * (port ? 22 : 17), port ? 16 : 11, cz * .9); CAM.wl.set(cx + d * 12, 0, cz * .95); }
     else { CAM.want.set(CAM.tx * .95, port ? 85 : 62, CAM.tz * .5 + (port ? 6 : 12)); CAM.wl.set(CAM.tx, 0, CAM.tz * .55); }
+    // 공(과 내 선수)이 화면 아래로 잘리지 않게: 가까운 터치라인 쪽이면 카메라를 더 숙여요
+    if (CAM.mode !== 1) { let zb = Math.max(ball.z, CAM.tz); if (c && M.phase === 'play' && Math.hypot(c.x - ball.x, c.z - ball.z) < 24) zb = Math.max(zb, c.z); const dzb = CAM.want.z - zb, hf = fov * Math.PI / 360;
+      if (dzb > .5) { const th = Math.atan2(CAM.want.y, dzb) - hf * .5; const zMin = th > .05 ? CAM.want.z - CAM.want.y / Math.tan(th) : zb; if (CAM.wl.z < zMin) CAM.wl.z = zMin; } else CAM.wl.z = Math.max(CAM.wl.z, zb - 2); }
     // 세트피스: 차는 선수 뒤에서 (코너킥 · 프리킥 · 페널티킥)
-    if (M.phase === 'set' && sp && sp.ux != null && !sp.prep && (sp.type === 'corner' || sp.type === 'free' || sp.type === 'pen')) { const back = sp.type === 'pen' ? 6.5 : sp.type === 'corner' ? 6.5 : 9, up = sp.type === 'pen' ? 2.1 : sp.type === 'corner' ? 3 : 3.2, ahead = sp.type === 'pen' ? 8 : sp.type === 'corner' ? 7 : 10; CAM.want.set(sp.x - sp.ux * back, up, sp.z - sp.uz * back); CAM.wl.set(sp.x + sp.ux * ahead, .6, sp.z + sp.uz * ahead); fov = port ? 62 : 46; speed = 2; }
+    if (M.phase === 'set' && sp && sp.ux != null && !sp.prep && (sp.type === 'corner' || sp.type === 'free' || sp.type === 'pen')) { const back = sp.type === 'pen' ? 6.5 : sp.type === 'corner' ? 5.4 : 9, up = sp.type === 'pen' ? 2.1 : sp.type === 'corner' ? 3 : 3.2, ahead = sp.type === 'pen' ? 8 : sp.type === 'corner' ? 7 : 10; CAM.want.set(sp.x - sp.ux * back, up, sp.z - sp.uz * back); CAM.wl.set(sp.x + sp.ux * ahead, .6, sp.z + sp.uz * ahead); fov = port ? 62 : 46; speed = 2; }
     // 골: 넣은 선수를 가까이 빙 돌며 보여 줘요
     if (M.phase === 'goal' && M.celeBy && M.phT > .7) { const p = M.celeBy; CAM.orb += dt * .45; const a = CAM.orb + (p.team ? Math.PI : 0); CAM.want.set(p.x + Math.sin(a) * 6.5, 2.2, p.z + Math.cos(a) * 6.5 + 1); CAM.wl.set(p.x, 1.2, p.z); fov = port ? 55 : 38; speed = 2.2; }
     else CAM.orb = 0;
@@ -198,8 +201,8 @@ function replayTick(dt) {
 }
 function replayCam(dt) {
   const s = Math.sign(ball.x) || 1; let px, py, pz;
-  if (REPLAY.cam === 0) { px = s * (PL.hx + 9); py = 4.5; pz = ball.z * .5 + 9; } else { px = ball.x - s * 9; py = 3; pz = ball.z + 10; }
-  cam.position.lerp(new T.Vector3(px, py, pz), Math.min(1, dt * 3)); CAM.look.set(ball.x, ball.y * .5 + .8, ball.z); cam.lookAt(CAM.look); if (cam.fov !== 45) { cam.fov = 45; cam.updateProjectionMatrix(); }
+  if (REPLAY.cam === 0) { px = s * (PL.hx + 4.2); py = 4.2; pz = clamp(ball.z * .5 + 9, -PL.hz - 2, PL.hz + 3); } else { px = clamp(ball.x - s * 9, -PL.hx - 3, PL.hx + 3); py = 3; pz = clamp(ball.z + 10, -PL.hz - 2, PL.hz + 3.5); } // 관중석 안으로 안 들어가게
+  cam.position.lerp(new T.Vector3(px, py, pz), Math.min(1, dt * 3)); CAM.look.lerp(new T.Vector3(ball.x, ball.y * .5 + .8, ball.z), Math.min(1, dt * 6)); cam.lookAt(CAM.look); if (Math.abs(cam.fov - 45) > .05) { cam.fov = lerp(cam.fov, 45, Math.min(1, dt * 4)); cam.updateProjectionMatrix(); }
 }
 /* ---------- 소리 (직접 만든 소리) ---------- */
 const AU = { ctx: null, crowd: null, cg: null, ex: 0 };
