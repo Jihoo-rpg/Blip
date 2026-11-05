@@ -481,7 +481,7 @@ function updateGarage() {
   if (inside && !G.inGarage && Math.abs(c.v) < 9) {
     G.inGarage = true; const need = G.wanted > 0 || c.hp < c.maxHp * .95; if (!need) { if (Math.abs(c.v) > 2) toast('🔧 정비소예요. 수배 중이거나 차가 망가졌을 때 오면 고쳐 줘요.'); return; }
     if (SV.money < 5000) { toast('💸 돈이 부족해요 (₩5,000 필요)'); return; }
-    fade(true); setTimeout(() => { addMoney(-5000); setWanted(0); c.hp = c.maxHp; c.fire = 0; if (c.type !== 'police' && c.type !== 'taxi' && c.type !== 'bus') { const pm = paintMat(pick(PAINT)); c.bodyG.children.forEach(o => { if (o.isMesh && o.material && o.material.clearcoat) o.material = pm; }); } toast('🔧 새 색으로 칠하고 수리했어요! 수배도 사라졌어요 (₩5,000)'); SFX.cash(); fade(false); }, 700);
+    fade(true); setTimeout(() => { addMoney(-5000); setWanted(0); c.hp = c.maxHp; c.fire = 0; if (c.type !== 'police' && c.type !== 'taxi' && c.type !== 'bus') { const pm = paintMat(pick(PAINT)); c.bodyG.children.forEach(o => { if (o.isMesh && o.material && o.material.clearcoat && o.material !== GLASS) o.material = pm; }); } toast('🔧 새 색으로 칠하고 수리했어요! 수배도 사라졌어요 (₩5,000)'); SFX.cash(); fade(false); }, 700);
   } else if (!inside) G.inGarage = false;
 }
 function fade(on) { $('#fade').style.opacity = on ? 1 : 0; }

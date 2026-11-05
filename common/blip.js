@@ -33,6 +33,7 @@
     phonetycoon: { name: '폰 공장 타이쿤', icon: '📱', path: 'phonetycoon/' },
     billiards: { name: '당구 마스터 3D', icon: '🎱', path: 'billiards/' },
     seoul: { name: 'STA 1', icon: '🏙️', path: 'seoul/' },
+    seoul2: { name: 'STA 2', icon: '🌆', path: 'seoul2/' },
   };
   const AVAS = ['😺', '🐶', '🦊', '🐼', '🐸', '🐵', '🦁', '🐯', '🐰', '🐻', '🐧', '🦄', '👾', '🤖', '👻', '🐲'];
 
