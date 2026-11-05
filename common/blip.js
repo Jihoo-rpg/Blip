@@ -266,6 +266,7 @@
 
   /* ---------- 📮 게임 요청 우편함 (24시간 안에 만들어 줘요) ---------- */
   const DAY_MS = 24 * 3600 * 1000;
+  const MAIL_TO = 'jihoo.you@sieusa.org';   // 새 요청이 오면 이 주소로 이메일이 가요
   let ownerId = null, ownerAt = 0;
   async function mailOwner(force) {
     if (!force && ownerId !== null && Date.now() - ownerAt < 60000) return ownerId;
@@ -289,6 +290,13 @@
     const last = Number(me.mailT || 0); if (Date.now() - last < 60000) throw new Error('1분 뒤에 다시 보낼 수 있어요');
     const r = await req('gamereq', 'POST', { title, desc, genre, nick: me.nick, ava: me.ava, code: me.code, acc: me.acc || '', st: 'new', t: { '.sv': 'timestamp' } });
     me.mailT = Date.now(); me.myMail = [r && r.name, ...(me.myMail || [])].filter(Boolean).slice(0, 30); saveMe();
+    // 📧 만드는 사람에게 이메일 (FormSubmit)
+    try {
+      fetch('https://formsubmit.co/ajax/' + MAIL_TO, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json' }, body: JSON.stringify({
+        _subject: '📮 blip 게임 요청: ' + title, _template: 'table', _captcha: 'false',
+        '게임 이름': title, '장르': genre || '-', '설명': desc, '보낸 사람': me.nick + (me.acc ? ' (@' + me.acc + ')' : '') + ' · 코드 ' + me.code,
+        '마감': new Date(Date.now() + DAY_MS).toLocaleString('ko-KR', { timeZone: 'Asia/Seoul' }) + ' 까지 (24시간)', '우편함': ROOT + 'hub/?v=req' }) }).catch(() => { });
+    } catch (e) { }
     return r && r.name;
   }
   async function mailSet(id, patch) { if (!isMailOwner()) throw new Error('받는 사람만 할 수 있어요'); await req('gamereq/' + id, 'PATCH', patch); }
