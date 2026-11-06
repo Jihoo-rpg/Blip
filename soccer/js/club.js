@@ -30,7 +30,7 @@ function openCreate() {
     const pro = PDB.filter(p => p.prospect || p.r === 'B'); const rnd = Math.random; const own = {}; const take = (pos, n) => { const L = pro.filter(p => p.pos === pos && !own[p.id]).sort(() => rnd() - .5).slice(0, n); for (const p of L) own[p.id] = 1; };
     take('GK', 2); take('DF', 6); take('MF', 6); take('FW', 4);
     SAVE.club = { name, emb: st.emb, c1: st.c1, c2: st.c2, coins: 1500, own, xi: [], form: '4-3-3', w: 0, d: 0, l: 0, beat: {}, made: Date.now(), freeGold: 1 };
-    autoXI(); saveClub(); $('#create').hidden = true; openClub(); toast('🎉 구단이 생겼어요! 선물로 골드 팩 1개를 드려요', 3500);
+    autoXI(); saveClub(); giveGifts(); $('#create').hidden = true; openClub(); toast('🎉 구단이 생겼어요! 선물로 골드 팩 1개를 드려요', 3500);
   };
 }
 /* ---------- 스쿼드 ---------- */
@@ -128,7 +128,10 @@ function renderMenu() {
   const kit = c ? [c.c1, c.c2, c.c1, c.c2] : (() => { const t = TEAMS.find(x => x.id === best.nat) || TEAMS[0]; return [t.home[0], t.home[1], t.home[2] || t.home[0], t.home[1]]; })();
   if (CH.ready) heroSet(best, kit);
 }
-function onCloudLoaded() { KMC = KM(); keysHelp(); if (UI.screen === 'menu') renderMenu(); else if (UI.screen === 'club') { clubHeader(); clubTab(CL.tab); } }
+/* 선물: 새로고침하면 한 번만 받아요 (구단이 없으면 만들 때 받아요) */
+const GIFTS = [{ id: 'coin5000_1106', coins: 5000, msg: '🎁 운영자 선물! 🪙5,000 코인을 받았어요' }];
+function giveGifts() { const c = club(); if (!c) return; SAVE.gifts = SAVE.gifts || {}; let got = 0; for (const g of GIFTS) if (!SAVE.gifts[g.id]) { SAVE.gifts[g.id] = 1; c.coins = (c.coins || 0) + g.coins; got++; setTimeout(() => { toast(g.msg, 4000); sfx('goal'); }, 1200 + got * 400); } if (got) { saveClub(); if (UI.screen === 'menu') renderMenu(); } }
+function onCloudLoaded() { giveGifts(); KMC = KM(); keysHelp(); if (UI.screen === 'menu') renderMenu(); else if (UI.screen === 'club') { clubHeader(); clubTab(CL.tab); } }
 function menuNav(tab) { auInit(); if (!club()) return openCreate(); CL.tab = tab; openClub(); }
 document.addEventListener('click', e => {
   if (UI.screen !== 'menu' || $('#menu').hidden) return; const t = e.target.closest('[data-mnav],#mClub,#mTeam,#mDaily,#mKeys,#mMute,#mOnl2,#mAcc'); if (!t) return; sfx('tick');

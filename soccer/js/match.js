@@ -229,7 +229,7 @@ function gainBall(p) {
   const prev = ball.last; if (!p.act && p.role !== 'GK' && Math.hypot(ball.vx, ball.vz) > 7) { p.act = 'trap'; p.actT = 0; p.foot = Math.random() < .7 ? 'Right' : 'Left'; } ball.owner = p; ball.held = false; ball.last = p; ball.shot = null; p.touches++; p.holdT = 0; p.think = Math.min(p.think, DIFFOF(p).react * .6);
   if (ball.passTo) { if (ball.passTo.team === p.team) { M.stats.pc[p.team]++; } ball.passTo = null; }
   if (prev && prev.team !== p.team) M.lastTurn = M.t;
-  for (let h = 0; h < 2; h++) if (M.human[h] === p.team) M.ctrl[h] = p;
+  for (let h = 0; h < 2; h++) { const tm = M.human[h]; if (tm < 0) continue; if (tm === p.team) M.ctrl[h] = p; else { const c = closestTo(team(tm).filter(q => q.role !== 'GK'), p.x, p.z); if (c && c !== M.ctrl[h]) { M.ctrl[h] = c; c.swT = M.t; } } } // 상대가 공을 잡으면 그 선수에게 가장 가까운 우리 선수로
   if (p.queued && M.t - p.queued.t < .45) { const q = p.queued; p.queued = null; humanAct(p, q.a, q.v, q.pow, q.h); }
 }
 function gkCatch(gk) { ball.owner = gk; ball.held = true; ball.last = gk; ball.shot = null; ball.vx = ball.vy = ball.vz = 0; gk.act = 'catch'; gk.actT = 0; gk.holdT = 0; gk.vx = gk.vz = 0; sfx('catch'); for (let h = 0; h < 2; h++) if (M.human[h] === gk.team) M.ctrl[h] = closestTo(team(gk.team).filter(p => p.role !== 'GK'), gk.x, gk.z); }
@@ -438,7 +438,7 @@ function endHalf() {
   else { M.phase = 'over'; M.phT = 0; const w = M.score[0] === M.score[1] ? -1 : M.score[0] > M.score[1] ? 0 : 1; for (const p of M.players) { p.act = w < 0 ? null : p.team === w ? 'clap' : 'sad'; p.actT = 0; } banner('경기 종료', `${M.t0.f} ${M.score[0]} : ${M.score[1]} ${M.t1.f}`, '#ffd400', 3); STAD.jump = 3; setTimeout(showResult, 3200); }
 }
 /* ---------- 그리기 ---------- */
-const SHADOW_GEO = new T.CircleGeometry(.62, 20), SHADOW_MAT = new T.MeshBasicMaterial({ map: ctex(64, 64, (g, W) => { const r = g.createRadialGradient(W / 2, W / 2, 0, W / 2, W / 2, W / 2); r.addColorStop(0, 'rgba(0,0,0,.55)'); r.addColorStop(.6, 'rgba(0,0,0,.25)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, W, W); }), transparent: true, depthWrite: false });
+const SHADOW_GEO = new T.CircleGeometry(.42, 20), SHADOW_MAT = new T.MeshBasicMaterial({ map: ctex(64, 64, (g, W) => { const r = g.createRadialGradient(W / 2, W / 2, 0, W / 2, W / 2, W / 2); r.addColorStop(0, 'rgba(0,0,0,.3)'); r.addColorStop(.6, 'rgba(0,0,0,.12)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, W, W); }), transparent: true, depthWrite: false });
 function animPlayer(p, dt) {
   const P = p.P; P.root.position.set(p.x, 0, p.z); P.root.rotation.y = p.yaw; if (P.blob) P.blob.position.set(p.x, .015, p.z);
   const sp = Math.hypot(p.vx, p.vz); const an = sp > 2.9 ? 'run' : sp > .45 ? 'walk' : 'idle'; setAnim(P, an, an === 'run' ? clamp(sp / 4.6, .85, 2) : an === 'walk' ? clamp(sp / 1.35, .55, 2.1) : 1); // 발이 미끄러지지 않게 걸음 속도를 실제 속도에 맞춰요

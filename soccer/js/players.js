@@ -19,13 +19,12 @@ function kitShader(m, kind, u) {
           diffuseColor.rgb = c; }` : kind === 'chest' ? `{ if (vBind.y > .955 && vBind.y < 1.585 && abs(vBind.x) < .21) diffuseColor.rgb = uA * .96; }` : kind === 'top'
       ? `{ if (vBind.y < .955) discard; float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); float ax = abs(vBind.x);
           vec3 c = uA * .96;
-          if (ax > .2 && ax < .232) c = uB;                      // 소매 끝 줄
-          if (ax >= .232) c = uSkin * (.85 + l * .3);             // 반팔 → 팔은 피부
+          if (ax >= .29) c = uSkin * vec3(.6, .4, .3) * (.9 + l * .15); // 반팔 아래 팔: 손 · 얼굴과 같은 피부 톤
           if (vBind.y > 1.6) c = uB;                                // 목 칼라
           diffuseColor.rgb = c; }`
       : `{ float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); vec3 c;
           if (vBind.y > .71) c = uA * clamp(.85 + l * .3, .85, 1.08);    // 반바지
-          else if (vBind.y > .53) c = uSkin * (.9 + l * .2);              // 무릎
+          else if (vBind.y > .53) c = uSkin * vec3(.6, .4, .3) * (.9 + l * .15); // 무릎 (손과 같은 피부 톤)
           else if (vBind.y > .5) c = uB;                                  // 스타킹 줄
           else c = uC * clamp(.7 + l * .6, .7, 1.1);                      // 스타킹
           if (vBind.y > .71 && vBind.y < .74) c = uB;                     // 바짓단 줄

@@ -136,7 +136,7 @@ function humanTick(dt, setMode) {
     else if (!ball.owner && Math.hypot(ball.x - p.x, ball.z - p.z) < 6 && ball.y < 1.2) { const pr = predictBall(.2); steer(p, pr[0], pr[1], maxSpd(p, false), dt); }
     else accel(p, 0, 0, dt);
     // 자동 전환: 수비할 때 다른 선수가 훨씬 가까우면
-    const o = ball.owner; if ((!o || o.team !== tm) && ball.passTo !== p && (M.t - (p.swT || 0)) > 1.2 && mag < .15) { const pr = predictBall(.4); const myD = Math.hypot(p.x - pr[0], p.z - pr[1]); const c = closestTo(team(tm).filter(q => q.role !== 'GK'), pr[0], pr[1]); if (c && c !== p && myD - Math.hypot(c.x - pr[0], c.z - pr[1]) > 7) { M.ctrl[h] = c; c.swT = M.t; } }
+    const o = ball.owner; if ((!o || o.team !== tm) && ball.passTo !== p && (M.t - (p.swT || 0)) > 1.2) { const pr = predictBall(.4); const myD = Math.hypot(p.x - pr[0], p.z - pr[1]); const c = closestTo(team(tm).filter(q => q.role !== 'GK'), pr[0], pr[1]); const gap = c ? myD - Math.hypot(c.x - pr[0], c.z - pr[1]) : 0; if (c && c !== p && (mag < .15 ? gap > 7 : o && gap > 10)) { M.ctrl[h] = c; c.swT = M.t; } }
     if (ball.passTo && ball.passTo.team === tm && ball.passTo !== p && !ball.owner) { M.ctrl[h] = ball.passTo; }
   }
 }
@@ -370,7 +370,7 @@ async function boot() {
   buildStadium(); buildBall(); setupUI();
   try { await loadChars(); } catch (e) { $('#load').innerHTML = '선수 모델을 못 불러왔어요 😢<br><small>새로고침해 보세요</small>'; return; }
   if (window.BLIP) { const prev = BLIP._onAccount; BLIP._onAccount = () => { if (prev) prev(); cloudPull(); renderMenu(); }; setTimeout(cloudPull, 1500); }
-  startDemo(); show('#menu'); CAM.snap = 0; cam.position.set(30, 60, 110); CAM.look.set(0, 0, 0); CAM.flyT = 3; $('#splash').classList.add('on'); setTimeout(() => $('#splash').classList.add('out'), 1900); setTimeout(() => $('#splash').remove(), 2700); $('#mMute').textContent = SAVE.mute ? '🔇' : '🔊'; $('#load').classList.add('gone'); setTimeout(() => $('#load').remove(), 700);
+  startDemo(); giveGifts(); show('#menu'); CAM.snap = 0; cam.position.set(30, 60, 110); CAM.look.set(0, 0, 0); CAM.flyT = 3; $('#splash').classList.add('on'); setTimeout(() => $('#splash').classList.add('out'), 1900); setTimeout(() => $('#splash').remove(), 2700); $('#mMute').textContent = SAVE.mute ? '🔇' : '🔊'; $('#load').classList.add('gone'); setTimeout(() => $('#load').remove(), 700);
   requestAnimationFrame(loop);
   const fol = new URLSearchParams(location.search).get('room'); if (fol) { auInit(); openOnline(fol); }
 }
