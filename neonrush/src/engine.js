@@ -33,8 +33,8 @@ const Engine = (() => {
     });
   }
 
-  function buildLevel(objs) {
-    const L = { decos: [], solids: [], hazards: [], pads: [], orbs: [], triggers: [], all: objs, endX: 0, cols: [] };
+  function buildLevel(objs, cfg = {}) {
+    const L = { jump: JUMP * (cfg.jump || 1), stepUp: cfg.step || 0, decos: [], solids: [], hazards: [], pads: [], orbs: [], triggers: [], all: objs, endX: 0, cols: [] };
     objs.forEach((o, i) => {
       o.id = i;
       if (o.t === 'deco') L.decos.push(o);
@@ -106,7 +106,7 @@ const Engine = (() => {
 
     switch (m) {
       case 'cube':
-        if (s.onGround && (held || wantTap)) { s.vy = JUMP * g; s.onGround = false; s.jumps++; s.pressBuf = 0; s.events.push({ e: 'jump' }); }
+        if (s.onGround && (held || wantTap)) { s.vy = L.jump * g; s.onGround = false; s.jumps++; s.pressBuf = 0; s.events.push({ e: 'jump' }); }
         else s.vy = clamp(s.vy - G * g * dt, MAXFALL);
         break;
       case 'robot':
@@ -148,6 +148,7 @@ const Engine = (() => {
       if (b.t !== 'block' || !ov(px, s.y, W, H, b.x, b.y, b.w, b.h)) continue;
       const penTop = b.y + b.h - s.y, penBot = s.y + H - b.y;
       if (penTop <= tol && s.vy <= 0) { s.y = b.y + b.h; s.vy = 0; if (gg === 1) grounded = true; }
+      else if (L.stepUp && bonkDies && penTop <= L.stepUp) { s.y = b.y + b.h; if (s.vy <= 0) { s.vy = 0; grounded = true; } } // step assist
       else if (penBot <= tol && s.vy >= 0) {
         if (bonkDies) { die(s); return; }
         s.y = b.y - H; s.vy = 0; if (gg === -1) grounded = true;

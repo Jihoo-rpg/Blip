@@ -37,7 +37,7 @@ const LEVELS = [
   ['Orange Crush', 2, 4, 5, 55, 128], ['Night Drive', 2, 5, 5, 66, 134], ['Metro Line', 2, 5, 6, 77, 138], ['Red Alert', 3, 6, 6, 88, 132],
   ['Overclock', 3, 7, 6, 99, 140], ['Static Storm', 3, 7, 7, 111, 136], ['Prism Break', 4, 8, 7, 122, 140], ['Hyperdrive', 4, 9, 7, 133, 144],
   ['Voltage', 4, 9, 7, 144, 146], ['Abyss', 5, 10, 7, 155, 140], ['Doomsday Engine', 5, 10, 8, 166, 148], ['Event Horizon', 5, 10, 8, 177, 150],
-].map(([name, tier, stars, secs, seed, bpm], i) => ({ name, tier, stars, secs, seed, bpm, ...UNLOCK[i] }));
+].map(([name, tier, stars, secs, seed, bpm], i) => ({ name, tier, stars, secs, seed, bpm, ...UNLOCK[i], phys: i === 0 ? { jump: 1.15, step: 0.55 } : undefined }));
 
 // bright GD-like palettes: [bg, ground]
 const PALETTES = [
@@ -81,7 +81,7 @@ function generate(def) {
   let L = null;
 
   function tryAdd(arr, endX) {
-    const list = objs.concat(arr); L = E.buildLevel(E.expand(list));
+    const list = objs.concat(arr); L = E.buildLevel(E.expand(list), def.phys);
     const nf = [];
     for (const f of F) { const r = advance(L, cloneF(f), endX); if (!r.layer.length) return false; nf.push(r); }
     objs = list; F = nf; return true;
@@ -269,7 +269,7 @@ function generate(def) {
   }
   objs = merged.concat(rest);
   // final verification from scratch on every phase
-  L = E.buildLevel(E.expand(objs));
+  L = E.buildLevel(E.expand(objs), def.phys);
   let sol = null;
   for (let i = 0; i < T.k; i++) {
     const r = advance(L, initFront(T.N, Math.round(i * T.N / T.k)), endX + 1);
@@ -289,7 +289,7 @@ for (let i = 0; i < LEVELS.length; i++) {
   for (let a = 0; a < 5; a++) { try { g = generate({ ...def, seed }); break; } catch (e) { console.log('  retry', def.name, e.message); seed += 1000; } }
   if (!g) throw new Error('could not generate ' + def.name);
   const T = TIERS[def.tier];
-  out.push({ name: def.name, diff: T.name, tier: def.tier, stars: def.stars, seed, bpm: def.bpm, objs: g.objs, len: g.endX });
+  out.push({ name: def.name, diff: T.name, tier: def.tier, stars: def.stars, seed, bpm: def.bpm, phys: def.phys, objs: g.objs, len: g.endX });
   sols.push(g.sol);
   const secs = g.sol.reduce((a, [, n]) => a + n, 0) / 240;
   console.log(def.name.padEnd(16), T.name.padEnd(7), 'objs', String(g.objs.length).padStart(4), 'len', String(g.endX).padStart(6), 'time', secs.toFixed(0) + 's', 'bt', g.backtracks, (Date.now() - t0) + 'ms');

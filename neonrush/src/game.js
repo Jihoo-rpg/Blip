@@ -25,7 +25,7 @@
 
   // ---------- levels ----------
   const LV = LEVELS.map(l => ({ ...l, L: null }));
-  const getL = i => LV[i].L || (LV[i].L = Engine.buildLevel(Engine.expand(LV[i].objs)));
+  const getL = i => LV[i].L || (LV[i].L = Engine.buildLevel(Engine.expand(LV[i].objs), LV[i].phys || {}));
   const musicCfg = l => ({ bpm: l.bpm || 130, prog: l.seed % 4, lead: (l.seed >> 2) % 4, tr: [0, 2, -3, 5, -2, 3][l.seed % 6], style: l.tier >= 3 ? 2 : l.tier >= 1 ? 1 : 0 });
   const DIFF_NAMES = ['Easy', 'Normal', 'Hard', 'Harder', 'Insane', 'Demon'];
   let sel = Math.min(store.get('sel', 0), LV.length - 1);
