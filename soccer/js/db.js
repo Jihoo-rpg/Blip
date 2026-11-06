@@ -313,6 +313,14 @@ const PDB = []; (function () {
     const base = { FW: [o - 2, o, o - 6, o - 2, o - 30, 30], MF: [o - 4, o - 6, o + 1, o - 2, o - 12, 30], DF: [o - 5, o - 25, o - 8, o - 12, o + 2, 30], GK: [o - 30, o - 40, o - 20, o - 30, o - 30, o + 1] }[ps];
     p.st = { spd: clamp(base[0], 30, 99), sht: clamp(base[1], 25, 99), pas: clamp(base[2], 30, 99), drb: clamp(base[3], 30, 99), def: clamp(base[4], 20, 99), gk: clamp(base[5], 20, 99) }; p.r = o >= 72 ? 'S' : 'B'; PDB.push(p); }
 })();
+/* 스페셜 카드: 시즌 스페셜(현역 스타 100~116) · 아이콘(레전드 110~131) → 10강 하면 최대 150 */
+RARITY.unshift({ k: 'I', n: '아이콘', c: '#fff1b0', min: 0 }, { k: 'T', n: '시즌 스페셜', c: '#c86bff', min: 0 });
+(function () { const base = PDB.slice(); const rnd = mulberry(4242);
+  const mk = (p, r, o, tag) => { const d = o - p.o; const st = {}; for (const k in p.st) st[k] = (k === 'gk') !== (p.pos === 'GK') ? p.st[k] : p.st[k] + d; PDB.push(Object.assign({}, p, { id: PDB.length, o, st, r, tag, base: p.id })); };
+  base.filter(p => !p.leg && !p.prospect && p.o >= 85).forEach(p => mk(p, 'T', Math.min(116, p.o + 11 + Math.floor(rnd() * 6)), '시즌 스페셜'));
+  const legs = base.filter(p => p.leg).sort((a, b) => b.o - a.o); legs.forEach((p, i) => mk(p, 'I', Math.round(131 - i * 21 / Math.max(1, legs.length - 1)), '아이콘'));
+})();
+const RANK = { B: 0, S: 1, G: 2, W: 3, L: 4, T: 5, I: 6 };
 const RAR = k => RARITY.find(r => r.k === k);
 const POSN = { GK: '골키퍼', DF: '수비수', MF: '미드필더', FW: '공격수' };
 /* 선수 생김새: 나라 · 이름으로 정해져요 */

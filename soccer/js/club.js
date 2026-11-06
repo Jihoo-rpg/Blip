@@ -7,20 +7,24 @@ const OPP = [
   { id: 'STG', n: '서울 타이거즈', f: '🐯', c: ['#ff7a00', '#141414'], o: 73 }, { id: 'TKS', n: '도쿄 사무라이즈', f: '⛩️', c: ['#141414', '#d7142b'], o: 76 }, { id: 'MXS', n: '멕시코시티 솔', f: '☀️', c: ['#00663a', '#f4f4f4'], o: 79 },
   { id: 'LDR', n: '런던 로열스', f: '👑', c: ['#6b2fb5', '#ffd400'], o: 82 }, { id: 'RIO', n: '리우 삼바스', f: '🥁', c: ['#ffdc02', '#1d4fae'], o: 84 }, { id: 'MLS', n: '밀라노 스텔라', f: '⭐', c: ['#8a1c2b', '#141414'], o: 86 },
   { id: 'MDB', n: '마드리드 블랑코스', f: '🤍', c: ['#f4f4f4', '#ffd400'], o: 88 }, { id: 'PRL', n: '파리 뤼미에르', f: '🗼', c: ['#1f2a5c', '#d7142b'], o: 90 }, { id: 'GAL', n: '갤럭시 올스타즈', f: '🌌', c: ['#ff4df0', '#22d3ee'], o: 94 },
+  { id: 'RCL', n: '레알 클래식', f: '🏛️', c: ['#ffffff', '#6b2fb5'], o: 100 }, { id: 'WDT', n: '월드 드림팀', f: '🌍', c: ['#0b1020', '#22d3ee'], o: 110 }, { id: 'ICN', n: '아이콘 레전즈', f: '👑', c: ['#fff1b0', '#141414'], o: 122 },
 ];
 const PACKS = [
-  { k: 'basic', n: '일반 팩', p: 200, w: { B: 50, S: 32, G: 16, W: 2, L: 0 }, c: '#c98a4b', d: '브론즈 · 실버가 많이 나와요' },
-  { k: 'gold', n: '골드 팩', p: 800, w: { B: 0, S: 0, G: 78, W: 19, L: 3 }, c: '#ffd400', d: '골드 이상 확정 · 월드클래스 19%' },
-  { k: 'wc', n: '월드클래스 팩', p: 2800, w: { B: 0, S: 0, G: 0, W: 85, L: 15 }, c: '#22d3ee', d: '월드클래스 확정 · 레전드 15%' },
+  { k: 'basic', n: '일반 팩', p: 200, w: { B: 50, S: 32, G: 16, W: 2, L: 0 }, c: '#c98a4b', d: '브론즈 · 실버가 많이 나와요', j: ['B', 'B'] },
+  { k: 'gold', n: '골드 팩', p: 800, w: { B: 0, S: 0, G: 78, W: 19, L: 3 }, c: '#ffd400', d: '골드 이상 확정 · 월드클래스 19%', j: ['B', 'S', 'S'] },
+  { k: 'wc', n: '월드클래스 팩', p: 2800, w: { B: 0, S: 0, G: 0, W: 80, L: 15, T: 5 }, c: '#22d3ee', d: '월드클래스 확정 · 레전드 15% · 스페셜 5%', j: ['S', 'S', 'G'] },
+  { k: 'sp', n: '스페셜 팩', p: 7000, w: { T: 88, I: 12 }, c: '#c86bff', d: '시즌 스페셜(100+) 확정 · 아이콘 12%', j: ['G', 'G', 'G', 'W'] },
 ];
-const DUPC = { B: 60, S: 120, G: 350, W: 1200, L: 3500 };
-/* 선수 팔기: 후보 선수만 · 전체 18명(처음 선수단)과 키퍼 2명은 남겨요 */
-const SELLC = DUPC, MIN_SQUAD = 18;
+const DUPC = { B: 60, S: 120, G: 350, W: 1200, L: 3500, T: 3000, I: 9000 };
+/* 선수 팔기: 처음 받은 기본 선수 18명만 못 팔아요 (선발이어도 팔면 자동으로 채워요) · 강화할수록 비싸요 */
+const SELLC = DUPC; const isBase = id => { const c = club(); return c.base ? c.base.includes(id) : !!(PDB[id] && PDB[id].prospect); };
+const sellPrice = id => Math.round(SELLC[PDB[id].r] * Math.pow(1.45, Math.max(0, lvOf(id) - 1)) / 10) * 10;
 function sellBar() { const c = club(); const n = Object.keys(c.own).length; const p = CL.sellPick != null ? PDB[CL.sellPick] : null;
-  if (p) return `<div class="sellbar"><span><b>${esc(p.n)}</b> (${RAR(p.r).n} ${p.o}) 팔까요? → 🪙${SELLC[p.r].toLocaleString()}</span><button class="btn main" data-sellok="1">팔기</button><button class="btn" data-sellno="1">취소</button></div>`;
-  return `<p class="hintp">💰 팔 후보 선수를 누르세요 · 선발 11명은 못 팔아요 · 선수단은 ${MIN_SQUAD}명 이상 남아요 (지금 ${n}명)</p>`; }
-function sellCheck(id) { const c = club(), p = PDB[id]; if (!p) return '없는 선수예요'; if (c.xi.includes(id)) return '선발 선수는 먼저 후보로 빼야 팔 수 있어요'; if (Object.keys(c.own).length <= MIN_SQUAD) return `선수단은 ${MIN_SQUAD}명 이상 있어야 해요`; if (p.pos === 'GK' && Object.keys(c.own).filter(i => PDB[i] && PDB[i].pos === 'GK').length <= 2) return '골키퍼는 2명은 남겨야 해요'; return ''; }
-function sellPlayer(id) { const c = club(), p = PDB[id]; const why = sellCheck(id); if (why) { toast(why, 2400); return; } delete c.own[id]; const n = SELLC[p.r]; coins(n); saveClub(); toast(`💰 ${p.n} 선수를 팔았어요 · 🪙 +${n.toLocaleString()}`, 2600); sfx('goal'); }
+  if (p) return `<div class="sellbar"><span><b>${esc(p.n)}</b> (${RAR(p.r).n} ${cardO(p)}${lvOf(p.id) > 1 ? ' · +' + lvOf(p.id) : ''}) 팔까요? → 🪙${sellPrice(p.id).toLocaleString()}</span><button class="btn main" data-sellok="1">팔기</button><button class="btn" data-sellno="1">취소</button></div>`;
+  return `<p class="hintp">💰 팔 선수를 누르세요 (선발도 돼요) · 처음 받은 기본 선수 18명은 못 팔아요 · 지금 ${n}명</p>`; }
+function sellCheck(id) { const c = club(), p = PDB[id]; if (!p || !c.own[id]) return '없는 선수예요'; if (isBase(id)) return '처음 받은 기본 선수는 못 팔아요'; return ''; }
+function dropFromXI(id) { const c = club(); const i = c.xi.indexOf(id); if (i < 0) return; const pos = FORMS[c.form][i][0]; const pool = owned().filter(q => q.id !== id && !c.xi.includes(q.id)).sort((a, b) => cardO(b) - cardO(a)); const r = pool.find(q => q.pos === pos) || pool[0]; c.xi[i] = r ? r.id : null; }
+function sellPlayer(id) { const c = club(), p = PDB[id]; const why = sellCheck(id); if (why) { toast(why, 2400); return; } const n = sellPrice(id); dropFromXI(id); delete c.own[id]; coins(n); saveClub(); toast(`💰 ${p.n} 선수를 팔았어요 · 🪙 +${n.toLocaleString()}`, 2600); sfx('goal'); }
 const CL = { tab: 'play', sel: null, busy: false };
 const club = () => SAVE.club;
 function saveClub() { persist(); }
@@ -37,20 +41,20 @@ function openCreate() {
     const pro = PDB.filter(p => p.prospect || p.r === 'B'); const rnd = Math.random; const own = {}; const take = (pos, n) => { const L = pro.filter(p => p.pos === pos && !own[p.id]).sort(() => rnd() - .5).slice(0, n); for (const p of L) own[p.id] = 1; };
     take('GK', 2); take('DF', 6); take('MF', 6); take('FW', 4);
     SAVE.club = { name, emb: st.emb, c1: st.c1, c2: st.c2, coins: 1500, own, xi: [], form: '4-3-3', w: 0, d: 0, l: 0, beat: {}, made: Date.now(), freeGold: 1 };
-    autoXI(); saveClub(); giveGifts(); $('#create').hidden = true; openClub(); toast('🎉 구단이 생겼어요! 선물로 골드 팩 1개를 드려요', 3500);
+    SAVE.club.base = Object.keys(SAVE.club.own).map(Number); autoXI(); saveClub(); giveGifts(); $('#create').hidden = true; openClub(); toast('🎉 구단이 생겼어요! 선물로 골드 팩 1개를 드려요', 3500);
   };
 }
 /* ---------- 스쿼드 ---------- */
 function owned() { return Object.keys(club().own).map(Number).map(i => PDB[i]).filter(Boolean); }
-function autoXI() { const c = club(); const F = FORMS[c.form]; const pool = owned().sort((a, b) => b.o - a.o); const used = new Set(); c.xi = F.map(f => { let p = pool.find(q => !used.has(q.id) && q.pos === f[0]) || pool.find(q => !used.has(q.id)); if (p) used.add(p.id); return p ? p.id : null; }); saveClub(); }
+function autoXI() { const c = club(); const F = FORMS[c.form]; const pool = owned().sort((a, b) => cardO(b) - cardO(a)); const used = new Set(), nm = new Set(); const ok = q => !used.has(q.id) && !nm.has(q.n); c.xi = F.map(f => { let p = pool.find(q => ok(q) && q.pos === f[0]) || pool.find(ok); if (p) { used.add(p.id); nm.add(p.n); } return p ? p.id : null; }); saveClub(); }
 function xiPlayers() { const c = club(); return c.xi.map(i => i == null ? null : PDB[i]); }
-function teamOvr(xi, form) { const F = FORMS[form]; let s = 0, n = 0; xi.forEach((p, i) => { if (!p) return; let o = p.o; if (F[i] && p.pos !== F[i][0]) o -= p.pos === 'GK' || F[i][0] === 'GK' ? 25 : 6; s += o; n++; }); return n ? Math.round(s / 11) : 0; }
+function teamOvr(xi, form) { const F = FORMS[form]; let s = 0, n = 0; xi.forEach((p, i) => { if (!p) return; let o = cardO(p); if (F[i] && p.pos !== F[i][0]) o -= p.pos === 'GK' || F[i][0] === 'GK' ? 25 : 6; s += o; n++; }); return n ? Math.round(s / 11) : 0; }
 const cardName = n => n.length > 6 && n.includes(' ') ? n.split(' ').pop() : n;
-function cardHTML(p, extra, slot) { if (!p) return `<div class="pcard empty" ${extra || ''}><div class="fr"></div><div class="in"></div><span>${slot || '+'}</span></div>`; const off = slot && slot !== p.pos; return `<div class="pcard r${p.r}" ${extra || ''}><div class="fr"></div><div class="in"><img data-por="${p.id}" alt=""><em>${p.o}</em><i>${p.pos}</i><span class="fl">${NAT[p.nat] || ''}</span><b>${esc(cardName(p.n))}</b><small>${RAR(p.r).n}</small>${off ? '<span class="off">⚠️</span>' : ''}</div><div class="gem"></div></div>`; }
+function cardHTML(p, extra, slot) { if (!p) return `<div class="pcard empty" ${extra || ''}><div class="fr"></div><div class="in"></div><span>${slot || '+'}</span></div>`; const off = slot && slot !== p.pos; const lv = lvOf(p.id); return `<div class="pcard r${p.r}" ${extra || ''}><div class="fr"></div><div class="in"><img data-por="${p.id}" alt=""><em>${cardO(p)}</em>${lv > 1 ? `<span class="lvb l${lv >= 8 ? 3 : lv >= 5 ? 2 : 1}${lv === 10 ? ' max' : ''}">+${lv}</span>` : ''}<i>${p.pos}</i><span class="fl">${NAT[p.nat] || ''}</span><b>${esc(cardName(p.n))}</b><small>${RAR(p.r).n}</small>${off ? '<span class="off">⚠️</span>' : ''}</div><div class="gem"></div></div>`; }
 function clubTeamObj(c, xi, form) {
   return { id: (c.id || c.name.replace(/\s/g, '').slice(0, 3)).toUpperCase(), n: c.name || c.n, f: c.emb || c.f, home: [c.c1 || c.c[0], c.c2 || c.c[1], c.c1 || c.c[0]], away: ['#f4f4f4', c.c1 || c.c[0], '#f4f4f4'], num: colDist(c.c1 || c.c[0], '#ffffff') < .6 ? '#141414' : '#ffffff', r: [80, 80, 80, 80], skin: [0, 1, 2], hair: ['#120f0d'], names: ['선수'], xi, form };
 }
-function oppXI(o) { const rnd = mulberry([...o.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11)); const F = FORMS['4-3-3']; const used = new Set(); return F.map(f => { const cand = PDB.filter(p => p.pos === f[0] && !used.has(p.id) && Math.abs(p.o - o.o) <= 4 && (o.o >= 90 || !p.leg)).sort((a, b) => Math.abs(a.o - o.o) - Math.abs(b.o - o.o) + (rnd() - .5) * 4); const p = cand[Math.floor(rnd() * Math.min(5, cand.length))] || PDB.filter(p => p.pos === f[0] && !used.has(p.id)).sort((a, b) => Math.abs(a.o - o.o) - Math.abs(b.o - o.o))[0]; used.add(p.id); return p; }); }
+function oppXI(o) { const rnd = mulberry([...o.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11)); const F = FORMS['4-3-3']; const used = new Set(), names = new Set(); return F.map(f => { const cand = PDB.filter(p => p.pos === f[0] && !used.has(p.id) && !names.has(p.n) && Math.abs(p.o - o.o) <= 4 && (o.o >= 90 || !p.leg)).sort((a, b) => Math.abs(a.o - o.o) - Math.abs(b.o - o.o) + (rnd() - .5) * 4); const p = cand[Math.floor(rnd() * Math.min(5, cand.length))] || PDB.filter(p => p.pos === f[0] && !used.has(p.id)).sort((a, b) => Math.abs(a.o - o.o) - Math.abs(b.o - o.o))[0]; used.add(p.id); names.add(p.n); return p; }); }
 /* ---------- 구단 화면 ---------- */
 function clubHeader() { const c = club(); if (!c) return; $('#clHead').innerHTML = `<div class="crest" style="background:linear-gradient(135deg,${c.c1} 55%,${c.c2} 55%)">${c.emb}</div><div class="cn"><b>${esc(c.name)}</b><small>${c.w}승 ${c.d}무 ${c.l}패 · 팀 능력치 ${teamOvr(xiPlayers(), c.form)}</small></div><div class="coin">🪙 ${(c.coins || 0).toLocaleString()}</div>`; }
 function openClub() { if (!club()) return openCreate(); show('#club'); UI.screen = 'club'; clubHeader(); clubTab(CL.tab); }
@@ -70,7 +74,7 @@ function clubTab0(t) {
       <div class="odds">${PACKS.map(k => `<div><b>${k.n}</b> ${Object.entries(k.w).filter(([, v]) => v).map(([r, v]) => `${RAR(r).n} ${v}%`).join(' · ')}</div>`).join('')}</div>`;
   } else if (t === 'all') {
     const own = club().own; const L = PDB.filter(p => !p.prospect).sort((a, b) => b.o - a.o); const n = L.filter(p => own[p.id]).length;
-    B.innerHTML = `<p class="hintp">선수 도감 ${n} / ${L.length} · 아직 없는 선수는 흐리게 보여요</p><div class="rfilter">${['all', 'L', 'W', 'G', 'S', 'B'].map(r => `<button class="chip ${CL.rf === r || (!CL.rf && r === 'all') ? 'on' : ''}" data-rf="${r}">${r === 'all' ? '전체' : RAR(r).n}</button>`).join('')}</div><div class="bench all">${L.filter(p => !CL.rf || CL.rf === 'all' || p.r === CL.rf).map(p => cardHTML(p, own[p.id] ? '' : 'data-miss="1"')).join('')}</div>`;
+    B.innerHTML = `<p class="hintp">선수 도감 ${n} / ${L.length} · 아직 없는 선수는 흐리게 보여요</p><div class="rfilter">${['all', 'I', 'T', 'L', 'W', 'G', 'S', 'B'].map(r => `<button class="chip ${CL.rf === r || (!CL.rf && r === 'all') ? 'on' : ''}" data-rf="${r}">${r === 'all' ? '전체' : RAR(r).n}</button>`).join('')}</div><div class="bench all">${L.filter(p => !CL.rf || CL.rf === 'all' || p.r === CL.rf).map(p => cardHTML(p, own[p.id] ? '' : 'data-miss="1"')).join('')}</div>`;
   }
 }
 function winCoins(o) { return 220 + Math.max(0, o.o - 60) * 24; }
@@ -99,21 +103,24 @@ document.addEventListener('click', e => {
 function rollPack(k) { const w = k.w; let tot = 0; for (const r in w) tot += w[r]; let x = Math.random() * tot, r = 'B'; for (const q in w) { x -= w[q]; if (x <= 0) { r = q; break; } } const L = PDB.filter(p => p.r === r && (r !== 'B' || true)); return pick(L); }
 function buyPack(k) {
   const c = club(); const free = k.k === 'gold' && c.freeGold; if (!free && (c.coins || 0) < k.p) { toast('🪙 코인이 부족해요. 경기에서 이기면 받아요!'); sfx('tick'); return; }
-  if (free) c.freeGold = 0; else coins(-k.p); const p = rollPack(k); const dup = !!c.own[p.id]; if (dup) coins(DUPC[p.r]); else c.own[p.id] = 1; saveClub(); clubHeader(); revealCard(p, dup, k);
+  if (free) c.freeGold = 0; else coins(-k.p); const p = rollPack(k); const dup = !!c.own[p.id]; if (dup) coins(DUPC[p.r]); else c.own[p.id] = 1;
+  const junk = (k.j || []).map(r => { let L = PDB.filter(q => q.r === r && !q.prospect); if (!L.length) L = PDB.filter(q => q.r === r); if (!L.length) L = PDB.filter(q => q.r === 'B' || q.r === 'S'); const q = pick(L); const d = !!c.own[q.id]; if (d) coins(DUPC[q.r]); else c.own[q.id] = 1; return { p: q, dup: d }; }); // 잡카드도 같이
+  saveClub(); clubHeader(); revealCard(p, dup, k, junk);
 }
-function revealCard(p, dup, k) {
+function revealCard(p, dup, k, junk) {
   const ov = $('#reveal'), r = RAR(p.r); ov.hidden = false; ov.className = 'r' + p.r; ov.innerHTML = `<div class="rv"><div class="pack big" style="--pc:${k.c}"><div class="pk">${k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div></div></div>`;
   sfx('kick', 1); vibrate(30);
   setTimeout(() => { sfx(p.r === 'W' || p.r === 'L' ? 'goal' : 'save'); if (p.r === 'W' || p.r === 'L') vibrate([60, 40, 120]);
     ov.innerHTML = `<div class="rv"><div class="glow" style="--rc:${r.c}"></div>${bigCard(p)}<div class="rvx"><div class="rvt" style="color:${r.c}">${r.n}!</div>${dup ? `<div class="dup">이미 있는 선수 → 🪙 ${DUPC[p.r]} 코인</div>` : '<div class="dup">새 선수 획득! 스쿼드에 넣어 보세요</div>'}<div class="row2" style="margin-top:14px"><button class="btn" id="rvClose">확인</button><button class="btn main" id="rvAgain">한 번 더 🪙${k.p.toLocaleString()}</button></div></div></div>`;
+    if (junk && junk.length) { const j = document.createElement('div'); j.className = 'junk'; j.innerHTML = `<p>+ 잡카드 ${junk.length}장 <small>(팔거나 강화 재료로 써요)</small></p><div>${junk.map(x => cardHTML(x.p) + (x.dup ? `<span class="jd">중복 🪙${DUPC[x.p.r]}</span>` : '')).join('')}</div>`; ov.querySelector('.rv').appendChild(j); }
     fillPortraits(ov); $('#rvClose').onclick = () => { ov.hidden = true; if (UI.screen === 'menu') renderMenu(); else clubTab(CL.tab); }; $('#rvAgain').onclick = () => { ov.hidden = true; buyPack(k); };
   }, 1300);
 }
-function bigCard(p) { const s = p.st; const sl = p.pos === 'GK' ? [['GK', s.gk], ['패스', s.pas], ['속도', s.spd]] : [['속도', s.spd], ['슈팅', s.sht], ['패스', s.pas], ['드리블', s.drb], ['수비', s.def], ['헤더', Math.round((s.def + s.sht) / 2)]]; const lau = p.r === 'W' || p.r === 'L' ? '<div class="laurel l"></div><div class="laurel r"></div>' : ''; return `<div class="pcard bcard r${p.r}">${lau}<div class="fr"></div><div class="in"><img data-por="${p.id}" alt=""><em>${p.o}</em><i>${p.pos}</i><span class="fl">${NAT[p.nat] || ''}</span><b>${esc(p.n)}</b><small>${POSN[p.pos]} · ${RAR(p.r).n}</small><div class="bs">${sl.map(([n, v]) => `<div><span>${n}</span>${v}</div>`).join('')}</div></div><div class="gem"></div></div>`; }
+function bigCard(p0) { const p = boost(p0, lvOf(p0.id)); const s = p.st; const sl = p.pos === 'GK' ? [['GK', s.gk], ['패스', s.pas], ['속도', s.spd]] : [['속도', s.spd], ['슈팅', s.sht], ['패스', s.pas], ['드리블', s.drb], ['수비', s.def], ['헤더', Math.round((s.def + s.sht) / 2)]]; const lau = p.r === 'W' || p.r === 'L' ? '<div class="laurel l"></div><div class="laurel r"></div>' : ''; return `<div class="pcard bcard r${p.r}">${lau}<div class="fr"></div><div class="in"><img data-por="${p.id}" alt=""><em>${p.o}</em>${lvOf(p.id) > 1 ? `<span class="lvb big l${lvOf(p.id) >= 8 ? 3 : lvOf(p.id) >= 5 ? 2 : 1}${lvOf(p.id) === 10 ? ' max' : ''}">+${lvOf(p.id)}</span>` : ''}<i>${p.pos}</i><span class="fl">${NAT[p.nat] || ''}</span><b>${esc(p.n)}</b><small>${POSN[p.pos]} · ${RAR(p.r).n}</small><div class="bs">${sl.map(([n, v]) => `<div><span>${n}</span>${v}</div>`).join('')}</div></div><div class="gem"></div></div>`; }
 /* ---------- 경기 ---------- */
 function startClubMatch(o) {
   const c = club(); if (c.xi.filter(x => x != null).length < 11) { toast('선수 11명이 필요해요. 자동 배치를 눌러 보세요'); return; }
-  const me = clubTeamObj(c, xiPlayers(), c.form); const op = clubTeamObj({ id: o.id, n: o.n, f: o.f, c: o.c }, oppXI(o), '4-3-3');
+  const me = clubTeamObj(c, xiPlayers().map(p => p && boost(p, lvOf(p.id))), c.form); const op = clubTeamObj({ id: o.id, n: o.n, f: o.f, c: o.c }, oppXI(o), '4-3-3');
   CL.vs = o; startGame({ T0: me, T1: op, f0: c.form, f1: '4-3-3', mode: 'club' });
 }
 function clubReward(res, gf) { // res: 'w' 'd' 'l'

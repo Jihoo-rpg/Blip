@@ -318,6 +318,30 @@ body.mob #bKeys{display:none}
 .pill.acc{color:#9be15d;cursor:pointer;max-width:150px;overflow:hidden;text-overflow:ellipsis}.pill.acc.off{color:#fff;opacity:.8}@media (max-width:640px){.pill.acc{max-width:46px}}
 .sellbar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin:4px 0 8px;padding:8px 10px;border-radius:12px;background:rgba(255,212,0,.12);border:1px solid rgba(255,212,0,.5);font-size:13px;font-weight:800}.sellbar span{flex:1;min-width:160px}.sellbar .btn{height:34px;padding:0 14px;font-size:13px}
 .bench.selling .pcard{animation:wob 1.2s ease-in-out infinite}@keyframes wob{50%{transform:rotate(-2deg)}}.pcard .price{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);z-index:3;padding:2px 7px;border-radius:999px;background:#ffd400;color:#2a1d02;font-size:11px;font-weight:900;white-space:nowrap;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+
+/* 스페셜 · 아이콘 카드 */
+.rT{--f1:#5b1fa8;--f2:#f3c4ff;--f3:#c86bff;--b1:#1c0b33;--b2:#5a2a9a;--tx:#fbe9ff}
+.rI{--f1:#a07a1e;--f2:#ffffff;--f3:#ffe9a0;--b1:#2b2210;--b2:#7a6430;--tx:#fff8dc}
+.pcard.rT .fr,.pcard.rI .fr{background-size:200% 200%;animation:sh 2.4s linear infinite}
+.pcard.rI .fr{background:linear-gradient(120deg,#ffe9a0,#fff 20%,#a8f0ff 40%,#ffd1f0 60%,#fff 80%,#ffe9a0);background-size:300% 300%}
+.pcard.rT:after,.pcard.rI:after{content:'';position:absolute;inset:0;clip-path:polygon(0 9%,14% 0,36% 0,50% 3.5%,64% 0,86% 0,100% 9%,100% 86%,50% 100%,0 86%);background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.4) 48%,transparent 60%);background-size:250% 100%;animation:sw 2.2s ease-in-out infinite;pointer-events:none}
+/* 강화 단계 배지 */
+.pcard .lvb{position:absolute;left:9%;top:calc(10% + var(--w) * .25);padding:0 calc(var(--w) * .04);border-radius:4px;font:900 calc(var(--w) * .11) Pretendard,sans-serif;line-height:1.35;color:#2a1d02;background:#e0a46a}
+.pcard .lvb.l2{background:#e8edf3}.pcard .lvb.l3{background:linear-gradient(135deg,#fff3a8,#ffc21a)}.pcard .lvb.max{background:linear-gradient(90deg,#ff6b7a,#ffd400,#5ff0b0,#22d3ee,#c86bff);color:#fff;text-shadow:0 1px 2px #000}
+.pcard i{top:calc(10% + var(--w) * .37)}.pcard .fl{top:calc(10% + var(--w) * .52)}
+/* 잡카드 */
+.junk{margin-top:14px;text-align:center}.junk p{margin:0 0 8px;font-weight:900}.junk small{opacity:.7;font-weight:700}.junk>div{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:flex-end}.junk .pcard{--w:62px}.junk .jd{font-size:10px;font-weight:900;color:var(--gold);align-self:center;margin-left:-4px}
+/* 강화 화면 */
+.upwrap .uptop{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}.upwrap .bcard{--w:190px}
+.upempty{width:190px;height:258px;display:grid;place-items:center;font-size:70px;border-radius:20px;border:2px dashed rgba(255,255,255,.25);opacity:.6}
+.upinfo{flex:1;min-width:240px;max-width:380px;padding:14px;border-radius:16px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12)}.upinfo b{font-size:20px}.upinfo p{margin:8px 0;font-weight:700;font-size:14px}.upinfo .up{color:#5ff0b0;font-size:22px}.upinfo .rate{color:var(--gold);font-size:24px}.upinfo .tiny{font-size:11px;opacity:.7}
+.gauge{position:relative;height:18px;border-radius:9px;background:rgba(0,0,0,.4);overflow:hidden;border:1px solid rgba(255,255,255,.2)}.gauge i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#22d3ee,#5ff0b0,#ffd400);transition:width .3s}.gauge span{position:relative;display:block;text-align:center;font-size:11px;font-weight:900;line-height:18px;text-shadow:0 1px 2px #000}
+.uplist .upc{position:relative;cursor:pointer;display:grid;justify-items:center}.uplist .upc.tgt .pcard{filter:drop-shadow(0 0 10px #ffd400)}.uplist .upc.tgt:after{content:'강화';position:absolute;top:-6px;padding:1px 8px;border-radius:999px;background:#ffd400;color:#2a1d02;font-size:11px;font-weight:900}
+.uplist .upc.mat .pcard{filter:drop-shadow(0 0 8px #5ff0b0);transform:scale(.94)}.uplist .upc.mat:after{content:'재료';position:absolute;top:-6px;padding:1px 8px;border-radius:999px;background:#5ff0b0;color:#04121a;font-size:11px;font-weight:900}.uplist .upc.no{opacity:.35}
+.upfx{animation:upshake .12s linear infinite}@keyframes upshake{25%{transform:translate(-3px,1px) rotate(-1deg)}75%{transform:translate(3px,-1px) rotate(1deg)}}.upmsg{text-align:center;margin-top:12px;font-weight:900;font-size:18px}
+#reveal.upfail .bcard{filter:grayscale(.6) brightness(.8)}
+.upinfo .row2{display:flex;gap:8px;flex-wrap:wrap}.upinfo .row2 .btn{flex:1 1 auto;min-width:0}
+@media (max-width:640px){.upwrap .uptop{flex-wrap:nowrap;gap:10px;align-items:flex-start}.upwrap .bcard{--w:118px;flex:0 0 auto}.upempty{width:118px;height:160px;font-size:48px}.upinfo{min-width:0;flex:1 1 0;padding:10px}.upinfo b{font-size:16px}.upinfo p{font-size:12px;margin:5px 0}.upinfo .rate{font-size:19px}.upinfo .up{font-size:18px}.upinfo .row2 .btn{height:38px;font-size:13px;padding:0 8px}}
 </style>
 </head>
 <body>
@@ -400,7 +424,7 @@ body.mob #bKeys{display:none}
 <div id="club" class="scr" hidden>
   <div class="cwrap">
     <div class="ctop"><button class="btn" id="clBack" style="height:42px;padding:0 14px">←</button><div id="clHead"></div></div>
-    <div id="clTabs"><button data-ctab="play" class="on">⚽ 경기</button><button data-ctab="squad">📋 스쿼드</button><button data-ctab="shop">🎁 선수 뽑기</button><button data-ctab="all">📖 도감</button></div>
+    <div id="clTabs"><button data-ctab="play" class="on">⚽ 경기</button><button data-ctab="squad">📋 스쿼드</button><button data-ctab="shop">🎁 선수 뽑기</button><button data-ctab="up">⚡ 강화</button><button data-ctab="all">📖 도감</button></div>
     <div id="clBody"></div>
   </div>
 </div>
@@ -429,6 +453,7 @@ body.mob #bKeys{display:none}
 <script src="js/ui.js"></script>
 <script src="js/net.js"></script>
 <script src="js/club.js"></script>
+<script src="js/upgrade.js"></script>
 <script src="../common/p2p.js"></script>
 <script src="../common/blip.js" data-game="soccer"></script>
 <script>if (IS_MOBILE) document.body.classList.add('mob'); setupOnline(); boot();</script>
