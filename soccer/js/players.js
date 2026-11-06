@@ -11,7 +11,12 @@ function kitShader(m, kind, u) {
     Object.assign(sh.uniforms, u);
     sh.vertexShader = sh.vertexShader.replace(KIT_V[0], KIT_V[1]).replace(KIT_V2[0], KIT_V2[1]);
     let f = 'varying vec3 vBind;\nuniform vec3 uA;uniform vec3 uB;uniform vec3 uC;uniform vec3 uSkin;\n' + sh.fragmentShader;
-    const body = kind === 'chest' ? `{ if (vBind.y > .955 && vBind.y < 1.585 && abs(vBind.x) < .21) diffuseColor.rgb = uA * .96; }` : kind === 'top'
+    const body = kind === 'boot' ? `{ float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); vec3 c = uA * (.8 + l * .35);
+          float band = vBind.y - (vBind.z + .06) * .2;
+          if (band > .052 && band < .074) c = uB;
+          if (vBind.z < -.075 && vBind.y > .03) c = uB * .95;
+          if (vBind.y < .022) c = uC;
+          diffuseColor.rgb = c; }` : kind === 'chest' ? `{ if (vBind.y > .955 && vBind.y < 1.585 && abs(vBind.x) < .21) diffuseColor.rgb = uA * .96; }` : kind === 'top'
       ? `{ if (vBind.y < .955) discard; float l = dot(diffuseColor.rgb, vec3(.3,.59,.11)); float ax = abs(vBind.x);
           vec3 c = uA * .96;
           if (ax > .2 && ax < .232) c = uB;                      // 소매 끝 줄
@@ -32,6 +37,7 @@ function kitShader(m, kind, u) {
 }
 const NUMTEX = {};
 function numTex(num, name, col, back) { const k = num + name + col + back; return NUMTEX[k] || (NUMTEX[k] = ctex(256, 256, (g, W, H) => { g.clearRect(0, 0, W, H); g.textAlign = 'center'; g.textBaseline = 'middle'; g.fillStyle = col; if (back) { const nm = name.split(' ').pop(); g.font = `bold 34px ${FONT}`; g.fillText(nm, W / 2, 40); g.font = `150px ${DFONT}`; g.fillText(num, W / 2, 150); } else { g.font = `120px ${DFONT}`; g.fillText(num, W / 2, H / 2); } })); }
+const BOOTS = [['#ff4d5e', '#ffffff', '#f2f2f2'], ['#111111', '#ffd400', '#2a2a2a'], ['#f2f2f2', '#ff4d5e', '#e0e0e0'], ['#22d3ee', '#111111', '#f2f2f2'], ['#ffd400', '#111111', '#2a2a2a'], ['#7c3aed', '#9be15d', '#f2f2f2'], ['#ff7a00', '#ffffff', '#1a1a1a'], ['#111111', '#ffffff', '#ff4d5e'], ['#9be15d', '#111111', '#f2f2f2'], ['#1e40ff', '#ffffff', '#f2f2f2']];
 function makeFootballer(pl, kit, numCol, gk) {
   const look = Object.assign({ top: '#ffffff', bot: '#ffffff', shoe: gk ? '#111111' : pick(['#111111', '#f2f2f2', '#ff4d5e', '#ffd400', '#22d3ee']) }, pl.look);
   const P = makePerson(Object.assign({}, look, { head: look.head === 'bald' || ['afro', 'curly', 'bun', 'twist', 'mohawk'].includes(look.hairStyle) && look.head !== 'buzz' ? (look.head === 'bald' || look.hairStyle === 'mohawk' ? 'none' : 'buzz') : look.head })); extraHair(P, look); const root = P.root; const sc = root.scale.clone(); root.scale.set(1, 1, 1); root.rotation.set(0, 0, 0); root.position.set(0, 0, 0); root.updateMatrixWorld(true);
@@ -42,7 +48,10 @@ function makeFootballer(pl, kit, numCol, gk) {
     if (n === 'Wolf3D_Outfit_Top') { o.material.color.setRGB(1, 1, 1); kitShader(o.material, 'top', { uA: { value: lin(k[0]) }, uB: { value: lin(k[3] || k[1]) }, uC: { value: lin(k[2]) }, uSkin: { value: skin } }); }
     if (n === 'Wolf3D_Body') kitShader(o.material, 'chest', { uA: { value: lin(k[0]) }, uB: { value: lin(k[3] || k[1]) }, uC: { value: lin(k[2]) }, uSkin: { value: skin } });
     if (n === 'Wolf3D_Outfit_Bottom') { o.material.color.setRGB(1, 1, 1); kitShader(o.material, 'bot', { uA: { value: lin(k[1]) }, uB: { value: lin(k[3] || k[0]) }, uC: { value: lin(k[2]) }, uSkin: { value: skin } }); }
-    if (n === 'Wolf3D_Outfit_Footwear') { o.material.color.copy(lin(look.shoe)).multiplyScalar(look.shoe === '#f2f2f2' ? 1.3 : 1.6); o.material.roughness = .35; }
+    if (n === 'Wolf3D_Outfit_Footwear') { // 구두 → 축구화 (무광 · 밑창 · 옆 줄 · 뒤꿈치 색)
+      const bc = BOOTS[(pl.num * 7 + (pl.name || '').length) % BOOTS.length]; const B = gk ? ['#111111', '#22d3ee', '#f2f2f2'] : (look.shoe === '#f2f2f2' ? ['#f2f2f2', '#111111', '#d0d0d0'] : bc);
+      o.material.normalMap = null; o.material.metalness = 0; o.material.roughness = .55; o.material.color.setRGB(1, 1, 1); o.material.needsUpdate = true;
+      kitShader(o.material, 'boot', { uA: { value: lin(B[0]) }, uB: { value: lin(B[1]) }, uC: { value: lin(B[2]) }, uSkin: { value: skin } }); }
   });
   // 등번호 · 이름 · 가슴 번호 (등뼈에 붙여서 같이 움직여요)
   const sp = P.B.Spine2; if (sp) {

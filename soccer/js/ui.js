@@ -2,15 +2,39 @@
 /* ===== 조작 · 카메라 · 화면 · 리플레이 · 소리 · 메뉴 ===== */
 /* ---------- 입력 ---------- */
 const KEY = {}; const INP = [{ x: 0, z: 0, sp: false, acts: [], hold: {} }, { x: 0, z: 0, sp: false, acts: [], hold: {} }];
-const KB = { shoot: ['Space', 'KeyK'], pass: ['KeyE', 'KeyJ'], through: ['KeyF', 'KeyL'] }; const HOLDK = ['pass', 'shoot', 'through', 'lob'];
+/* ---------- 조작키 (바꿀 수 있어요 · 설정은 저장돼요) ---------- */
+const KDEF = { up: 'KeyW', down: 'KeyS', left: 'KeyA', right: 'KeyD', sprint: 'ShiftLeft', shoot: 'Space', pass: 'KeyE', through: 'KeyF', skill: 'KeyQ', cam: 'KeyC' };
+const KNAME = { up: '위로 이동', down: '아래로 이동', left: '왼쪽 이동', right: '오른쪽 이동', sprint: '질주', shoot: '슛 (수비: 슬라이딩)', pass: '패스 (수비: 태클)', through: '스루패스 (수비: 선수 바꾸기)', skill: '개인기', cam: '카메라 바꾸기' };
+const KALT = { shoot: 'KeyK', pass: 'KeyJ', through: 'KeyL', up: 'ArrowUp', down: 'ArrowDown', left: 'ArrowLeft', right: 'ArrowRight' };
+const KM = () => Object.assign({}, KDEF, SAVE.keys || {}); let KMC = KM();
+const kIs = (act, code) => KMC[act] === code || KALT[act] === code || (act === 'sprint' && KMC.sprint === 'ShiftLeft' && code === 'ShiftRight');
+const kDown = act => !!(KEY[KMC[act]] || KEY[KALT[act]] || (act === 'sprint' && KMC.sprint === 'ShiftLeft' && KEY.ShiftRight));
+function keyLabel(c) { if (!c) return '-'; if (c === 'Space') return 'Space'; if (/^Key/.test(c)) return c.slice(3); if (/^Digit/.test(c)) return c.slice(5); if (/^Numpad/.test(c)) return 'Num' + c.slice(6); return { ShiftLeft: 'Shift', ShiftRight: '오른 Shift', ControlLeft: 'Ctrl', ControlRight: '오른 Ctrl', AltLeft: 'Alt', AltRight: '오른 Alt', ArrowUp: '↑', ArrowDown: '↓', ArrowLeft: '←', ArrowRight: '→', Enter: 'Enter', Tab: 'Tab', CapsLock: 'Caps', Backspace: '←Back', Semicolon: ';', Quote: "'", Comma: ',', Period: '.', Slash: '/', BracketLeft: '[', BracketRight: ']', Backslash: '\\', Minus: '-', Equal: '=', Backquote: '`' }[c] || c; }
+const HOLDK = ['pass', 'shoot', 'through', 'lob'];
 addEventListener('keydown', e => {
+  if (UI.keyCap) { e.preventDefault(); e.stopPropagation(); keyCapture(e.code); return; }
   if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return; if (KEY[e.code]) return; KEY[e.code] = true;
-  for (const a in KB) if (KB[a].includes(e.code)) { pushAct(a === 'sw' ? a : a + 'Down'); e.preventDefault(); }
-  if (e.code === 'KeyQ' && !e.repeat) pushAct('skill');
-  if (e.code === 'Escape' || e.code === 'KeyP') togglePause(); if (e.code === 'KeyC') cycleCam(); if ((e.code === 'KeyR' || e.code === 'Space' || e.code === 'Enter') && M.phase === 'replay') REPLAY.skip = true; if ((e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') && M.phase === 'intro') skipIntro();
-});
-addEventListener('keyup', e => { KEY[e.code] = false; for (const a in KB) if (a !== 'sw' && KB[a].includes(e.code)) pushAct(a + 'Up');
-  }); // 키: Space 슛 · E 패스 · F 스루패스 · Q 개인기 · Shift 질주
+  for (const a of ['shoot', 'pass', 'through']) if (kIs(a, e.code)) { pushAct(a + 'Down'); e.preventDefault(); }
+  if (kIs('skill', e.code) && !e.repeat) pushAct('skill');
+  if (e.code === 'Escape' || e.code === 'KeyP') togglePause(); if (kIs('cam', e.code)) cycleCam(); if ((e.code === 'KeyR' || e.code === 'Space' || e.code === 'Enter' || kIs('shoot', e.code)) && M.phase === 'replay') REPLAY.skip = true; if ((e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape' || kIs('shoot', e.code)) && M.phase === 'intro') skipIntro();
+}, true);
+addEventListener('keyup', e => { KEY[e.code] = false; if (UI.keyCap) return; for (const a of ['shoot', 'pass', 'through']) if (kIs(a, e.code)) pushAct(a + 'Up'); });
+/* 조작키 설정 창 */
+function openKeys() {
+  const m = $('#kset'); m.hidden = false; UI.keyCap = null; UI.kWasPaused = UI.paused;
+  const draw = () => { KMC = KM(); $('#ksList').innerHTML = Object.keys(KDEF).map(k => `<button class="ksRow${UI.keyCap === k ? ' on' : ''}" data-k="${k}"><span>${KNAME[k]}</span><kbd>${UI.keyCap === k ? '키를 누르세요…' : keyLabel(KMC[k])}</kbd></button>`).join(''); };
+  UI.ksDraw = draw; draw();
+  $('#ksList').onclick = e => { const b = e.target.closest('[data-k]'); if (!b) return; UI.keyCap = UI.keyCap === b.dataset.k ? null : b.dataset.k; draw(); };
+  $('#ksReset').onclick = () => { SAVE.keys = {}; persist(); UI.keyCap = null; draw(); keysHelp(); toast('기본 키로 돌렸어요'); };
+  $('#ksOk').onclick = () => { UI.keyCap = null; m.hidden = true; keysHelp(); };
+}
+function keyCapture(code) {
+  const act = UI.keyCap; if (code === 'Escape') { UI.keyCap = null; UI.ksDraw(); return; } if (code === 'KeyP') { toast('P는 일시정지 키라서 못 써요'); return; }
+  const km = KM(); const other = Object.keys(km).find(k => k !== act && km[k] === code); // 이미 쓰는 키면 서로 바꿔요
+  SAVE.keys = Object.assign({}, SAVE.keys || {}); if (other) SAVE.keys[other] = km[act]; SAVE.keys[act] = code; persist(); UI.keyCap = null; UI.ksDraw(); keysHelp();
+  if (other) toast(`${keyLabel(code)}는 '${KNAME[other].split(' (')[0]}'에 쓰던 키라서 서로 바꿨어요`, 2600);
+}
+function keysHelp() { KMC = KM(); const k = c => `<kbd>${keyLabel(KMC[c])}</kbd>`; const el = $('#keysBody'); if (el) el.innerHTML = `<div>${k('up')}${k('left')}${k('down')}${k('right')} 이동 &nbsp;${k('sprint')} 질주 &nbsp;${k('skill')} 개인기</div><div>${k('shoot')} 슛 <span>(수비: 슬라이딩)</span></div><div>${k('pass')} 패스 <span>(수비: 태클)</span></div><div>${k('through')} 스루패스 <span>(수비: 선수 바꾸기)</span></div><div><span>모든 킥은 꾹 누른 만큼 세게 · 톡 = 약하게</span> <button class="ksOpen" type="button">⌨️ 키 바꾸기</button></div>`; }
 addEventListener('blur', () => { for (const k in KEY) KEY[k] = false; });
 function pushAct(a) {
   if (!M.on || UI.paused || M.phase === 'intro') return; const now = performance.now(), H = INP[0].hold; let dur;
@@ -23,11 +47,11 @@ const TAP = .28; function kickPow(a, dur) { if (dur == null) return 0; return /^
 function holdInfo(I) { let t = 0, k = ''; const now = performance.now(); for (const q of HOLDK) if (I.hold[q]) { const d = (now - I.hold[q]) / 1000; if (d > t) { t = d; k = q; } } return [k ? kickPow(k, t) : 0, k]; }
 const STICK = { on: false, id: null, ox: 0, oy: 0, x: 0, y: 0 };
 function readLocal() {
-  let ix = 0, iy = 0; if (KEY.KeyA || KEY.ArrowLeft) ix -= 1; if (KEY.KeyD || KEY.ArrowRight) ix += 1; if (KEY.KeyW || KEY.ArrowUp) iy += 1; if (KEY.KeyS || KEY.ArrowDown) iy -= 1;
+  let ix = 0, iy = 0; if (kDown('left')) ix -= 1; if (kDown('right')) ix += 1; if (kDown('up')) iy += 1; if (kDown('down')) iy -= 1;
   if (STICK.on) { ix = STICK.x; iy = -STICK.y; } const L = Math.hypot(ix, iy); if (L > 1) { ix /= L; iy /= L; }
   // 화면 방향 → 경기장 방향
   const f = new T.Vector3(); cam.getWorldDirection(f); f.y = 0; f.normalize(); const r = new T.Vector3(-f.z, 0, f.x);
-  const I = INP[0]; I.x = r.x * ix + f.x * iy; I.z = r.z * ix + f.z * iy; I.sp = !!(KEY.ShiftLeft || KEY.ShiftRight || TOUCHB.sprint); I.mag = Math.min(1, Math.hypot(ix, iy));
+  const I = INP[0]; I.x = r.x * ix + f.x * iy; I.z = r.z * ix + f.z * iy; I.sp = !!(kDown('sprint') || TOUCHB.sprint); I.mag = Math.min(1, Math.hypot(ix, iy));
 }
 /* 터치 */
 const TOUCHB = { sprint: false };
@@ -322,6 +346,7 @@ function setupUI() {
   $('#bResume').onclick = () => togglePause(); $('#bQuit').onclick = () => quitToMenu();
   $('#bRestart').onclick = () => { UI.paused = false; if (M.mode === 'club') return startClubMatch(CL.vs); startGame(); };
   $('#rAgain').onclick = () => { if (M.mode === 'online') return netRematch(); if (M.mode === 'club') return startClubMatch(CL.vs); startGame(); }; $('#rMenu').onclick = () => quitToMenu();
+  keysHelp(); document.addEventListener('click', e => { if (e.target.closest('.ksOpen')) openKeys(); }); $('#bKeys').onclick = () => openKeys();
   $('#intro').onclick = () => skipIntro(); $('#rlOk').onclick = () => { SAVE.portraitOK = 1; persist(); $('#rotLock').hidden = true; }; $('#rlTry').onclick = () => mobileLandscape();
   $('#bCam').onclick = () => cycleCam(); $('#bPause').onclick = () => togglePause(); $('#bSkip').onclick = () => REPLAY.skip = true;
   $('#bMute').onclick = () => { SAVE.mute = !SAVE.mute; persist(); if (AU.master) AU.master.gain.value = SAVE.mute ? 0 : .8; $('#bMute').textContent = SAVE.mute ? '🔇' : '🔊'; }; $('#bMute').textContent = SAVE.mute ? '🔇' : '🔊';
@@ -344,6 +369,7 @@ function loop(now) {
 async function boot() {
   buildStadium(); buildBall(); setupUI();
   try { await loadChars(); } catch (e) { $('#load').innerHTML = '선수 모델을 못 불러왔어요 😢<br><small>새로고침해 보세요</small>'; return; }
+  if (window.BLIP) { const prev = BLIP._onAccount; BLIP._onAccount = () => { if (prev) prev(); cloudPull(); renderMenu(); }; setTimeout(cloudPull, 1500); }
   startDemo(); show('#menu'); CAM.snap = 0; cam.position.set(30, 60, 110); CAM.look.set(0, 0, 0); CAM.flyT = 3; $('#splash').classList.add('on'); setTimeout(() => $('#splash').classList.add('out'), 1900); setTimeout(() => $('#splash').remove(), 2700); $('#mMute').textContent = SAVE.mute ? '🔇' : '🔊'; $('#load').classList.add('gone'); setTimeout(() => $('#load').remove(), 700);
   requestAnimationFrame(loop);
   const fol = new URLSearchParams(location.search).get('room'); if (fol) { auInit(); openOnline(fol); }

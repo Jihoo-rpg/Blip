@@ -441,7 +441,7 @@ function endHalf() {
 const SHADOW_GEO = new T.CircleGeometry(.62, 20), SHADOW_MAT = new T.MeshBasicMaterial({ map: ctex(64, 64, (g, W) => { const r = g.createRadialGradient(W / 2, W / 2, 0, W / 2, W / 2, W / 2); r.addColorStop(0, 'rgba(0,0,0,.55)'); r.addColorStop(.6, 'rgba(0,0,0,.25)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, W, W); }), transparent: true, depthWrite: false });
 function animPlayer(p, dt) {
   const P = p.P; P.root.position.set(p.x, 0, p.z); P.root.rotation.y = p.yaw; if (P.blob) P.blob.position.set(p.x, .015, p.z);
-  const sp = Math.hypot(p.vx, p.vz); const an = sp > 4.6 ? 'run' : sp > .5 ? 'walk' : 'idle'; setAnim(P, an, an === 'run' ? clamp(sp / 6.4, .8, 1.5) : an === 'walk' ? clamp(sp / 1.6, .6, 2) : 1);
+  const sp = Math.hypot(p.vx, p.vz); const an = sp > 2.9 ? 'run' : sp > .45 ? 'walk' : 'idle'; setAnim(P, an, an === 'run' ? clamp(sp / 4.6, .85, 2) : an === 'walk' ? clamp(sp / 1.35, .55, 2.1) : 1); // 발이 미끄러지지 않게 걸음 속도를 실제 속도에 맞춰요
   P.mixer.update(dt); footballPose(p);
 }
 function syncBallMesh(dt) {

@@ -308,6 +308,14 @@ body.mob .tb{opacity:.82}body.mob .tr .ib{width:34px;height:34px;font-size:15px;
 #bLob{width:56px;height:56px;right:calc(220px + env(safe-area-inset-right));bottom:calc(26px + env(safe-area-inset-bottom))}
 #power{width:110px;height:8px;border-width:1.5px;bottom:110px;z-index:12;pointer-events:none}#powerF{border-radius:4px}body.mob #power{position:fixed;height:7px;transform:translateX(-50%)}
 @media (orientation:portrait){body.mob #power{bottom:calc(250px + env(safe-area-inset-bottom))}}
+
+#kset .card{width:min(440px,94vw);max-height:92vh;overflow:auto}#ksList{display:flex;flex-direction:column;gap:6px;margin:8px 0 12px}
+.ksRow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);font-weight:800;font-size:14px;text-align:left}
+.ksRow kbd{min-width:64px;text-align:center;padding:5px 10px;border-radius:8px;background:#fff;color:#0b1020;font:900 14px Pretendard,sans-serif;box-shadow:0 2px 0 #9aa3b8}.ksRow.on{border-color:var(--gold);background:rgba(255,212,0,.12)}.ksRow.on kbd{background:var(--gold)}
+.ksOpen{margin-left:6px;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.15);font-size:11px;font-weight:900;pointer-events:auto}
+#keys kbd+kbd{margin-left:2px}
+body.mob #bKeys{display:none}
+.pill.acc{color:#9be15d;cursor:pointer;max-width:150px;overflow:hidden;text-overflow:ellipsis}.pill.acc.off{color:#fff;opacity:.8}@media (max-width:640px){.pill.acc{max-width:46px}}
 </style>
 </head>
 <body>
@@ -321,9 +329,9 @@ body.mob .tb{opacity:.82}body.mob .tr .ib{width:34px;height:34px;font-size:15px;
   <div class="mTop">
     <button class="mClub" id="mClub"></button>
     <div class="brand">블립 풋볼 <span>11</span></div>
-    <div class="mRes"><div class="pill c" id="mCoins">🪙 0</div><div class="pill" id="rec"></div><a href="../hub/" class="mIcon" title="허브">🏠</a><button class="mIcon" id="mMute">🔊</button></div>
+    <div class="mRes"><button class="pill acc" id="mAcc">☁️</button><div class="pill c" id="mCoins">🪙 0</div><div class="pill" id="rec"></div><a href="../hub/" class="mIcon" title="허브">🏠</a><button class="mIcon" id="mMute">🔊</button></div>
   </div>
-  <div class="mLeft"><button class="mSide" id="mDaily"><span>🎁</span>출석 보상<i class="dot" id="mDailyDot"></i></button><button class="mSide" data-mnav="all"><span>📖</span>도감</button><button class="mSide" id="mKeys"><span>🎮</span>조작법</button></div>
+  <div class="mLeft"><button class="mSide" id="mDaily"><span>🎁</span>출석 보상<i class="dot" id="mDailyDot"></i></button><button class="mSide" data-mnav="all"><span>📖</span>도감</button><button class="mSide" id="mKeys"><span>⌨️</span>조작 설정</button></div>
   <div class="mGrid">
     <button class="mFeat" id="bClub"><small>나만의 구단</small><p id="mFeatP">AI 구단을 이기고 코인을 모아요</p><div class="opp2" id="mNext"></div><span class="bal">⚽</span><em>▶ 경기 시작</em></button>
     <button class="mTeam" id="mTeam"></button>
@@ -358,7 +366,7 @@ body.mob .tb{opacity:.82}body.mob .tr .ib{width:34px;height:34px;font-size:15px;
   <div id="comm"></div>
   <div id="hint" hidden></div>
   <div id="replay" hidden><b>REPLAY</b><button class="chip" id="bSkip">건너뛰기 ⏭</button></div>
-  <div id="keys"><div><kbd>W A S D</kbd> 이동 &nbsp;<kbd>Shift</kbd> 질주 &nbsp;<kbd>Q</kbd> 개인기</div><div><kbd>Space</kbd> 슛 <span>(수비: 슬라이딩)</span></div><div><kbd>E</kbd> 패스 <span>(수비: 태클)</span></div><div><kbd>F</kbd> 스루패스 <span>(수비: 선수 바꾸기)</span></div><div><span>모든 킥은 꾹 누른 만큼 세게 · 톡 = 약하게</span></div><button id="keysX">✕</button></div>
+  <div id="keys"><div id="keysBody"></div><button id="keysX">✕</button></div>
 </div>
 
 <div id="rot">📱 가로로 돌리면 더 넓게 보여요</div>
@@ -369,8 +377,9 @@ body.mob .tb{opacity:.82}body.mob .tr .ib{width:34px;height:34px;font-size:15px;
 </div>
 
 <div id="pause" class="modal" hidden><div class="card col"><h2 class="h">일시정지</h2>
-  <button class="btn main" id="bResume">계속하기</button><button class="btn" id="bRestart">처음부터 다시</button><button class="btn" id="bQuit">메뉴로 나가기</button></div></div>
+  <button class="btn main" id="bResume">계속하기</button><button class="btn" id="bRestart">처음부터 다시</button><button class="btn" id="bKeys">⌨️ 조작키 설정</button><button class="btn" id="bQuit">메뉴로 나가기</button></div></div>
 
+<div id="kset" class="modal" hidden><div class="card col"><h2 class="h">⌨️ 조작키 설정</h2><p class="hintp">바꿀 동작을 누르고 → 원하는 키를 누르세요 (화살표 · J K L 키도 같이 돼요)</p><div id="ksList"></div><div class="row2"><button class="btn" id="ksReset">기본값</button><button class="btn main" id="ksOk">완료</button></div></div></div>
 <div id="result" class="modal" hidden><div class="card">
   <h2 id="rTitle" class="h">승리!</h2><div id="rScore"></div><div id="rGoals"></div><div id="rStats"></div><div id="rMvp"></div><div id="rReward" hidden></div>
   <div class="row2"><button class="btn" id="rMenu">메뉴</button><button class="btn main" id="rAgain">다시 하기</button></div></div></div>

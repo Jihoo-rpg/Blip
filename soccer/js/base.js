@@ -26,4 +26,14 @@ addEventListener('resize', resize); resize();
 function ctex(w, h, draw, rep) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h, c); const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = Math.min(8, ren.capabilities.getMaxAnisotropy()); if (rep) { t.wrapS = t.wrapT = T.RepeatWrapping; t.repeat.set(rep[0], rep[1]); } return t; }
 function toast(t, ms) { const el = $('#toast'); el.innerHTML = t; el.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove('on'), ms || 2200); }
 const SAVE = (() => { try { return JSON.parse(localStorage.getItem('blip_soccer_v1') || '{}') || {}; } catch (e) { return {}; } })();
-function persist() { try { localStorage.setItem('blip_soccer_v1', JSON.stringify(SAVE)); } catch (e) { } }
+function persist() { SAVE._t = Date.now(); try { localStorage.setItem('blip_soccer_v1', JSON.stringify(SAVE)); } catch (e) { } if (window.BLIP && BLIP.cloud && BLIP.loggedIn && SAVE._acc === BLIP.me.acc) BLIP.cloud.saveSoon('soccer', () => SAVE); }
+/* 허브 계정 저장: 로그인하면 계정(서버)에 저장 → 다른 기기에서도 이어서. 게스트로 하던 저장은 계정 저장을 덮어쓰지 않아요 */
+async function cloudPull() {
+  if (!window.BLIP || !BLIP.cloud || !BLIP.loggedIn) return; const acc = BLIP.me.acc; const r = await BLIP.cloud.load('soccer'); const mine = SAVE._acc === acc;
+  if (r && r.d && (!mine || (r.d._t || 0) > (SAVE._t || 0))) { // 계정 저장을 불러와요
+    if (!mine) { try { localStorage.setItem('blip_soccer_v1_guest', JSON.stringify(SAVE)); } catch (e) { } }
+    for (const k of Object.keys(SAVE)) delete SAVE[k]; Object.assign(SAVE, r.d); SAVE._acc = acc; try { localStorage.setItem('blip_soccer_v1', JSON.stringify(SAVE)); } catch (e) { }
+    if (typeof onCloudLoaded === 'function') onCloudLoaded(); toast('☁️ 허브 계정에 저장된 구단을 불러왔어요', 2600);
+  } else { SAVE._acc = acc; persist(); BLIP.cloud.save('soccer', SAVE); } // 계정에 저장이 없거나 이 기기 게 더 최근이면 올려요
+}
+

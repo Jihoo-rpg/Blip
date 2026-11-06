@@ -117,6 +117,7 @@ function renderMenu() {
   const c = club(); const xpAll = c ? (c.xp || 0) : 0, lv = Math.floor(xpAll / 100) + 1, xp = xpAll % 100;
   $('#mClub').innerHTML = c ? `<div class="crest" style="background:linear-gradient(135deg,${c.c1} 55%,${c.c2} 55%)">${c.emb}</div><div style="min-width:0"><b>${esc(c.name)}</b><div class="lv"><i>${lv}</i><u style="--xp:${xp}%"></u>${xp} / 100 XP</div></div>` : `<div class="crest" style="background:rgba(255,255,255,.12)">➕</div><div style="min-width:0"><b>구단 만들기</b><div class="lv">눌러서 나만의 구단을 만들어요</div></div>`;
   $('#mCoins').textContent = '🪙 ' + (c ? c.coins || 0 : 0).toLocaleString();
+  const acc = window.BLIP && BLIP.loggedIn; const ap = $('#mAcc'); if (ap) { ap.textContent = acc ? '☁️ ' + (BLIP.me.nick || '계정') : '☁️ 로그인'; ap.classList.toggle('off', !acc); ap.title = acc ? '허브 계정에 자동 저장 중 (다른 기기에서도 이어서 해요)' : '허브에서 로그인하면 구단이 계정에 저장돼요'; }
   if (c) { const o = nextOpp(c); $('#mNext').innerHTML = `<span>다음 상대</span><div class="crest" style="background:linear-gradient(135deg,${o.c[0]} 55%,${o.c[1]} 55%)">${o.f}</div><span>${esc(o.n)} · 🪙${winCoins(o)}</span>`; $('#mFeatP').textContent = `${c.w}승 ${c.d}무 ${c.l}패 · 이기면 코인으로 선수 뽑기!`; }
   else { $('#mNext').innerHTML = ''; $('#mFeatP').textContent = '구단을 만들면 선수 18명 + 🪙1,500 + 골드 팩!'; }
   const xi = c ? xiPlayers() : []; const ovr = c ? teamOvr(xi, c.form) : 0; const val = xi.filter(Boolean).reduce((a, p) => a + playerValue(p), 0);
@@ -127,12 +128,15 @@ function renderMenu() {
   const kit = c ? [c.c1, c.c2, c.c1, c.c2] : (() => { const t = TEAMS.find(x => x.id === best.nat) || TEAMS[0]; return [t.home[0], t.home[1], t.home[2] || t.home[0], t.home[1]]; })();
   if (CH.ready) heroSet(best, kit);
 }
+function onCloudLoaded() { KMC = KM(); keysHelp(); if (UI.screen === 'menu') renderMenu(); else if (UI.screen === 'club') { clubHeader(); clubTab(CL.tab); } }
 function menuNav(tab) { auInit(); if (!club()) return openCreate(); CL.tab = tab; openClub(); }
 document.addEventListener('click', e => {
-  if (UI.screen !== 'menu' || $('#menu').hidden) return; const t = e.target.closest('[data-mnav],#mClub,#mTeam,#mDaily,#mKeys,#mMute,#mOnl2'); if (!t) return; sfx('tick');
+  if (UI.screen !== 'menu' || $('#menu').hidden) return; const t = e.target.closest('[data-mnav],#mClub,#mTeam,#mDaily,#mKeys,#mMute,#mOnl2,#mAcc'); if (!t) return; sfx('tick');
   if (t.dataset.mnav) return menuNav(t.dataset.mnav);
   if (t.id === 'mClub') return menuNav('play'); if (t.id === 'mTeam') return menuNav('squad'); if (t.id === 'mOnl2') { auInit(); return openOnline(); }
   if (t.id === 'mDaily') { const c = club(); if (!c) { toast('먼저 구단을 만들어요!'); return openCreate(); } if (c.daily === today()) { toast('오늘 출석 보상은 이미 받았어요. 내일 또 와요!'); return; } c.daily = today(); coins(300); toast('🎁 출석 보상 🪙300 받았어요!', 2600); sfx('goal'); return renderMenu(); }
+  if (t.id === 'mAcc') { if (window.BLIP && BLIP.loggedIn) return toast('☁️ 허브 계정에 자동 저장 중이에요. 다른 기기에서 같은 계정으로 로그인하면 그대로 이어서 해요', 4200); return toast('허브(🏠)에서 로그인하면 구단·코인·선수·키 설정이 계정에 저장돼요', 4200); }
+  if (t.id === 'mKeys' && !IS_MOBILE) return openKeys();
   if (t.id === 'mKeys') return toast(IS_MOBILE ? '왼쪽 화면 끌기: 이동 · 패스 / 슛(꾹) / 스루 / 질주 버튼' : 'WASD 이동 · Shift 질주 · Q 개인기 · Space 슛 · E 패스 · F 스루패스 (꾹 = 세게) · C 카메라', 4200);
   if (t.id === 'mMute') { $('#bMute').click(); $('#mMute').textContent = SAVE.mute ? '🔇' : '🔊'; }
 });

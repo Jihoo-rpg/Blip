@@ -356,6 +356,14 @@
   }
   function mailSeenNow(list) { const m = Math.max(Number(me.mailSeen || 0), ...(list || []).map(v => v.t || 0)); me.mailSeen = m; saveMe(); }
 
+
+  /* ---------- 게임 저장: 허브 계정에 로그인하면 계정(서버)에 저장돼요 → 다른 기기에서도 이어서 ---------- */
+  const cloudT = {}; const cloudPend = {};
+  const cloudBody = data => JSON.stringify({ t: Date.now(), d: JSON.stringify(data) });
+  function cloudSave(game, data) { if (!me.acc) return Promise.resolve(false); delete cloudPend[game]; return fetch(FB + '/users/' + me.acc + '/games/' + game + '.json', { method: 'PUT', body: cloudBody(data) }).then(r => r.ok).catch(() => false); }
+  function cloudSaveSoon(game, getData, ms) { if (!me.acc) return; cloudPend[game] = getData; clearTimeout(cloudT[game]); cloudT[game] = setTimeout(() => { if (cloudPend[game]) cloudSave(game, cloudPend[game]()); }, ms || 3000); }
+  async function cloudLoad(game) { if (!me.acc) return null; const r = await raw('users/' + me.acc + '/games/' + game).catch(() => null); if (!r || !r.d) return null; try { return { t: r.t || 0, d: JSON.parse(r.d) }; } catch (e) { return null; } }
+  window.addEventListener('pagehide', () => { for (const g in cloudPend) { try { fetch(FB + '/users/' + me.acc + '/games/' + g + '.json', { method: 'PUT', body: cloudBody(cloudPend[g]()), keepalive: true }); } catch (e) { } } });
   /* ---------- 시작 ---------- */
   const followCode = (new URLSearchParams(location.search).get('follow') || '').toUpperCase();
   function start() {
@@ -374,7 +382,7 @@
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', start); else start();
 
   window.BLIP = {
-    fullscreen: FS, get me() { return me; }, GAMES, AVAS, now, isOnline, followCode,
+    fullscreen: FS, cloud: { save: cloudSave, saveSoon: cloudSaveSoon, load: cloudLoad }, get me() { return me; }, GAMES, AVAS, now, isOnline, followCode,
     friendList, requestFriend, accept, decline, removeFriend, invite, inbox, clearInvite, allUsers,
     gameUrl, go, setProfile, saveMe, beat, notify, login, signup, logout, syncAccount, get loggedIn() { return !!me.acc; }, setGame(g) { curGame = g || ''; beat(); },
     mail: { DAY_MS, owner: mailOwner, isOwner: isMailOwner, claim: claimMail, list: mailList, send: mailSend, set: mailSet, del: mailDel, poll: pollMail, seenNow: mailSeenNow },
