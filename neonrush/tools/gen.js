@@ -37,7 +37,7 @@ const LEVELS = [
   ['Orange Crush', 2, 4, 5, 55, 128], ['Night Drive', 2, 5, 5, 66, 134], ['Metro Line', 2, 5, 6, 77, 138], ['Red Alert', 3, 6, 6, 88, 132],
   ['Overclock', 3, 7, 6, 99, 140], ['Static Storm', 3, 7, 7, 111, 136], ['Prism Break', 4, 8, 7, 122, 140], ['Hyperdrive', 4, 9, 7, 133, 144],
   ['Voltage', 4, 9, 7, 144, 146], ['Abyss', 5, 10, 7, 155, 140], ['Doomsday Engine', 5, 10, 8, 166, 148], ['Event Horizon', 5, 10, 8, 177, 150],
-].map(([name, tier, stars, secs, seed, bpm], i) => ({ name, tier, stars, secs, seed, bpm, ...UNLOCK[i], phys: i === 0 ? { step: 0.55, pad: 1.2 } : undefined }));
+].map(([name, tier, stars, secs, seed, bpm], i) => ({ name, tier, stars, secs, seed, bpm, ...UNLOCK[i], phys: undefined }));
 
 // bright GD-like palettes: [bg, ground]
 const PALETTES = [
@@ -99,7 +99,7 @@ function generate(def) {
     spike3(x, h, w) { return EV.spikes(x, h, w, 3); },
     small(x, h, w) { return EV.spikes(x, h, w, rint(1, 2), true); },
     up2(x, h, w) { if (st.mode !== 'robot' || h >= 3) return null; const a = [], p = x + 2.4 * sfac() + 0.3; floor(a, x, p, h); floor(a, p, x + w, h + 2); return { a, h: h + 2 }; },
-    up(x, h, w) { if (h >= 4) return null; const a = [], p = x + 2.0 * sfac() + 0.3; floor(a, x, p, h); floor(a, p, x + w, h + 1); return { a, h: h + 1 }; },
+    up(x, h, w) { if (h >= (T.name === 'Easy' ? 2 : 4) || (totalBeats < 14 && h >= 1)) return null; const a = [], p = x + 2.0 * sfac() + 0.3; floor(a, x, p, h); floor(a, p, x + w, h + 1); return { a, h: h + 1 }; },
     down(x, h, w) { if (h <= 0) return null; const a = [], p = x + 1.2, nh = T.name === 'Easy' ? h - 1 : (rnd() < 0.5 ? 0 : h - 1); floor(a, x, p, h); floor(a, p, x + w, nh); deco(a, p + 1, x + w, nh); return { a, h: nh }; },
     downSpike(x, h, w) { if (h <= 0) return null; const a = [], p = x + 1.2, nh = h - 1; floor(a, x, p, h); floor(a, p, x + w, nh); a.push(['s', r2(x + w - 0.6), nh, 0, 0]); return { a, h: nh }; },
     pit(x, h, w) {

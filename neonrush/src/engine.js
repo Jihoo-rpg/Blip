@@ -3,11 +3,11 @@ const Engine = (() => {
   const SPEEDS = { 0: 8.4, 1: 10.4, 2: 12.9, 3: 15.6, 4: 19.2 };
   const MODES = ['cube', 'ship', 'ball', 'ufo', 'wave', 'robot', 'spider'];
   const CORRIDOR = { ship: 1, ball: 1, ufo: 1, wave: 1, spider: 1 };
-  const G = 110, JUMP = 22, PAD = 34, PINK_PAD = 26, ORB = 22.5, PINK_ORB = 17, MAXFALL = 26;
+  const G = 116.4, JUMP = 22.36, PAD = 30.5, PINK_PAD = 20.5, ORB = 22.1, PINK_ORB = 16, MAXFALL = 30;
   const SHIP_UP = 44, SHIP_DOWN = 38, SHIP_MAX = 10;
   const BALL_G = 80, BALL_MAX = 20;
-  const UFO_G = 62, UFO_J = 12.5, UFO_MAX = 16;
-  const ROBOT_J = 12, ROBOT_HOLD = 0.2;
+  const UFO_G = 62, UFO_J = 13.6, UFO_MAX = 16;
+  const ROBOT_J = 12, ROBOT_HOLD = 0.245;
   const DT = 1 / 240;
   // hitbox per mode: [offsetX, width, height]
   const BOX = { cube: [0, 1, 1], robot: [0, 1, 1], spider: [0, 1, 1], ball: [0, 1, 1], ship: [0, 1, 0.6], ufo: [0, 1, 0.7], wave: [0.25, 0.5, 0.5] };
@@ -194,6 +194,6 @@ const Engine = (() => {
   function clamp(v, m) { return Math.max(-m, Math.min(m, v)); }
   // limit only the falling speed (in the gravity direction) so pads/orbs keep their full upward boost
   function fall(v, g, m) { return g > 0 ? Math.max(-m, v) : Math.min(m, v); }
-  return { expand, buildLevel, newState, clone, step, DT, SPEEDS, MODES, CORRIDOR, BOX };
+  return { expand, buildLevel, newState, clone, step, DT, SPEEDS, MODES, CORRIDOR, BOX, JUMP_T: JUMP / G };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

@@ -200,7 +200,7 @@
         if (s.dead || s.won) { acc = 0; break; }
         if (s.mode === 'cube') {
           if (s.onGround) { const tgt = Math.round(rot / 90) * 90; rot = lerp(rot, tgt, 0.35); }
-          else rot += 400 * Engine.DT;
+          else rot += 180 / (2 * Engine.JUMP_T) * Engine.DT; // exactly half a turn per jump
         } else if (s.mode === 'ball') rot += s.grav * s.speed * Engine.DT * 115;
         if (s.mode === 'wave') { waveTrail.push([s.x + 0.5, s.y + 0.25]); if (waveTrail.length > 900) waveTrail.splice(0, 300); }
       }
