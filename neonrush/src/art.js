@@ -47,6 +47,55 @@ const Art = (() => {
     c.fillStyle = c2; c.beginPath(); c.moveTo(-U * 0.3, U * 0.06); c.lineTo(U * 0.3, U * 0.06); c.lineTo(U * 0.2, U * 0.2); c.lineTo(-U * 0.35, U * 0.2); c.closePath(); c.fill(); c.stroke();
   }
 
+
+  // ---- other vehicles (original designs), drawn centered on (0,0), U = block size ----
+  const OUT = '#05080f';
+  function ball(c, U, d, c1, c2) {
+    const r = U * 0.48;
+    c.lineWidth = U * 0.07; c.strokeStyle = OUT;
+    c.fillStyle = c1; c.shadowColor = c1; c.shadowBlur = U * 0.25; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill(); c.shadowBlur = 0; c.stroke();
+    c.fillStyle = c2;
+    for (let i = 0; i < 4; i += 2) { c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r * 0.82, i * Math.PI / 2, (i + 1) * Math.PI / 2); c.closePath(); c.fill(); c.stroke(); }
+    c.fillStyle = c1; c.beginPath(); c.arc(0, 0, r * 0.32, 0, 7); c.fill(); c.stroke();
+  }
+  function ufo(c, U, d, c1, c2) {
+    // dome
+    c.save(); c.beginPath(); c.arc(0, -U * 0.02, U * 0.44, Math.PI, 0); c.closePath();
+    c.fillStyle = 'rgba(220,235,255,0.28)'; c.fill(); c.lineWidth = U * 0.05; c.strokeStyle = 'rgba(255,255,255,0.85)'; c.stroke(); c.restore();
+    c.save(); c.translate(0, -U * 0.2); cube(c, U * 0.38, d, c1, c2, false); c.restore();
+    // saucer
+    c.lineWidth = U * 0.07; c.strokeStyle = OUT; c.lineJoin = 'round';
+    c.fillStyle = c1; c.shadowColor = c1; c.shadowBlur = U * 0.2;
+    c.beginPath(); c.ellipse(0, U * 0.06, U * 0.62, U * 0.17, 0, 0, 7); c.fill(); c.shadowBlur = 0; c.stroke();
+    c.fillStyle = c2; c.beginPath(); c.moveTo(-U * 0.42, U * 0.14); c.lineTo(U * 0.42, U * 0.14); c.lineTo(U * 0.28, U * 0.3); c.lineTo(-U * 0.28, U * 0.3); c.closePath(); c.fill(); c.stroke();
+    c.fillStyle = '#ffe23c'; c.beginPath(); c.arc(0, U * 0.05, U * 0.08, 0, 7); c.fill(); c.stroke();
+  }
+  function wave(c, U, d, c1, c2) {
+    c.lineWidth = U * 0.06; c.strokeStyle = OUT; c.lineJoin = 'round';
+    c.fillStyle = c1; c.shadowColor = c1; c.shadowBlur = U * 0.3;
+    c.beginPath(); c.moveTo(U * 0.42, 0); c.lineTo(-U * 0.3, -U * 0.3); c.lineTo(-U * 0.14, 0); c.lineTo(-U * 0.3, U * 0.3); c.closePath(); c.fill(); c.shadowBlur = 0; c.stroke();
+    c.fillStyle = c2; c.beginPath(); c.moveTo(U * 0.22, 0); c.lineTo(-U * 0.12, -U * 0.13); c.lineTo(-U * 0.04, 0); c.lineTo(-U * 0.12, U * 0.13); c.closePath(); c.fill();
+  }
+  function legs(c, U, c1, c2, ph, n, spider) {
+    c.lineCap = 'round'; c.lineJoin = 'round';
+    for (let i = 0; i < n; i++) {
+      const side = i % 2 ? 1 : -1, k = Math.floor(i / 2), sw = Math.sin(ph + i * 1.7) * 0.12;
+      const hx = side * U * (spider ? 0.12 + k * 0.12 : 0.14), hy = U * 0.1;
+      const kx = side * U * (spider ? 0.48 + k * 0.1 : 0.2) + sw * U, ky = spider ? -U * 0.05 : U * 0.3;
+      const fx = side * U * (spider ? 0.56 + k * 0.08 : 0.16) + sw * U * 1.4, fy = U * 0.5;
+      c.strokeStyle = OUT; c.lineWidth = U * 0.17; c.beginPath(); c.moveTo(hx, hy); c.lineTo(kx, ky); c.lineTo(fx, fy); c.stroke();
+      c.strokeStyle = i % 2 ? c1 : c2; c.lineWidth = U * 0.09; c.beginPath(); c.moveTo(hx, hy); c.lineTo(kx, ky); c.lineTo(fx, fy); c.stroke();
+    }
+  }
+  function robot(c, U, d, c1, c2, ph) {
+    legs(c, U, c1, c2, ph, 2, false);
+    c.save(); c.translate(0, -U * 0.14); cube(c, U * 0.62, d, c1, c2, true); c.restore();
+  }
+  function spider(c, U, d, c1, c2, ph) {
+    legs(c, U, c1, c2, ph, 4, true);
+    c.save(); c.translate(0, -U * 0.1); cube(c, U * 0.56, d, c1, c2, true); c.restore();
+  }
+
   // Difficulty faces (own designs): 0 easy .. 5 demon
   const FACE_COL = [['#7fe3ff', '#1d8fd6'], ['#9dff7a', '#2fb52a'], ['#ffd86a', '#f08a12'], ['#ff8a6a', '#d42a1a'], ['#ff9ae6', '#d42ab0'], ['#ff5a5a', '#8a0a14']];
   function face(c, s, tier) {
@@ -104,5 +153,5 @@ const Art = (() => {
     cv.width = cv.height = size * d; cv.style.width = cv.style.height = size + 'px';
     const c = cv.getContext('2d'); c.scale(d, d); c.translate(size / 2, size / 2); cube(c, size * 0.78, design, c1, c2, false); return cv;
   }
-  return { COLORS, DESIGNS, cube, ship, face, faceCanvas, iconCanvas };
+  return { COLORS, DESIGNS, cube, ship, ball, ufo, wave, robot, spider, face, faceCanvas, iconCanvas };
 })();

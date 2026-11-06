@@ -38,7 +38,7 @@
   let held = false, acc = 0, last = performance.now();
   let camX = -8, camY = -2.5, shake = 0, rot = 0, shipRot = 0;
   let particles = [], ripples = [], bgCol = hex('#1f49d6'), grCol = hex('#163bb5'), bgT = bgCol.slice(), grT = grCol.slice();
-  let flash = 0, levelTime = 0;
+  let flash = 0, levelTime = 0, waveTrail = [], streaks = [];
 
   function hex(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
   const rgb = (c, a = 1) => `rgba(${c[0] | 0},${c[1] | 0},${c[2] | 0},${a})`;
@@ -75,6 +75,10 @@
     $('lvBarP').style.width = pr.p + '%'; $('lvPctP').textContent = pr.p + '%';
     $('lvAtt').textContent = pr.att;
     $('lvDone').style.display = pr.done ? 'block' : 'none';
+    const MN = { cube: '큐브', ship: '쉽', ball: '볼', ufo: 'UFO', wave: '웨이브', robot: '로봇', spider: '스파이더' };
+    const ms = ['cube']; l.objs.filter(o => o[0] === 'P').forEach(o => { const m = Engine.MODES[o[3]]; if (!ms.includes(m)) ms.push(m); });
+    $('lvModes').innerHTML = ''; ms.forEach(m => $('lvModes').appendChild(vehicleCanvas(m, 30)));
+    $('lvModesTxt').textContent = ms.map(m => MN[m]).join(' · ');
     const dots = $('lvDots'); dots.innerHTML = '';
     LV.forEach((x, i) => { const d = document.createElement('i'); d.className = (i === sel ? 'on ' : '') + 't' + x.tier; d.onclick = () => { sel = i; renderSelect(); }; dots.appendChild(d); });
     store.set('sel', sel);
@@ -84,6 +88,7 @@
   // icon kit
   function renderIcons() {
     $('iconPrev').innerHTML = ''; $('iconPrev').appendChild(Art.iconCanvas(icon.d, col1(), col2(), 120));
+    const mp = $('modePrev'); mp.innerHTML = ''; Engine.MODES.forEach(m => mp.appendChild(vehicleCanvas(m, 64)));
     const g = $('iconGrid'); g.innerHTML = '';
     for (let d = 0; d < Art.DESIGNS; d++) {
       const b = document.createElement('div'); b.className = 'cell' + (d === icon.d ? ' on' : '');
@@ -93,6 +98,14 @@
       const row = $(id); row.innerHTML = '';
       Art.COLORS.forEach((c, i) => { const b = document.createElement('div'); b.className = 'sw' + (icon[key] === i ? ' on' : ''); b.style.background = c; b.onclick = () => { icon[key] = i; store.set('icon', icon); renderIcons(); }; row.appendChild(b); });
     }
+  }
+  function vehicleCanvas(m, size) {
+    const c = document.createElement('canvas'), d = Math.min(2, window.devicePixelRatio || 1);
+    c.width = c.height = size * d; c.style.width = c.style.height = size + 'px';
+    const x = c.getContext('2d'); x.scale(d, d); x.translate(size / 2, size / 2); const u = size * 0.62;
+    const fn = { cube: () => Art.cube(x, u, icon.d, col1(), col2(), false), ship: () => Art.ship(x, u, icon.d, col1(), col2()), ball: () => Art.ball(x, u, icon.d, col1(), col2()),
+      ufo: () => Art.ufo(x, u, icon.d, col1(), col2()), wave: () => Art.wave(x, u * 1.3, icon.d, col1(), col2()), robot: () => Art.robot(x, u, icon.d, col1(), col2(), 0.6), spider: () => Art.spider(x, u, icon.d, col1(), col2(), 0.6) };
+    fn[m](); return c;
   }
   function drawMenuIcon() { const m = $('menuIcon'); m.innerHTML = ''; m.appendChild(Art.iconCanvas(icon.d, col1(), col2(), 64)); }
 
@@ -111,12 +124,12 @@
     if (cp) { s = Engine.clone(cp.s); rot = cp.rot; }
     else { s = Engine.newState(); rot = 0; levelTime = 0; }
     [bgCol, grCol] = colorAt(s.x); bgT = bgCol.slice(); grT = grCol.slice();
-    camX = s.x - viewW() * 0.3; camY = targetCamY(); particles = []; ripples = []; deadTimer = 0; cpTimer = 0;
+    camX = s.x - viewW() * 0.3; camY = targetCamY(); particles = []; ripples = []; waveTrail = []; streaks = []; deadTimer = 0; cpTimer = 0;
     Music.start(musicCfg(LV[cur]));
     const pr = P(LV[cur].name); pr.att++; saveProg();
   }
   const viewW = () => W / U;
-  function targetCamY() { const extra = Math.max(0, H / U - VIEW_H) * 0.45; return (s.mode === 'ship' ? -1 : Math.max(-2.5, s.y - 6.5)) - extra; }
+  function targetCamY() { const extra = Math.max(0, H / U - VIEW_H) * 0.45; return (Engine.CORRIDOR[s.mode] ? -1 : Math.max(-2.5, s.y - 6.5)) - extra; }
 
   // ---------- input ----------
   function press() { Music.init(); if (mode === 'play') held = true; }
@@ -188,22 +201,23 @@
         if (s.mode === 'cube') {
           if (s.onGround) { const tgt = Math.round(rot / 90) * 90; rot = lerp(rot, tgt, 0.35); }
           else rot += 400 * Engine.DT;
-        }
+        } else if (s.mode === 'ball') rot += s.grav * s.speed * Engine.DT * 115;
+        if (s.mode === 'wave') { waveTrail.push([s.x + 0.5, s.y + 0.25]); if (waveTrail.length > 900) waveTrail.splice(0, 300); }
       }
       if (practice && !s.dead) { cpTimer += dt; if (cpTimer > 2.5 && (s.onGround || s.mode === 'ship')) { cpTimer = 0; placeCP(); } }
     }
-    const tgtShip = s.mode === 'ship' ? -Math.atan2(s.vy, s.speed * 1.4) * 180 / Math.PI : 0;
+    const tgtShip = s.mode === 'ship' ? -Math.atan2(s.vy, s.speed * 1.4) * 180 / Math.PI : s.mode === 'ufo' ? -s.vy * 1.2 : 0;
     shipRot = lerp(shipRot, tgtShip, 0.3);
     if (!s.dead && !s.won) {
       const c1 = hex(col1()), c2 = hex(col2());
-      if (s.mode === 'cube' && s.onGround && Math.random() < 0.7)
-        particles.push({ x: s.x + 0.05, y: s.y + 0.05, vx: -1 - Math.random() * 2, vy: Math.random() * 2, life: 0.35, max: 0.35, col: c2, size: 0.12 });
-      if (s.mode === 'ship') for (let i = 0; i < 2; i++)
+      if ((s.mode === 'cube' || s.mode === 'robot' || s.mode === 'ball' || s.mode === 'spider') && s.onGround && Math.random() < 0.7)
+        particles.push({ x: s.x + 0.05, y: s.grav > 0 ? s.y + 0.05 : s.y + 0.95, vx: -1 - Math.random() * 2, vy: Math.random() * 2 * s.grav, life: 0.35, max: 0.35, col: c2, size: 0.12 });
+      if (s.mode === 'ship' || (s.mode === 'ufo' && Math.random() < 0.5)) for (let i = 0; i < 2; i++)
         particles.push({ x: s.x + 0.05, y: s.y + 0.3 + (Math.random() - 0.5) * 0.2, vx: -3 - Math.random() * 3, vy: (Math.random() - 0.5) * 2, life: 0.3, max: 0.3, col: held ? [255, 220, 90] : c1, size: 0.16 });
     }
     stepParticles(dt);
     if (!s.dead) camX = s.x - viewW() * 0.3;
-    camY = lerp(camY, targetCamY(), Math.min(1, dt * (s.mode === 'ship' ? 4 : 5)));
+    camY = lerp(camY, targetCamY(), Math.min(1, dt * (Engine.CORRIDOR[s.mode] ? 4 : 5)));
     for (let i = 0; i < 3; i++) { bgCol[i] = lerp(bgCol[i], bgT[i], dt * 2.5); grCol[i] = lerp(grCol[i], grT[i], dt * 2.5); }
     shake = Math.max(0, shake - dt * 3); flash = Math.max(0, flash - dt * 2.5);
   }
@@ -211,6 +225,7 @@
     for (const p of particles) { p.x += p.vx * dt; p.y += p.vy * dt; p.life -= dt; }
     particles = particles.filter(p => p.life > 0);
     for (const r of ripples) r.t += dt; ripples = ripples.filter(r => r.t < r.max);
+    for (const k of streaks) k.t += dt; streaks = streaks.filter(k => k.t < 0.25);
   }
   function handleEvents() {
     for (const ev of s.events) {
@@ -225,7 +240,8 @@
       } else if (ev.e === 'orb' || ev.e === 'pad') {
         const o = ev.o; ripples.push({ x: o.x + 0.5, y: o.y + (ev.e === 'pad' ? 0.15 : 0.5), t: 0, max: 0.35, r: 1.6, col: o.pink ? [255, 90, 220] : [255, 230, 60] });
       } else if (ev.e === 'portal') {
-        flash = 0.6; ripples.push({ x: ev.o.x + 0.5, y: ev.o.y + 1.5, t: 0, max: 0.5, r: 3, col: ev.o.mode === 'ship' ? [255, 90, 220] : [90, 255, 120] });
+        waveTrail = []; flash = 0.6; ripples.push({ x: ev.o.x + 0.5, y: ev.o.y + 1.5, t: 0, max: 0.5, r: 3, col: hex(PORTAL_COL[ev.o.mode][0]) });
+      } else if (ev.e === 'teleport') { streaks.push({ x: s.x + 0.5, y0: ev.y0 + 0.5, y1: ev.y1 + 0.5, t: 0 }); flash = Math.max(flash, 0.15);
       } else if (ev.e === 'color') { bgT = hex(ev.o.bg); grT = hex(ev.o.gr); }
       else if (ev.e === 'win') win();
     }
@@ -373,7 +389,7 @@
     cx.restore();
   }
   // 3D ring portal: tilted ellipse ring with a dark striped side band
-  const PORTAL_COL = { ship: ['#ff4fd8', '#ffc2f2'], cube: ['#3dff5a', '#c8ffd0'] };
+  const PORTAL_COL = { ship: ['#ff4fd8', '#ffc2f2'], cube: ['#3dff5a', '#c8ffd0'], ball: ['#ff5a1f', '#ffc7ad'], ufo: ['#ffb31a', '#ffe7b0'], wave: ['#2fd4ff', '#c4f4ff'], robot: ['#e8e8e8', '#ffffff'], spider: ['#b04dff', '#e6c7ff'] };
   function drawPortal(o, t, part) {
     const cxp = SX(o.x + 0.5), cyp = SY(o.y + 1.5), rx = U * 0.42, ry = U * 1.6, depth = U * 0.75;
     const [c, light] = PORTAL_COL[o.mode];
@@ -416,7 +432,7 @@
     cx.restore();
   }
   function drawSpeed(o, t) {
-    const x = SX(o.x), y = SY(o.y + 1.5), col = ['#ffb340', '#40e0ff', '#3dff5a', '#ff4fd8'][o.v];
+    const x = SX(o.x), y = SY(o.y + 1.5), col = ['#ffb340', '#40e0ff', '#3dff5a', '#ff4fd8', '#ff3030'][o.v];
     cx.save(); cx.shadowColor = col; cx.shadowBlur = 16; cx.fillStyle = col; cx.strokeStyle = '#fff'; cx.lineWidth = 2;
     for (let i = 0; i < o.v + 1; i++) {
       const ox = x + i * U * 0.4 + Math.sin(t * 8) * 2;
@@ -468,12 +484,31 @@
       cx.fillRect(SX(p.x) - sz / 2, SY(p.y) - sz / 2, sz, sz);
     }
     if (showPlayer && !s.dead) {
-      cx.save(); cx.translate(SX(s.x + 0.5), SY(s.y + (s.mode === 'cube' ? 0.5 : 0.3)));
-      if (s.mode === 'cube') { cx.rotate(rot * Math.PI / 180); Art.cube(cx, U, icon.d, col1(), col2()); }
-      else { cx.rotate(shipRot * Math.PI / 180); Art.ship(cx, U, icon.d, col1(), col2()); }
+      const [ox, bw, bh] = Engine.BOX[s.mode], c1 = col1(), c2 = col2(), ph = s.x * 2.2;
+      if (s.mode === 'wave' && waveTrail.length > 1) {
+        cx.save(); cx.strokeStyle = c2; cx.lineWidth = U * 0.16; cx.shadowColor = c2; cx.shadowBlur = U * 0.4; cx.lineJoin = 'miter'; cx.globalAlpha = 0.85;
+        cx.beginPath(); let st0 = 0; while (st0 < waveTrail.length - 1 && SX(waveTrail[st0][0]) < -20) st0++;
+        cx.moveTo(SX(waveTrail[st0][0]), SY(waveTrail[st0][1])); for (let i = st0 + 1; i < waveTrail.length; i++) cx.lineTo(SX(waveTrail[i][0]), SY(waveTrail[i][1]));
+        cx.lineTo(SX(s.x + 0.5), SY(s.y + 0.25)); cx.stroke(); cx.restore();
+      }
+      cx.save(); cx.translate(SX(s.x + ox + bw / 2), SY(s.y + bh / 2));
+      if (s.grav < 0) cx.scale(1, -1);
+      switch (s.mode) {
+        case 'cube': cx.rotate(rot * Math.PI / 180); Art.cube(cx, U, icon.d, c1, c2); break;
+        case 'ship': cx.rotate(shipRot * Math.PI / 180); Art.ship(cx, U, icon.d, c1, c2); break;
+        case 'ufo': cx.rotate(shipRot * Math.PI / 180); Art.ufo(cx, U, icon.d, c1, c2); break;
+        case 'ball': cx.rotate(rot * Math.PI / 180 * s.grav); Art.ball(cx, U, icon.d, c1, c2); break;
+        case 'wave': cx.rotate((held ? -45 : 45) * Math.PI / 180); Art.wave(cx, U, icon.d, c1, c2); break;
+        case 'robot': Art.robot(cx, U, icon.d, c1, c2, s.onGround ? ph : 0.6); break;
+        case 'spider': Art.spider(cx, U, icon.d, c1, c2, s.onGround ? ph : 0.6); break;
+      }
       cx.restore();
     }
     for (const o of L.triggers) if (o.t === 'portal' && vis(o)) drawPortal(o, t, 'front');
+    for (const k of streaks) {
+      const a = 1 - k.t / 0.25; cx.save(); cx.strokeStyle = `rgba(255,255,255,${a})`; cx.lineWidth = U * 0.5 * a; cx.shadowColor = col2(); cx.shadowBlur = U;
+      cx.beginPath(); cx.moveTo(SX(k.x), SY(k.y0)); cx.lineTo(SX(k.x), SY(k.y1)); cx.stroke(); cx.restore();
+    }
     for (const r of ripples) {
       const k = r.t / r.max; cx.strokeStyle = rgb(r.col, 1 - k); cx.lineWidth = U * 0.12 * (1 - k) + 1;
       cx.beginPath(); cx.arc(SX(r.x), SY(r.y), r.r * U * k, 0, Math.PI * 2); cx.stroke();

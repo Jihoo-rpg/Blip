@@ -112,7 +112,7 @@
     <div class="play" id="playBtn" title="Play (Enter)"><svg viewBox="0 0 24 24"><path d="M5 3l16 9-16 9z" fill="#fff" stroke="#062a0c" stroke-width="2" stroke-linejoin="round"/></svg></div>
     <div style="width:84px"></div>
   </div>
-  <div class="hint">점프: Space / ↑ / W / 클릭 / 터치 — 꾹 누르면 연속 점프<br>오브는 닿는 순간 클릭 · 쉽 모드는 누르는 동안 상승<br>P/Esc 일시정지 · R 재시작 · M 음소거</div>
+  <div class="hint">점프: Space / ↑ / W / 클릭 / 터치 — 꾹 누르면 연속 점프<br>쉽·웨이브는 누르는 동안 위로 · 볼·스파이더는 눌러서 중력 반전 · UFO는 눌러서 날갯짓 · 로봇은 길게 누를수록 높이<br>P/Esc 일시정지 · R 재시작 · M 음소거</div>
 </div>
 
 <div id="select" class="ov shade">
@@ -125,6 +125,7 @@
       <div style="flex:1;min-width:0">
         <div id="lvName"></div>
         <div class="stars">★ <span id="lvStars"></span></div>
+        <div id="lvModes" style="display:flex;gap:4px;margin-top:6px"></div><div id="lvModesTxt" style="font-size:11px;opacity:.7"></div>
         <div class="bars">
           <div class="barrow"><span>Normal</span><div class="bar"><i id="lvBarN"></i></div><span id="lvPctN">0%</span></div>
           <div class="barrow"><span>Practice</span><div class="bar p"><i id="lvBarP"></i></div><span id="lvPctP">0%</span></div>
@@ -143,6 +144,7 @@
   <button class="btn back" id="iconBack">◀ 뒤로</button>
   <div class="big" style="font-size:min(8vw,44px)">ICON KIT</div>
   <div id="iconPrev"></div>
+  <div id="modePrev" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;background:rgba(0,0,0,.35);border-radius:14px;padding:6px 10px"></div>
   <div class="kit">
     <div id="iconGrid"></div>
     <div class="lbl">메인 색</div><div class="swrow" id="col1"></div>

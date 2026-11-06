@@ -6,25 +6,38 @@ const E = require(process.env.ENGINE || '../src/engine.js');
 const fs = require('fs');
 
 const TIERS = [
-  { name: 'Easy', N: 24, k: 4, rest: 0.22, shipGap: 4.6, shipMove: 1, speeds: [1], cube: [26, 32], ship: [14, 16], half: 0,
+  { name: 'Easy', N: 24, k: 4, rest: 0.22, shipGap: 4.6, shipMove: 1, speeds: [1, 1, 0], cube: [26, 32], ship: [14, 16], half: 0,
     ev: { spike1: 4, spike2: 4, spike3: 2, small: 2, up: 4, down: 3, pad: 3, hang: 2, pit: 3, orbPit: 2 } },
-  { name: 'Normal', N: 20, k: 4, rest: 0.14, shipGap: 4.1, shipMove: 2, speeds: [1, 1, 2], cube: [28, 34], ship: [16, 18], half: 0,
+  { name: 'Normal', N: 20, k: 4, rest: 0.14, shipGap: 4.1, shipMove: 2, speeds: [1, 1, 2, 0], cube: [28, 34], ship: [16, 18], half: 0,
     ev: { spike1: 2, spike2: 4, spike3: 3, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 3, saw: 3, downSpike: 2 } },
-  { name: 'Hard', N: 14, k: 4, rest: 0.08, shipGap: 3.6, shipMove: 2, speeds: [1, 2], cube: [30, 36], ship: [18, 20], half: 0.1,
+  { name: 'Hard', N: 14, k: 4, rest: 0.08, shipGap: 3.6, shipMove: 2, speeds: [1, 2, 2, 0], cube: [30, 36], ship: [18, 20], half: 0.1,
     ev: { spike2: 3, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 4, saw: 3, downSpike: 3 } },
-  { name: 'Harder', N: 10, k: 4, rest: 0.05, shipGap: 3.2, shipMove: 3, speeds: [2, 2, 3], cube: [32, 38], ship: [18, 22], half: 0.2,
+  { name: 'Harder', N: 10, k: 4, rest: 0.05, shipGap: 3.2, shipMove: 3, speeds: [1, 2, 3], cube: [32, 38], ship: [18, 22], half: 0.2,
     ev: { spike2: 3, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 4, saw: 4, downSpike: 4 } },
-  { name: 'Insane', N: 7, k: 4, rest: 0.03, shipGap: 2.8, shipMove: 3, speeds: [2, 3], cube: [34, 40], ship: [20, 24], half: 0.3,
+  { name: 'Insane', N: 7, k: 4, rest: 0.03, shipGap: 2.8, shipMove: 3, speeds: [2, 3, 3, 4], cube: [34, 40], ship: [20, 24], half: 0.3,
     ev: { spike2: 2, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 4, pit: 4, orbPit: 4, saw: 4, downSpike: 4 } },
-  { name: 'Demon', N: 5, k: 3, rest: 0, shipGap: 2.4, shipMove: 3, speeds: [3], cube: [36, 44], ship: [22, 26], half: 0.45,
+  { name: 'Demon', N: 5, k: 3, rest: 0, shipGap: 2.4, shipMove: 3, speeds: [3, 3, 4], cube: [36, 44], ship: [22, 26], half: 0.45,
     ev: { spike2: 2, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 4, pit: 4, orbPit: 4, saw: 4, downSpike: 4 } },
 ];
+// modes per level: hardest modes appear later; 'feat' is the newly introduced mode
+const UNLOCK = [
+  { modes: ['ship'], feat: 'ship', ground: ['cube'] }, { modes: ['ship'], feat: 'ship', ground: ['cube'] },
+  { modes: ['ship', 'ball'], feat: 'ball', ground: ['cube'] }, { modes: ['ship', 'ball'], feat: 'ball', ground: ['cube'] },
+  { modes: ['ship', 'ball', 'ufo'], feat: 'ufo', ground: ['cube'] }, { modes: ['ship', 'ball', 'ufo'], feat: 'ufo', ground: ['cube'] },
+  { modes: ['ship', 'ball', 'ufo'], feat: 'ufo', ground: ['cube'] },
+  { modes: ['ship', 'ball', 'ufo', 'wave'], feat: 'wave', ground: ['cube'] }, { modes: ['ship', 'ufo', 'wave'], feat: 'wave', ground: ['cube'] },
+  { modes: ['ship', 'ball', 'ufo', 'wave'], feat: 'robot', ground: ['cube', 'robot'] }, { modes: ['ball', 'ufo', 'wave'], feat: 'robot', ground: ['cube', 'robot'] },
+  { modes: ['ship', 'ball', 'ufo', 'wave', 'spider'], feat: 'spider', ground: ['cube', 'robot'] }, { modes: ['ship', 'ufo', 'wave', 'spider'], feat: 'spider', ground: ['cube', 'robot'] },
+  { modes: ['ship', 'ball', 'ufo', 'wave', 'spider'], feat: null, ground: ['cube', 'robot'] }, { modes: ['ship', 'ball', 'ufo', 'wave', 'spider'], feat: null, ground: ['cube', 'robot'] },
+  { modes: ['ship', 'ball', 'ufo', 'wave', 'spider'], feat: null, ground: ['cube', 'robot'] },
+];
+const MODE_IDX = { cube: 0, ship: 1, ball: 2, ufo: 3, wave: 4, robot: 5, spider: 6 };
 const LEVELS = [
   ['First Steps', 0, 1, 4, 11, 128], ['Blue Horizon', 0, 2, 5, 22, 132], ['Green Valley', 1, 3, 5, 33, 130], ['Pulse Runner', 1, 3, 5, 44, 136],
   ['Orange Crush', 2, 4, 5, 55, 128], ['Night Drive', 2, 5, 5, 66, 134], ['Metro Line', 2, 5, 6, 77, 138], ['Red Alert', 3, 6, 6, 88, 132],
   ['Overclock', 3, 7, 6, 99, 140], ['Static Storm', 3, 7, 7, 111, 136], ['Prism Break', 4, 8, 7, 122, 140], ['Hyperdrive', 4, 9, 7, 133, 144],
   ['Voltage', 4, 9, 7, 144, 146], ['Abyss', 5, 10, 7, 155, 140], ['Doomsday Engine', 5, 10, 8, 166, 148], ['Event Horizon', 5, 10, 8, 177, 150],
-].map(([name, tier, stars, secs, seed, bpm]) => ({ name, tier, stars, secs, seed, bpm }));
+].map(([name, tier, stars, secs, seed, bpm], i) => ({ name, tier, stars, secs, seed, bpm, ...UNLOCK[i] }));
 
 // bright GD-like palettes: [bg, ground]
 const PALETTES = [
@@ -36,7 +49,7 @@ function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79
 const r2 = v => Math.round(v * 100) / 100;
 
 // ---------- verification ----------
-const key = s => `${s.mode}|${Math.round(s.y * 12)}|${Math.round(s.vy * 1.5)}|${s.onGround}|${s.holding}|${s.used.size}|${s.pressBuf > 0}`;
+const key = s => `${s.mode}|${s.grav}|${s.robotT > 0}|${Math.round(s.y * 12)}|${Math.round(s.vy * 1.5)}|${s.onGround}|${s.holding}|${s.used.size}|${s.pressBuf > 0}`;
 function initFront(N, p) { return { N, layer: [{ s: E.newState(), path: null }], first: p }; }
 function advance(L, F, xTarget) {
   let layer = F.layer;
@@ -85,6 +98,7 @@ function generate(def) {
     spike2(x, h, w) { return EV.spikes(x, h, w, 2); },
     spike3(x, h, w) { return EV.spikes(x, h, w, 3); },
     small(x, h, w) { return EV.spikes(x, h, w, rint(1, 2), true); },
+    up2(x, h, w) { if (st.mode !== 'robot' || h >= 3) return null; const a = [], p = x + 2.4 * sfac() + 0.3; floor(a, x, p, h); floor(a, p, x + w, h + 2); return { a, h: h + 2 }; },
     up(x, h, w) { if (h >= 4) return null; const a = [], p = x + 2.0 * sfac() + 0.3; floor(a, x, p, h); floor(a, p, x + w, h + 1); return { a, h: h + 1 }; },
     down(x, h, w) { if (h <= 0) return null; const a = [], p = x + 1.2, nh = T.name === 'Easy' ? h - 1 : (rnd() < 0.5 ? 0 : h - 1); floor(a, x, p, h); floor(a, p, x + w, nh); deco(a, p + 1, x + w, nh); return { a, h: nh }; },
     downSpike(x, h, w) { if (h <= 0) return null; const a = [], p = x + 1.2, nh = h - 1; floor(a, x, p, h); floor(a, p, x + w, nh); a.push(['s', r2(x + w - 0.6), nh, 0, 0]); return { a, h: nh }; },
@@ -119,12 +133,14 @@ function generate(def) {
 
   // ---------- ship segment ----------
   function shipSeg(x, w, open) {
-    const a = [];
+    const a = [], M = st.mode;
+    const P = { ship: [0, T.shipMove, 0.35], ufo: [0.4, T.shipMove, 0.3], wave: [-0.8, T.shipMove + 1, 0.2], ball: [1.2, 1, 0.6], spider: [1.2, 1, 0.6] }[M] || [0, T.shipMove, 0.35];
+    const gapBase = M === 'wave' ? Math.max(2.1, T.shipGap + P[0]) : T.shipGap + P[0];
     if (open) { // ease corridor toward fully open (for exits)
       st.f = Math.max(0, st.f - 2); st.c = Math.min(10, st.c + 2);
     } else {
-      const G = T.shipGap + (rnd() < 0.3 ? 0.6 : 0);
-      const mid = (st.f + st.c) / 2, mv = (rint(-T.shipMove, T.shipMove)) * (rnd() < 0.35 ? 0 : 1);
+      const G = gapBase + (rnd() < 0.3 ? 0.6 : 0);
+      const mid = (st.f + st.c) / 2, mv = (rint(-P[1], P[1])) * (rnd() < 0.35 ? 0 : 1);
       let nm = Math.max(G / 2 + 0.5, Math.min(10 - G / 2 - 0.5, mid + mv));
       // narrow gradually
       const curG = st.c - st.f, g = Math.max(G, curG - 1.5);
@@ -132,7 +148,7 @@ function generate(def) {
     }
     if (st.f > 0) a.push(['b', r2(x), 0, r2(w), st.f]);
     if (st.c < 10) a.push(['b', r2(x), st.c, r2(w), r2(10 - st.c)]);
-    if (!open && st.c - st.f >= T.shipGap + 0.5 && rnd() < 0.35) {
+    if (!open && st.c - st.f >= gapBase + 0.5 && rnd() < P[2]) {
       if (rnd() < 0.5) a.push(['s', r2(x + w / 2 - 0.5), st.f, 0, 0]); else a.push(['s', r2(x + w / 2 - 0.5), r2(st.c - 1), 1, 0]);
     }
     return a;
@@ -147,7 +163,7 @@ function generate(def) {
   let totalBeats = 0, backtracks = 0;
   function cubeBeat(forceRest, ramp, wantH0) {
     const w = bpb() * (!forceRest && !wantH0 && rnd() < T.half ? 0.5 : 1);
-    let names = forceRest ? ['rest'] : [chooseEvent(ramp), chooseEvent(ramp), 'rest'];
+    let names = forceRest ? ['rest'] : [st.mode === 'robot' && rnd() < 0.25 ? 'up2' : chooseEvent(ramp), chooseEvent(ramp), 'rest'];
     if (wantH0) names = st.h > 0 ? ['down', 'down', 'rest'] : ['rest'];
     for (const n of names) {
       const r = EV[n](st.x, st.h, w); if (!r) continue;
@@ -172,35 +188,52 @@ function generate(def) {
   }
   function cubeOrShipRest() {
     const w = bpb();
-    if (st.mode === 'cube') { const r = EV.rest(st.x, st.h, w); if (tryAdd(r.a, st.x + w - 2.4)) { st.x = r2(st.x + w); return true; } return false; }
+    if (!E.CORRIDOR[st.mode]) { const r = EV.rest(st.x, st.h, w); if (tryAdd(r.a, st.x + w - 2.4)) { st.x = r2(st.x + w); return true; } return false; }
     const save = { f: st.f, c: st.c }; const a = shipSeg(st.x, w / 2, true);
     if (tryAdd(a, st.x + w / 2 - 2.4)) { st.x = r2(st.x + w / 2); return true; } Object.assign(st, save); return false;
   }
 
+  // plan section modes
+  const plan = ['cube'];
+  for (let sec = 1; sec < def.secs; sec++) plan.push(sec % 2 === 1 ? pick(def.modes) : pick(def.ground));
+  if (def.feat) {
+    const corr = !!E.CORRIDOR[def.feat];
+    const idx = plan.map((m, i) => i).filter(i => i > 0 && (i % 2 === 1) === corr);
+    if (idx.length) { plan[idx[0]] = def.feat; if (idx.length > 2) plan[idx[idx.length - 1]] = def.feat; }
+  }
+  let sinceSpeed = 0;
   for (let sec = 0; sec < def.secs; sec++) {
-    const ship = sec % 2 === 1;
+    const mode = plan[sec], corridor = !!E.CORRIDOR[mode];
     if (sec > 0) {
-      // bring cube down to ground before a ship portal
-      if (ship) { let g = 0; while (st.h > 0 && g++ < 6) withBacktrack(() => cubeBeat(false, 1, true)); }
-      // open ship corridor before a cube portal
-      if (!ship) { let g = 0; while ((st.f > 0 || st.c < 10) && g++ < 8) withBacktrack(() => { const save = { f: st.f, c: st.c }, w = bpb() / 2; const a = shipSeg(st.x, w, true); if (tryAdd(a, st.x + w - 2.4)) { st.x = r2(st.x + w); return true; } Object.assign(st, save); return false; }); }
+      if (corridor) { let g = 0; while (st.h > 0 && g++ < 6) withBacktrack(() => cubeBeat(false, 1, true)); }
+      if (!corridor) { let g = 0; while ((st.f > 0 || st.c < 10) && g++ < 8) withBacktrack(() => { const save = { f: st.f, c: st.c }, w = bpb() / 2; const a = shipSeg(st.x, w, true); if (tryAdd(a, st.x + w - 2.4)) { st.x = r2(st.x + w); return true; } Object.assign(st, save); return false; }); }
       pal = (pal + 1 + Math.floor(rnd() * (PALETTES.length - 1))) % PALETTES.length;
       const arr = [['C', st.x, 0, ...PALETTES[pal]]];
       const sp = pick(T.speeds); if (sp !== st.speed) { arr.push(['S', st.x + 0.5, 0.5, sp]); }
-      arr.push(['P', r2(st.x + 1.5), 3, ship ? 1 : 0]);
+      arr.push(['P', r2(st.x + 1.5), 3, MODE_IDX[mode]]);
       const w = bpb();
-      if (!ship) floor(arr, st.x, st.x + w, 0);
+      if (!corridor) floor(arr, st.x, st.x + w, 0);
       if (!tryAdd(arr, st.x + w - 2.4)) throw new Error('portal fail');
-      st.speed = sp; st.mode = ship ? 'ship' : 'cube'; st.h = 0; st.f = 0; st.c = 10;
+      st.speed = sp; st.mode = mode; st.h = 0; st.f = 0; st.c = 10;
       st.x = r2(st.x + w);
       hist.length = 0; // never backtrack across a portal
+      sinceSpeed = 0;
     }
-    const nBeats = ship ? rint(...T.ship) : rint(...T.cube);
+    const nBeats = corridor ? rint(...T.ship) : rint(...T.cube);
     const start = totalBeats;
-    if (!ship) {
+    if (!corridor) {
       while (totalBeats - start < nBeats) {
         const ramp = Math.min(1, (sec * 30 + totalBeats - start) / 16);
+        // occasional speed change mid-section
+        if (sinceSpeed >= 10 && totalBeats - start < nBeats - 4 && rnd() < 0.18) {
+          const sp = pick(T.speeds);
+          if (sp !== st.speed) { const save = { ...st }; const w = bpb(); const r = EV.rest(st.x, st.h, w); r.a.push(['S', r2(st.x + 0.5), st.h + 0.5, sp]);
+            if (tryAdd(r.a, st.x + w - 2.4)) { st.x = r2(st.x + w); st.speed = sp; totalBeats++; hist.length = 0; } else Object.assign(st, save); }
+          sinceSpeed = 0;
+        }
+        const tb = totalBeats;
         withBacktrack(tries => cubeBeat(tries > 1, ramp));
+        sinceSpeed += totalBeats - tb;
       }
     } else {
       for (let i = 0; i < nBeats * 2; i++) {
@@ -214,7 +247,7 @@ function generate(def) {
       totalBeats += nBeats;
     }
   }
-  if (st.mode === 'ship') {
+  if (E.CORRIDOR[st.mode]) {
     let g = 0; while ((st.f > 0 || st.c < 10) && g++ < 8) withBacktrack(() => cubeOrShipRest());
     const w = bpb(); if (!tryAdd([['P', r2(st.x + 1.5), 3, 0]], st.x + w - 2.4)) throw new Error('end portal'); st.x = r2(st.x + w); st.mode = 'cube'; hist.length = 0;
   }
