@@ -34,7 +34,7 @@ const Engine = (() => {
   }
 
   function buildLevel(objs, cfg = {}) {
-    const L = { jump: JUMP * (cfg.jump || 1), stepUp: cfg.step != null ? cfg.step : 0.4, pad: (cfg.pad || 1), decos: [], solids: [], hazards: [], pads: [], orbs: [], triggers: [], all: objs, endX: 0, cols: [] };
+    const L = { jump: JUMP * (cfg.jump || 1), stepUp: cfg.step || 0, pad: (cfg.pad || 1), decos: [], solids: [], hazards: [], pads: [], orbs: [], triggers: [], all: objs, endX: 0, cols: [] };
     objs.forEach((o, i) => {
       o.id = i;
       if (o.t === 'deco') L.decos.push(o);
@@ -42,8 +42,10 @@ const Engine = (() => {
       else if (o.t === 'spike') {
         o.w = 1; o.h = 1;
         const sm = o.small;
-        if (o.dir === 'down') o.hb = { x: o.x + 0.32, y: o.y + (sm ? 0.68 : 0.42), w: 0.36, h: sm ? 0.32 : 0.58 };
-        else o.hb = { x: o.x + 0.32, y: o.y, w: 0.36, h: sm ? 0.32 : 0.58 };
+        // triangle hitbox matching the drawn spike (slightly inset)
+        const th = sm ? 0.4 : 0.88;
+        if (o.dir === 'down') o.tri = [[o.x + 0.12, o.y + 1], [o.x + 0.88, o.y + 1], [o.x + 0.5, o.y + 1 - th]];
+        else o.tri = [[o.x + 0.12, o.y], [o.x + 0.88, o.y], [o.x + 0.5, o.y + th]];
         L.hazards.push(o);
       }
       else if (o.t === 'saw') { o.w = o.r * 2; o.h = o.r * 2; L.hazards.push(o); }
@@ -80,6 +82,20 @@ const Engine = (() => {
     const c0 = Math.max(0, Math.floor(x) - 2), c1 = Math.min(L.cols.length - 1, Math.floor(x) + 2);
     for (let c = c0; c <= c1; c++) for (const o of L.cols[c]) if (o._s !== stamp) { o._s = stamp; buf.push(o); }
     return buf;
+  }
+  function triBox(t, x, y, w, h) { // separating axis test: triangle vs axis-aligned box
+    const bx = [x, x + w, x + w, x], by = [y, y, y + h, y + h];
+    let mnx = Infinity, mxx = -Infinity, mny = Infinity, mxy = -Infinity;
+    for (const p of t) { mnx = Math.min(mnx, p[0]); mxx = Math.max(mxx, p[0]); mny = Math.min(mny, p[1]); mxy = Math.max(mxy, p[1]); }
+    if (mxx <= x || mnx >= x + w || mxy <= y || mny >= y + h) return false;
+    for (let i = 0; i < 3; i++) {
+      const a = t[i], b = t[(i + 1) % 3], nx = -(b[1] - a[1]), ny = b[0] - a[0];
+      let t0 = Infinity, t1 = -Infinity, b0 = Infinity, b1 = -Infinity;
+      for (const p of t) { const d = p[0] * nx + p[1] * ny; t0 = Math.min(t0, d); t1 = Math.max(t1, d); }
+      for (let k = 0; k < 4; k++) { const d = bx[k] * nx + by[k] * ny; b0 = Math.min(b0, d); b1 = Math.max(b1, d); }
+      if (t1 <= b0 || b1 <= t0) return false;
+    }
+    return true;
   }
   function die(s) { s.dead = true; s.events.push({ e: 'die' }); }
 
@@ -163,9 +179,9 @@ const Engine = (() => {
     const hx = px + sh, hy = s.y + sh, hw = W - sh * 2, hh = H - sh * 2;
     for (const o of near) {
       if (o.t === 'spike') {
-        const h = o.hb; if (ov(hx, hy, hw, hh, h.x, h.y, h.w, h.h)) { die(s); return; }
+        if (triBox(o.tri, hx, hy, hw, hh)) { die(s); return; }
       } else if (o.t === 'saw') {
-        if (circRect(o.x, o.y, o.r * 0.88, hx, hy, hw, hh)) { die(s); return; }
+        if (circRect(o.x, o.y, o.r * 0.92, hx, hy, hw, hh)) { die(s); return; }
       } else if (o.t === 'pad') {
         if (!s.used.has(o.id) && ov(px, s.y, W, H, o.x - 0.2, o.y, 1.4, 2.3)) { // tall zone: jumping just before a pad still triggers it
           s.used.add(o.id); s.vy = CORRIDOR[m] ? 8 : (o.pink ? PINK_PAD : PAD) * L.pad * s.grav; s.onGround = false; s.robotT = 0; s.events.push({ e: 'pad', o });

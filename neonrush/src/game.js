@@ -1,14 +1,14 @@
 // ===== Game / rendering / menus =====
 (() => {
   const cv = document.getElementById('c'), cx = cv.getContext('2d');
-  const VIEW_H = 12;
+  const VIEW_H = 11;
   const $ = id => document.getElementById(id);
   let W = 0, H = 0, U = 40, DPR = 1;
   function resize() {
     DPR = Math.min(2, window.devicePixelRatio || 1);
     W = window.innerWidth; H = window.innerHeight;
     cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px';
-    U = Math.min(H / VIEW_H, W / 17);
+    U = Math.min(H / VIEW_H, W / 16);
   }
   window.addEventListener('resize', resize); resize();
 
@@ -129,7 +129,7 @@
     const pr = P(LV[cur].name); pr.att++; saveProg();
   }
   const viewW = () => W / U;
-  function targetCamY() { const extra = Math.max(0, H / U - VIEW_H) * 0.45; return (Engine.CORRIDOR[s.mode] ? -1 : Math.max(-2.5, s.y - 6.5)) - extra; }
+  function targetCamY() { const extra = Math.max(0, H / U - VIEW_H) * 0.45; return (Engine.CORRIDOR[s.mode] ? -0.5 : Math.max(-2, s.y - 6)) - extra; }
 
   // ---------- input ----------
   function press() { Music.init(); if (mode === 'play') held = true; }
@@ -529,7 +529,7 @@
     if (mode === 'play') { update(dt); draw(now / 1000, true); }
     else if (mode === 'paused') draw(now / 1000, true);
     else {
-      demoX += dt * 7; camX = (demoX % Math.max(30, L.endX - 20)) - 10; camY = lerp(camY, -2.5 - Math.max(0, H / U - VIEW_H) * 0.45, 0.1);
+      demoX += dt * 7; camX = (demoX % Math.max(30, L.endX - 20)) - 10; camY = lerp(camY, -2 - Math.max(0, H / U - VIEW_H) * 0.45, 0.1);
       const [b, g] = colorAt(camX + 10); for (let i = 0; i < 3; i++) { bgCol[i] = lerp(bgCol[i], b[i], dt * 2); grCol[i] = lerp(grCol[i], g[i], dt * 2); }
       stepParticles(dt); draw(now / 1000, mode === 'win');
     }

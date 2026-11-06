@@ -126,8 +126,8 @@ function generate(def) {
   };
   const evNames = Object.keys(T.ev), evW = evNames.map(n => T.ev[n]);
   function chooseEvent(ramp) {
-    if (totalBeats < 14) { const safe = T.name === 'Easy' ? ['rest', 'rest', 'spike1', 'spike1', 'up', 'down'] : ['rest', 'spike1', 'spike2', 'up', 'down']; return pick(safe); }
-    if (rnd() < T.rest + (1 - ramp) * 0.15) return 'rest';
+    if (totalBeats < 14) { const safe = T.name === 'Easy' ? ['spike1', 'spike1', 'spike2', 'up', 'down', 'rest'] : ['spike1', 'spike2', 'spike2', 'up', 'down']; return pick(safe); }
+    if (rnd() < T.rest + (1 - ramp) * 0.05) return 'rest';
     let r = rnd() * evW.reduce((a, b) => a + b), i = 0; while ((r -= evW[i]) > 0) i++;
     return evNames[i];
   }
@@ -135,8 +135,8 @@ function generate(def) {
   // ---------- ship segment ----------
   function shipSeg(x, w, open) {
     const a = [], M = st.mode;
-    const P = { ship: [0, T.shipMove, 0.35], ufo: [0.4, T.shipMove, 0.3], wave: [-0.8, T.shipMove + 1, 0.2], ball: [1.2, 1, 0.6], spider: [1.2, 1, 0.6] }[M] || [0, T.shipMove, 0.35];
-    const gapBase = M === 'wave' ? Math.max(2.1, T.shipGap + P[0]) : T.shipGap + P[0];
+    const P = { ship: [0, T.shipMove, 0.35], ufo: [0.4, T.shipMove, 0.3], wave: [-0.8, T.shipMove + 1, 0.2], ball: [-0.3, 1, 0.55], spider: [-0.3, 1, 0.55] }[M] || [0, T.shipMove, 0.35];
+    const gapBase = M === 'wave' ? Math.max(2.1, T.shipGap + P[0]) : (M === 'ball' || M === 'spider') ? Math.min(4.2, Math.max(3, T.shipGap + P[0])) : T.shipGap + P[0];
     if (open) { // ease corridor toward fully open (for exits)
       st.f = Math.max(0, st.f - 2); st.c = Math.min(10, st.c + 2);
     } else {
@@ -160,7 +160,7 @@ function generate(def) {
   const snap = () => ({ objs, F, st: { ...st }, rndState: null });
   let pal = Math.floor(rnd() * PALETTES.length);
   objs.push(['C', 0, 0, ...PALETTES[pal]]);
-  st.x = r2(bpb() * 3); // intro: 3 beats
+  st.x = r2(bpb() * 1.5); // short intro
   let totalBeats = 0, backtracks = 0;
   function cubeBeat(forceRest, ramp, wantH0) {
     const w = bpb() * (!forceRest && !wantH0 && rnd() < T.half ? 0.5 : 1);
