@@ -281,7 +281,7 @@ function clockStr() { const m = Math.floor(M.clock / 60), s = Math.floor(M.clock
 const radar = { c: null, g: null };
 function hudTick() {
   rotTick(); if (UI.screen !== 'game') { if (!$('#intro').hidden) { $('#intro').hidden = true; document.body.classList.remove('intro'); } return; } introTick();
-  $('#sc0').textContent = M.score[0]; $('#sc1').textContent = M.score[1]; $('#clk').textContent = clockStr() + (M.half === 2 ? '' : ''); $('#half').textContent = M.half === 1 ? '전반' : '후반';
+  $('#sc0').textContent = M.score[0]; $('#sc1').textContent = M.score[1]; $('#clk').textContent = clockStr() + (M.half === 2 ? '' : ''); $('#half').textContent = ['전반', '후반', '연장 전반', '연장 후반'][M.half - 1] || '';
   const h = M.human[0] >= 0 ? 0 : -1; const p = h >= 0 ? M.ctrl[h] : null;
   const tag = $('#ptag'); if (p) { tag.hidden = false; if (UI.tagP !== p) { UI.tagP = p; const pd = p.d.pid != null ? PDB[p.d.pid] : null; const o = ovrOf(p.d); const r = pd ? pd.r : o >= 88 ? 'W' : o >= 80 ? 'G' : o >= 72 ? 'S' : 'B';
       tag.innerHTML = `<div class="mc r${r}"><div class="fr"></div><div class="in">${pd ? `<img alt="">` : ''}<em>${o}</em></div></div><div class="mt"><b>${p.d.num}</b><span>${esc(p.d.name)}</span><small>${ROLE_NAMES[p.role]}</small></div>`; if (pd) portrait(pd, u => { const im = tag.querySelector('img'); if (im && UI.tagP === p) im.src = u; }); } } else { tag.hidden = true; UI.tagP = null; }
@@ -304,7 +304,7 @@ function hudTick() {
   if (me >= 0 && M.phase === 'set' && M.sp && M.sp.team === me && M.sp.taker === M.ctrl[0] && (M.sp.ready || NET.role === 'guest') && !M.sp.pend && !M.sp.done) ht = { throw: IS_MOBILE ? '방향을 정하고 패스(꾹 = 멀리) → 스로인' : '방향 + E(꾹 = 멀리) → 스로인', goalkick: IS_MOBILE ? '패스 꾹 눌렀다 떼기: 골킥 세기' : 'E 꾹 눌렀다 떼기: 골킥 세기', corner: IS_MOBILE ? '슛 꾹→떼기: 크로스(길게 누를수록 멀리) · 패스: 짧게' : 'Space 꾹→떼기: 크로스(오래 = 멀리) · E: 짧은 패스', free: IS_MOBILE ? '슛 꾹 눌렀다 떼기: 프리킥 슛 · 패스' : 'Space 꾹 눌렀다 떼기: 슛 · E: 패스', pen: IS_MOBILE ? '방향(위·아래)을 정하고 슛 꾹 → 떼기' : '방향(W·S)을 정하고 Space 꾹 → 떼기' }[M.sp.type];
   if (me >= 0 && M.phase === 'kickoff' && M.koTeam === me && !M.koPrep) ht = IS_MOBILE ? '패스 버튼으로 킥오프' : 'E로 킥오프';
   if (hint.textContent !== ht) { hint.textContent = ht; hint.hidden = !ht; }
-  if (performance.now() - (UI.sbT || 0) > 1000) { UI.sbT = performance.now(); drawBoard(M.t0, M.t1, M.score, `${clockStr()} ${M.half === 1 ? '전반' : '후반'}`); }
+  if (performance.now() - (UI.sbT || 0) > 1000) { UI.sbT = performance.now(); drawBoard(M.t0, M.t1, M.score, `${clockStr()} ${['전반', '후반', '연장 전반', '연장 후반'][M.half - 1] || ''}`); }
 }
 /* ---------- 메뉴 ---------- */
 const PICK = { t0: SAVE.t0 || 'KOR', t1: SAVE.t1 || 'JPN', f0: SAVE.f0 || '4-3-3', diff: SAVE.diff == null ? 1 : SAVE.diff, len: SAVE.len || 6, side: 0 };

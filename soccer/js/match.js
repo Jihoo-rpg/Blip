@@ -166,7 +166,7 @@ function checkRules() {
 }
 function goal(ti) {
   M.score[ti]++; M.phase = 'goal'; M.phT = 0; ball.inNet = Math.sign(ball.x) || 1; ball.owner = null; ball.shot = null; ball.passTo = null; const sc = ball.last && ball.last.team === ti ? ball.last : null; const og = ball.last && ball.last.team !== ti;
-  const min = Math.min(90, Math.floor(M.clock / 60) + 1); M.scorers.push({ team: ti, name: sc ? sc.d.name : (og ? (ball.last.d.name + ' (자책)') : '?'), min }); if (sc) { sc.goals++; sc.rating += 1.2; }
+  const min = Math.min(M.half > 2 ? 120 : 90, Math.floor(M.clock / 60) + 1); M.scorers.push({ team: ti, name: sc ? sc.d.name : (og ? (ball.last.d.name + ' (자책)') : '?'), min }); if (sc) { sc.goals++; sc.rating += 1.2; }
   STAD.jump = 6; STAD.jumpSide = null; sfx('goal'); banner('GOAL!', `${M[ti ? 't1' : 't0'].f} ${sc ? sc.d.name : '자책골'} ${min}'`, '#ffd400', 2.6);
   comm(og ? '아… 자책골이에요!' : pick([`골!!! ${shortName(sc)}!!`, `${shortName(sc)}, 골망을 흔듭니다!`, `들어갔어요! ${shortName(sc)}!`])); M.goalTeam = ti; M.celeBy = sc;
   for (const p of M.players) { if (p.team === ti) { if (p === sc) { p.act = 'cele'; p.actT = 0; p.celeKind = randi(0, 4); } else if (p.role !== 'GK') { p.act = null; } } else if (p.role !== 'GK') { p.act = Math.random() < .5 ? 'sad' : null; p.actT = 0; } }
@@ -409,7 +409,7 @@ function matchTick(dt) {
   const P = M.phase;
   if (P === 'play') {
     M.clock += dt * 90 * 60 / (M.len * 60);
-    const halfEnd = M.half === 1 ? 45 * 60 : 90 * 60;
+    const halfEnd = [45, 90, 105, 120][M.half - 1] * 60;
     if (M.clock >= halfEnd && !ball.shot && (!ball.owner || Math.abs(ball.x) < PL.hx - 20)) { M.clock = halfEnd; endHalf(); return; }
     humanTick(dt); teamAI(0, dt); teamAI(1, dt); movePlayers(dt); for (const p of M.players) slideHit(p); ballPhys(dt); ballControl(dt); checkRules();
     if (ball.passTo) { ball.passT += dt; if (ball.passT > 4) ball.passTo = null; }
@@ -435,15 +435,18 @@ function matchTick(dt) {
     movePlayers(dt); ballPhys(dt); netContain();
     if (M.phT > 3.2) { if (REC.frames.length > 40 && !M.noReplay) startReplay(() => kickoff(1 - M.goalTeam, true)); else kickoff(1 - M.goalTeam, true); }
   } else if (P === 'foul') { movePlayers(dt); for (const p of M.players) { p.vx *= .9; p.vz *= .9; } if (M.phT > .9 && M.foulNext) { const f = M.foulNext; M.foulNext = null; startSet(f[0], f[1], f[2], f[3]); } }
-  else if (P === 'half') { if (M.phT > 3.5) { M.half = 2; M.dir = [-1, 1]; kickoff(1); banner('후반전 시작', null, '#22d3ee', 1.4); } }
+  else if (P === 'half') { if (M.phT > (M.half === 2 ? 4.2 : 3.5)) { M.half++; M.dir = M.half % 2 ? [1, -1] : [-1, 1]; kickoff(M.half % 2 ? 0 : 1); banner(HALFN[M.half - 1] + ' 시작', null, M.half > 2 ? '#ff8a1f' : '#22d3ee', 1.4); } }
   else if (P === 'over') { for (const p of M.players) { p.vx *= .9; p.vz *= .9; } movePlayers(dt); }
   // 사람 · 공 메시 · 애니메이션
   for (const p of M.players) animPlayer(p, dt);
   if (P !== 'replay') REC.push();
 }
+const HALFN = ['전반전', '후반전', '연장 전반', '연장 후반'];
 function endHalf() {
   sfx('whistle', 1); sfx('whistle', 1, .35);
-  if (M.half === 1) { M.phase = 'half'; M.phT = 0; banner('하프타임', `${M.t0.f} ${M.score[0]} : ${M.score[1]} ${M.t1.f}`, '#22d3ee', 3.2); comm('전반전이 끝났어요.'); }
+  const draw = M.score[0] === M.score[1];
+  if (M.half === 1 || M.half === 3) { M.phase = 'half'; M.phT = 0; banner(M.half === 1 ? '하프타임' : '연장 전반 끝', `${M.t0.f} ${M.score[0]} : ${M.score[1]} ${M.t1.f}`, '#22d3ee', 3.2); comm(M.half === 1 ? '전반전이 끝났어요.' : '연장 전반이 끝났어요.'); }
+  else if (M.half === 2 && draw && M.mode !== 'demo') { M.phase = 'half'; M.phT = 0; banner('연장전!', `${M.t0.f} ${M.score[0]} : ${M.score[1]} ${M.t1.f} · 15분씩 두 번 더`, '#ff8a1f', 4); comm('비겼어요! 연장전으로 갑니다!'); STAD.jump = 2; }
   else { M.phase = 'over'; M.phT = 0; const w = M.score[0] === M.score[1] ? -1 : M.score[0] > M.score[1] ? 0 : 1; for (const p of M.players) { p.act = w < 0 ? null : p.team === w ? 'clap' : 'sad'; p.actT = 0; } banner('경기 종료', `${M.t0.f} ${M.score[0]} : ${M.score[1]} ${M.t1.f}`, '#ffd400', 3); STAD.jump = 3; setTimeout(showResult, 3200); }
 }
 /* ---------- 그리기 ---------- */

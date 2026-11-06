@@ -9,9 +9,9 @@ const OPP = [
   { id: 'MDB', n: '마드리드 블랑코스', f: '🤍', c: ['#f4f4f4', '#ffd400'], o: 88 }, { id: 'PRL', n: '파리 뤼미에르', f: '🗼', c: ['#1f2a5c', '#d7142b'], o: 90 }, { id: 'GAL', n: '갤럭시 올스타즈', f: '🌌', c: ['#ff4df0', '#22d3ee'], o: 94 },
 ];
 const PACKS = [
-  { k: 'basic', n: '일반 팩', p: 300, w: { B: 50, S: 32, G: 16, W: 2, L: 0 }, c: '#c98a4b', d: '브론즈 · 실버가 많이 나와요' },
-  { k: 'gold', n: '골드 팩', p: 1200, w: { B: 0, S: 0, G: 78, W: 19, L: 3 }, c: '#ffd400', d: '골드 이상 확정 · 월드클래스 19%' },
-  { k: 'wc', n: '월드클래스 팩', p: 4000, w: { B: 0, S: 0, G: 0, W: 85, L: 15 }, c: '#22d3ee', d: '월드클래스 확정 · 레전드 15%' },
+  { k: 'basic', n: '일반 팩', p: 200, w: { B: 50, S: 32, G: 16, W: 2, L: 0 }, c: '#c98a4b', d: '브론즈 · 실버가 많이 나와요' },
+  { k: 'gold', n: '골드 팩', p: 800, w: { B: 0, S: 0, G: 78, W: 19, L: 3 }, c: '#ffd400', d: '골드 이상 확정 · 월드클래스 19%' },
+  { k: 'wc', n: '월드클래스 팩', p: 2800, w: { B: 0, S: 0, G: 0, W: 85, L: 15 }, c: '#22d3ee', d: '월드클래스 확정 · 레전드 15%' },
 ];
 const DUPC = { B: 60, S: 120, G: 350, W: 1200, L: 3500 };
 const CL = { tab: 'play', sel: null, busy: false };
@@ -66,7 +66,7 @@ function clubTab0(t) {
     B.innerHTML = `<p class="hintp">선수 도감 ${n} / ${L.length} · 아직 없는 선수는 흐리게 보여요</p><div class="rfilter">${['all', 'L', 'W', 'G', 'S', 'B'].map(r => `<button class="chip ${CL.rf === r || (!CL.rf && r === 'all') ? 'on' : ''}" data-rf="${r}">${r === 'all' ? '전체' : RAR(r).n}</button>`).join('')}</div><div class="bench all">${L.filter(p => !CL.rf || CL.rf === 'all' || p.r === CL.rf).map(p => cardHTML(p, own[p.id] ? '' : 'data-miss="1"')).join('')}</div>`;
   }
 }
-function winCoins(o) { return 150 + Math.max(0, o.o - 60) * 18; }
+function winCoins(o) { return 220 + Math.max(0, o.o - 60) * 24; }
 document.addEventListener('click', e => {
   if (UI.screen !== 'club') return; const t = e.target.closest('[data-ctab],[data-opp],[data-cform],[data-slot],[data-bench],[data-pack],[data-rf],#bAuto'); if (!t) return; const c = club(); sfx('tick');
   if (t.dataset.ctab) return clubTab(t.dataset.ctab);
@@ -106,7 +106,7 @@ function startClubMatch(o) {
   CL.vs = o; startGame({ T0: me, T1: op, f0: c.form, f1: '4-3-3', mode: 'club' });
 }
 function clubReward(res, gf) { // res: 'w' 'd' 'l'
-  const c = club(), o = CL.vs; if (!c || !o) return ''; const base = winCoins(o); let n = res === 'w' ? base : res === 'd' ? Math.round(base * .4) : 50; n += gf * 25; let bonus = 0; if (res === 'w' && !c.beat[o.id]) { bonus = 500 + Math.max(0, o.o - 60) * 20; c.beat[o.id] = 1; }
+  const c = club(), o = CL.vs; if (!c || !o) return ''; const base = winCoins(o); let n = res === 'w' ? base : res === 'd' ? Math.round(base * .45) : 80; n += gf * 30; let bonus = 0; if (res === 'w' && !c.beat[o.id]) { bonus = 500 + Math.max(0, o.o - 60) * 20; c.beat[o.id] = 1; }
   c[res]++; c.xp = (c.xp || 0) + (res === 'w' ? 60 : res === 'd' ? 30 : 15); coins(n + bonus); saveClub(); return `🪙 +${n}${bonus ? ` · 🎁 첫 승리 보너스 +${bonus}` : ''} (보유 ${c.coins.toLocaleString()})`;
 }
 /* ---------- 메인 메뉴 ---------- */
