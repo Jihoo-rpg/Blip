@@ -138,7 +138,7 @@ function footballPose(p) {
     leg2(P, S, V3(1, -.15, s * .1), V3(1, -.05, 0), k); leg2(P, O, V3(.75, .05, -s * .08), V3(.35, -.94, 0), k);
     arm2(P, 'Left', V3(-.4, -.7, -.6), V3(-.2, -.9, -.2), k); arm2(P, 'Right', V3(-.4, -.7, .6), V3(-.2, -.9, .2), k);
   } else if (a === 'dive') {
-    const k = Math.min(1, t / .25); const ds = p.diveSide || 1; root.rotation.z = -ds * 1.35 * k; root.position.y = Math.sin(Math.min(1, t / .5) * Math.PI) * (p.diveH || .6) + .35 * k;
+    const k = Math.min(1, t / .25) * (t > .9 ? Math.max(0, 1 - (t - .9) / .4) : 1); const ds = p.diveSide || 1; root.rotation.z = -ds * 1.35 * k; root.position.y = Math.sin(Math.min(1, t / .5) * Math.PI) * (p.diveH || .6) + .35 * k;
     arm2(P, 'Left', V3(0, 1, -.3 * ds), V3(0, 1, 0), k); arm2(P, 'Right', V3(0, 1, -.3 * ds), V3(0, 1, 0), k);
   } else if (a === 'catch') {
     arm2(P, 'Left', V3(1, -.1, -.25), V3(.6, .3, .3), 1); arm2(P, 'Right', V3(1, -.1, .25), V3(.6, .3, -.3), 1);

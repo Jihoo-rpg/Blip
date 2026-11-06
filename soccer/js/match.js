@@ -188,7 +188,7 @@ function movePlayers(dt) {
     if (sp > .6 && p.act !== 'slide' && p.act !== 'dive' && !(p.faceLock > 0)) p.yaw += angDiff(p.yaw, Math.atan2(p.vx, p.vz)) * Math.min(1, dt * (ball.owner === p ? 9 : 7));
     if (p.faceLock > 0) p.faceLock -= dt;
     p.x = clamp(p.x, -PL.hx - 4, PL.hx + 4); p.z = clamp(p.z, -PL.hz - 3, PL.hz + 3);
-    p.kCd -= dt; p.tkCd -= dt; if (p.act) { p.actT += dt; const D = { skill: 1.5, kick: .5, pass: .38, cross: .5, slide: .8, dive: 1.3, throw: .7, header: .55, stumble: .7, catch: .4, trap: .3, place: .75, pickup: .7, point: 1.2 }[p.act]; if (D && p.actT > D) p.act = null; }
+    p.kCd -= dt; p.tkCd -= dt; if (p.act) { p.actT += dt; const D = { skill: 1.5, kick: .5, pass: .38, cross: .5, slide: .8, dive: 1.3, throw: .7, header: .55, stumble: .7, catch: .4, trap: .3, place: .75, pickup: .7, point: 1.2 }[p.act]; if (D && p.actT > D) { p.act = (p.role === 'GK' && ball.owner === p && ball.held) ? 'hold' : null; p.diveCatch = false; } }
   }
   // 몸끼리 겹치지 않게
   const L = M.players; for (let i = 0; i < L.length; i++) for (let j = i + 1; j < L.length; j++) { const a = L[i], b = L[j]; const dx = b.x - a.x, dz = b.z - a.z, d2 = dx * dx + dz * dz; if (d2 < .49 && d2 > 1e-6) { const d = Math.sqrt(d2), o = (.7 - d) / 2; a.x -= dx / d * o; a.z -= dz / d * o; b.x += dx / d * o; b.z += dz / d * o; } }
@@ -198,7 +198,7 @@ function ballControl(dt) {
   if (M.phase !== 'play') return;
   const o = ball.owner;
   if (o) {
-    if (o.role === 'GK' && ball.held) { ball.x = o.x + Math.sin(o.yaw) * .35; ball.z = o.z + Math.cos(o.yaw) * .35; ball.y = 1.1; return; }
+    if (o.role === 'GK' && ball.held) { gkBallInHands(o, dt); return; }
     const sp = Math.hypot(o.vx, o.vz); const sk = o.skill; const by = sk ? Math.atan2(sk.dx, sk.dz) : o.yaw; const lead = sk ? (sk.k === 'roulette' ? .22 : sk.k === 'drag' && sk.t / sk.d < .45 ? .15 : .38 + sp * .04) : .42 + sp * .05;
     const tx = o.x + Math.sin(by) * lead + (sk && sk.k === 'stepover' && sk.t / sk.d < .55 ? Math.cos(by) * .0 : 0), tz = o.z + Math.cos(by) * lead; const k = Math.min(1, dt * (sk ? 18 : 14));
     const nx = lerp(ball.x, tx, k), nz = lerp(ball.z, tz, k); ball.vx = (nx - ball.x) / dt; ball.vz = (nz - ball.z) / dt; ball.x = nx; ball.z = nz; ball.y = PL.br; ball.vy = 0;
@@ -232,7 +232,16 @@ function gainBall(p) {
   for (let h = 0; h < 2; h++) { const tm = M.human[h]; if (tm < 0) continue; if (tm === p.team) M.ctrl[h] = p; else { const c = closestTo(team(tm).filter(q => q.role !== 'GK'), p.x, p.z); if (c && c !== M.ctrl[h]) { M.ctrl[h] = c; c.swT = M.t; } } } // 상대가 공을 잡으면 그 선수에게 가장 가까운 우리 선수로
   if (p.queued && M.t - p.queued.t < .45) { const q = p.queued; p.queued = null; humanAct(p, q.a, q.v, q.pow, q.h); }
 }
-function gkCatch(gk) { ball.owner = gk; ball.held = true; ball.last = gk; ball.shot = null; ball.vx = ball.vy = ball.vz = 0; gk.act = 'catch'; gk.actT = 0; gk.holdT = 0; gk.vx = gk.vz = 0; sfx('catch'); for (let h = 0; h < 2; h++) if (M.human[h] === gk.team) M.ctrl[h] = closestTo(team(gk.team).filter(p => p.role !== 'GK'), gk.x, gk.z); }
+// 키퍼가 잡은 공: 순간이동 없이 손까지 날아와서, 그다음엔 손을 따라가요
+const _hl = new T.Vector3(), _hr = new T.Vector3();
+function gkBallInHands(o, dt) {
+  let hx = o.x + Math.sin(o.yaw) * .35, hy = 1.1, hz = o.z + Math.cos(o.yaw) * .35; const B = o.P && o.P.B;
+  if (B && B.LeftHand && B.RightHand) { B.LeftHand.getWorldPosition(_hl); B.RightHand.getWorldPosition(_hr); hx = (_hl.x + _hr.x) / 2 + Math.sin(o.yaw) * .06; hy = Math.max(PL.br, (_hl.y + _hr.y) / 2); hz = (_hl.z + _hr.z) / 2 + Math.cos(o.yaw) * .06; }
+  if (ball.cT != null && ball.cT < .2) { ball.cT += dt; const k = Math.min(1, ball.cT / .2), e = k * k * (3 - 2 * k); ball.x = lerp(ball.cF[0], hx, e); ball.y = lerp(ball.cF[1], hy, e); ball.z = lerp(ball.cF[2], hz, e); }
+  else { const k = Math.min(1, dt * 25); ball.x = lerp(ball.x, hx, k); ball.y = lerp(ball.y, hy, k); ball.z = lerp(ball.z, hz, k); }
+  ball.vx = ball.vy = ball.vz = 0;
+}
+function gkCatch(gk) { ball.cF = [ball.x, ball.y, ball.z]; ball.cT = 0; const diving = gk.act === 'dive'; ball.owner = gk; ball.held = true; ball.last = gk; ball.shot = null; ball.vx = ball.vy = ball.vz = 0; if (!diving) { gk.act = 'catch'; gk.actT = 0; } else gk.diveCatch = true; gk.holdT = 0; gk.vx = gk.vz = 0; sfx('catch'); for (let h = 0; h < 2; h++) if (M.human[h] === gk.team) M.ctrl[h] = closestTo(team(gk.team).filter(p => p.role !== 'GK'), gk.x, gk.z); }
 function inOwnBox(p, x, z) { const gx = ownGoalX(p.team); return Math.abs(x - gx) < 16.5 && Math.abs(z) < 20.16 && Math.sign(x) === Math.sign(gx); }
 function header(p) {
   p.act = 'header'; p.actT = 0; p.kCd = .4; const gx = goalX(p.team); const dg = Math.hypot(gx - p.x, p.z);

@@ -79,21 +79,21 @@ function humanAct(p, a, v, pow, h) {
   const up = /Up$/.test(a), down = /Down$/.test(a), base = a.replace(/Down$|Up$/, ''); pow = clamp(pow || 0, 0, 1);
   if (isTaker) {
     if (!up) return;
-    if (M.phase === 'kickoff') { if (M.koPrep || base === 'shoot') return; doPass(p, dirTarget(p, I.x, I.z, false, pow) || M.koMate, 'ground', pow); return; }
+    if (M.phase === 'kickoff') { if (M.koPrep || base === 'shoot') return; doPass(p, M.koMate || bestMate(p, 'pass', 0), 'ground', pow); return; }
     if (!sp.ready || sp.pend || sp.done) return; // 아직 공을 놓는 중이에요
     const run = f => { sp.done = true; setPend(sp, f); };
-    if (sp.type === 'throw') { const m = dirTarget(p, I.x, I.z, true, pow); if (m) run(() => throwIn(p, m.x, m.z, pow)); return; }
-    if (sp.type === 'corner') { if (base === 'pass') { const m = dirTarget(p, I.x, I.z, true, pow); run(() => doPass(p, m, 'ground', pow)); } else { const az = clamp(I.z * 8, -7, 7), far = 4 + pow * 10; run(() => { const gx = goalX(p.team); const [vx, vy, vz] = passVel(p, gx - M.dir[p.team] * far, az, 'cross'); p.act = 'cross'; p.actT = 0; kickBall(p, vx, vy, vz, -Math.sign(sp.z) * Math.sign(sp.x) * 1.5); }); } return; }
+    if (sp.type === 'throw') { const m = bestMate(p, 'pass', pow); if (m) run(() => throwIn(p, m.x, m.z, pow)); return; }
+    if (sp.type === 'corner') { if (base === 'pass') { const m = bestMate(p, 'pass', pow); run(() => doPass(p, m, 'ground', pow)); } else { const az = clamp(I.z * 8, -7, 7), far = 4 + pow * 10; run(() => { const gx = goalX(p.team); const [vx, vy, vz] = passVel(p, gx - M.dir[p.team] * far, az, 'cross'); p.act = 'cross'; p.actT = 0; kickBall(p, vx, vy, vz, -Math.sign(sp.z) * Math.sign(sp.x) * 1.5); }); } return; }
     if (base === 'shoot' && (sp.type === 'pen' || sp.type === 'free')) { const aim = Math.abs(I.z) > .25 ? clamp(I.z * 1.4, -1, 1) : 0; run(() => doShoot(p, Math.max(.15, pow), aim)); return; }
-    if (base !== 'shoot') { const m = dirTarget(p, I.x, I.z, true, pow); const k = base === 'pass' ? (dist(p, m) > 30 && pow > .55 ? 'long' : 'ground') : base === 'lob' ? 'long' : 'through'; run(() => doPass(p, m, k, pow)); }
+    if (base !== 'shoot') { const m = bestMate(p, base === 'through' ? 'through' : 'pass', pow); if (!m) return; const k = base === 'pass' ? (dist(p, m) > 30 && pow > .55 ? 'long' : 'ground') : base === 'lob' ? 'long' : 'through'; run(() => doPass(p, m, k, pow)); }
     return;
   }
   if (M.phase !== 'play') return;
   if (own) {
     if (ball.held || !up) return; const gx = goalX(p.team);
-    if (base === 'pass') { const m = dirTarget(p, I.x, I.z, true, pow); if (!m) return; if (Math.abs(gx - p.x) < 26 && Math.abs(p.z) > 15 && Math.abs(gx - m.x) < 19 && Math.abs(m.z) < 18) doCross(p, m, clamp(m.z, -6, 6), pow); else doPass(p, m, dist(p, m) > 30 && pow > .55 ? 'long' : 'ground', pow); }
-    else if (base === 'through') { const m = dirTarget(p, I.x, I.z, true, pow); if (m) doPass(p, m, 'through', pow); }
-    else if (base === 'lob') { if (Math.abs(gx - p.x) < 25 && Math.abs(p.z) > 14) doCross(p, null, clamp(I.z * 6, -6, 6), pow); else { const m = dirTarget(p, I.x, I.z, true, pow); if (m) doPass(p, m, 'long', pow); } }
+    if (base === 'pass') { const m = bestMate(p, 'pass', pow); if (!m) return; if (Math.abs(gx - p.x) < 26 && Math.abs(p.z) > 15 && Math.abs(gx - m.x) < 19 && Math.abs(m.z) < 18) doCross(p, m, clamp(m.z, -6, 6), pow); else doPass(p, m, dist(p, m) > 30 && pow > .55 ? 'long' : 'ground', pow); }
+    else if (base === 'through') { const m = bestMate(p, 'through', pow); if (m) doPass(p, m, 'through', pow); }
+    else if (base === 'lob') { if (Math.abs(gx - p.x) < 25 && Math.abs(p.z) > 14) doCross(p, null, clamp(I.z * 6, -6, 6), pow); else { const m = bestMate(p, 'pass', Math.max(pow, .5)); if (m) doPass(p, m, 'long', pow); } }
     else if (base === 'shoot') doShoot(p, Math.max(.12, pow), Math.abs(I.z) > .25 ? clamp(I.z * 1.3, -1, 1) : null);
     return;
   }
@@ -105,6 +105,19 @@ function humanAct(p, a, v, pow, h) {
   if (base === 'pass') tryTackle(p, false);
   else if (base === 'shoot') { if (ball.owner && ball.owner.team !== p.team) p.yaw = Math.atan2(ball.owner.x - p.x, ball.owner.z - p.z); tryTackle(p, true); }
   else if (base === 'through' || base === 'lob') switchPlayer(h);
+}
+/* 패스: 방향 안 보고 가장 좋은 동료 (비어 있고 · 앞으로 가고 · 길이 안 막힌)
+   kind: 'pass' 보통 · 'through' 앞으로 뛰는 선수 · 세기(pw)가 있으면 그만큼 먼 동료를 더 좋아해요 */
+function bestMate(p, kind, pw) {
+  const opp = team(1 - p.team); let best = null, bs = -1e9;
+  for (const m of team(p.team)) { if (m === p) continue; const d = dist(p, m); if (d < 3.5 || d > 60) continue;
+    const prog = (m.x - p.x) * M.dir[p.team]; let lane = 99; for (const q of opp) { const t = clamp(((q.x - p.x) * (m.x - p.x) + (q.z - p.z) * (m.z - p.z)) / (d * d), 0, 1); const ex = p.x + (m.x - p.x) * t - q.x, ez = p.z + (m.z - p.z) * t - q.z; lane = Math.min(lane, Math.hypot(ex, ez) / (t * 1.5 + .5)); }
+    let space = 99; for (const q of opp) space = Math.min(space, dist(q, m));
+    let sc = Math.min(lane, 6) * 2.2 + Math.min(space, 8) * 1.1 + prog * (kind === 'through' ? .9 : .4) - (m.role === 'GK' ? 8 : 0);
+    if (pw) sc -= Math.abs(d - (10 + pw * 34)) * .14; else sc -= d * .11 + (d > 26 ? (d - 26) * .3 : 0);
+    if (kind === 'through' && (prog < 4 || m.role === 'DF')) sc -= 6;
+    if (sc > bs) { bs = sc; best = m; } }
+  return best;
 }
 function autoReceive(p, I, mag) {
   if (ball.owner || ball.y > 2.4) return null; const coming = ball.passTo === p; const d = Math.hypot(ball.x - p.x, ball.z - p.z); const bs = Math.hypot(ball.vx, ball.vz);
