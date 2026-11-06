@@ -14,6 +14,13 @@ const PACKS = [
   { k: 'wc', n: '월드클래스 팩', p: 2800, w: { B: 0, S: 0, G: 0, W: 85, L: 15 }, c: '#22d3ee', d: '월드클래스 확정 · 레전드 15%' },
 ];
 const DUPC = { B: 60, S: 120, G: 350, W: 1200, L: 3500 };
+/* 선수 팔기: 후보 선수만 · 전체 18명(처음 선수단)과 키퍼 2명은 남겨요 */
+const SELLC = DUPC, MIN_SQUAD = 18;
+function sellBar() { const c = club(); const n = Object.keys(c.own).length; const p = CL.sellPick != null ? PDB[CL.sellPick] : null;
+  if (p) return `<div class="sellbar"><span><b>${esc(p.n)}</b> (${RAR(p.r).n} ${p.o}) 팔까요? → 🪙${SELLC[p.r].toLocaleString()}</span><button class="btn main" data-sellok="1">팔기</button><button class="btn" data-sellno="1">취소</button></div>`;
+  return `<p class="hintp">💰 팔 후보 선수를 누르세요 · 선발 11명은 못 팔아요 · 선수단은 ${MIN_SQUAD}명 이상 남아요 (지금 ${n}명)</p>`; }
+function sellCheck(id) { const c = club(), p = PDB[id]; if (!p) return '없는 선수예요'; if (c.xi.includes(id)) return '선발 선수는 먼저 후보로 빼야 팔 수 있어요'; if (Object.keys(c.own).length <= MIN_SQUAD) return `선수단은 ${MIN_SQUAD}명 이상 있어야 해요`; if (p.pos === 'GK' && Object.keys(c.own).filter(i => PDB[i] && PDB[i].pos === 'GK').length <= 2) return '골키퍼는 2명은 남겨야 해요'; return ''; }
+function sellPlayer(id) { const c = club(), p = PDB[id]; const why = sellCheck(id); if (why) { toast(why, 2400); return; } delete c.own[id]; const n = SELLC[p.r]; coins(n); saveClub(); toast(`💰 ${p.n} 선수를 팔았어요 · 🪙 +${n.toLocaleString()}`, 2600); sfx('goal'); }
 const CL = { tab: 'play', sel: null, busy: false };
 const club = () => SAVE.club;
 function saveClub() { persist(); }
@@ -49,14 +56,14 @@ function clubHeader() { const c = club(); if (!c) return; $('#clHead').innerHTML
 function openClub() { if (!club()) return openCreate(); show('#club'); UI.screen = 'club'; clubHeader(); clubTab(CL.tab); }
 function clubTab(t) { clubTab0(t); fillPortraits($('#clBody')); }
 function clubTab0(t) {
-  CL.tab = t; CL.sel = null; $$('#clTabs [data-ctab]').forEach(b => b.classList.toggle('on', b.dataset.ctab === t)); const B = $('#clBody'); const c = club();
+  if (t !== 'squad') { CL.sell = false; CL.sellPick = null; } CL.tab = t; CL.sel = null; $$('#clTabs [data-ctab]').forEach(b => b.classList.toggle('on', b.dataset.ctab === t)); const B = $('#clBody'); const c = club();
   if (t === 'play') {
     B.innerHTML = `<p class="hintp">AI 구단을 이기면 코인을 받아요. 강한 팀일수록 코인이 많아요! 처음 이기면 보너스 🎁</p><div class="opps">${OPP.map((o, i) => { const lock = i > 0 && !c.beat[OPP[i - 1].id] && i > (c.w || 0) + 2; const rew = winCoins(o); return `<button class="opp ${lock ? 'lock' : ''}" data-opp="${o.id}"><div class="crest sm" style="background:linear-gradient(135deg,${o.c[0]} 55%,${o.c[1]} 55%)">${o.f}</div><div class="on"><b>${esc(o.n)}</b><small>능력치 ${o.o} ${c.beat[o.id] ? '· ✅ 이김' : ''}</small></div><div class="rw">${lock ? '🔒' : `🪙 ${rew}${c.beat[o.id] ? '' : ' 🎁'}`}</div></button>`; }).join('')}</div>`;
   } else if (t === 'squad') {
     const xi = xiPlayers(); const F = FORMS[c.form]; const bench = owned().filter(p => !c.xi.includes(p.id)).sort((a, b) => b.o - a.o);
-    B.innerHTML = `<div class="sqtop"><div class="row">${Object.keys(FORMS).map(f => `<button class="chip ${c.form === f ? 'on' : ''}" data-cform="${f}">${f}</button>`).join('')}</div><button class="chip" id="bAuto">✨ 자동 배치</button></div>
+    B.innerHTML = `<div class="sqtop"><div class="row">${Object.keys(FORMS).map(f => `<button class="chip ${c.form === f ? 'on' : ''}" data-cform="${f}">${f}</button>`).join('')}</div><div class="row"><button class="chip ${CL.sell ? 'on' : ''}" id="bSell">💰 선수 팔기</button><button class="chip" id="bAuto">✨ 자동 배치</button></div></div>
       <div class="sqwrap"><div class="pitch">${F.map((f, i) => `<div class="slot" style="left:${50 + f[2] * 40}%;top:${89 - (f[1] + .95) / 1.0 * 76}%">${cardHTML(xi[i], `data-slot="${i}"`, f[0])}</div>`).join('')}</div>
-      <div><p class="hintp">선수를 누르고 → 바꿀 선수를 누르면 자리를 바꿔요</p><div class="bench">${bench.map(p => cardHTML(p, `data-bench="${p.id}"`)).join('') || '<p class="hintp">후보 선수가 없어요. 뽑기에서 선수를 얻어요!</p>'}</div></div></div>`;
+      <div>${CL.sell ? sellBar() : '<p class="hintp">선수를 누르고 → 바꿀 선수를 누르면 자리를 바꿔요</p>'}<div class="bench${CL.sell ? ' selling' : ''}">${bench.map(p => cardHTML(p, `data-bench="${p.id}"`) .replace('<div class="gem">', CL.sell ? `<span class="price">🪙${SELLC[p.r]}</span><div class="gem">` : '<div class="gem">')).join('') || '<p class="hintp">후보 선수가 없어요. 뽑기에서 선수를 얻어요!</p>'}</div></div></div>`;
   } else if (t === 'shop') {
     B.innerHTML = `<div class="packs">${PACKS.map(k => `<button class="pack" data-pack="${k.k}" style="--pc:${k.c}"><div class="pk">${k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div><b>${k.n}</b><small>${k.d}</small><span>${k.k === 'gold' && c.freeGold ? '🎁 무료!' : '🪙 ' + k.p.toLocaleString()}</span></button>`).join('')}</div>
       <p class="hintp">이미 있는 선수가 나오면 코인으로 바꿔 드려요 (브론즈 60 · 실버 120 · 골드 350 · 월드클래스 1,200 · 레전드 3,500)</p>
@@ -68,7 +75,11 @@ function clubTab0(t) {
 }
 function winCoins(o) { return 220 + Math.max(0, o.o - 60) * 24; }
 document.addEventListener('click', e => {
-  if (UI.screen !== 'club') return; const t = e.target.closest('[data-ctab],[data-opp],[data-cform],[data-slot],[data-bench],[data-pack],[data-rf],#bAuto'); if (!t) return; const c = club(); sfx('tick');
+  if (UI.screen !== 'club') return; const t = e.target.closest('[data-ctab],[data-opp],[data-cform],[data-slot],[data-bench],[data-pack],[data-rf],#bAuto,#bSell,[data-sellok],[data-sellno]'); if (!t) return; const c = club(); sfx('tick');
+  if (t.id === 'bSell') { CL.sell = !CL.sell; CL.sellPick = null; return clubTab('squad'); }
+  if (t.dataset.sellok) { const id = CL.sellPick; CL.sellPick = null; if (id != null) sellPlayer(id); return clubTab('squad'); }
+  if (t.dataset.sellno) { CL.sellPick = null; return clubTab('squad'); }
+  if (CL.sell && (t.dataset.bench != null || t.dataset.slot != null)) { if (t.dataset.slot != null) { toast('선발 선수는 먼저 후보로 빼야 팔 수 있어요', 2400); return; } const id = +t.dataset.bench; const why = sellCheck(id); if (why) { toast(why, 2400); return; } CL.sellPick = id; return clubTab('squad'); }
   if (t.dataset.ctab) return clubTab(t.dataset.ctab);
   if (t.dataset.rf) { CL.rf = t.dataset.rf; return clubTab('all'); }
   if (t.id === 'bAuto') { autoXI(); clubHeader(); return clubTab('squad'); }
