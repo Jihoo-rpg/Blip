@@ -107,30 +107,30 @@ const Engine = (() => {
     switch (m) {
       case 'cube':
         if (s.onGround && (held || wantTap)) { s.vy = L.jump * g; s.onGround = false; s.jumps++; s.pressBuf = 0; s.events.push({ e: 'jump' }); }
-        else s.vy = clamp(s.vy - G * g * dt, MAXFALL);
+        else s.vy = fall(s.vy - G * g * dt, g, MAXFALL);
         break;
       case 'robot':
         if (s.onGround && (held || wantTap)) { s.vy = ROBOT_J; s.robotT = ROBOT_HOLD; s.onGround = false; s.jumps++; s.pressBuf = 0; s.events.push({ e: 'jump' }); }
         else if (held && s.robotT > 0) { s.vy = Math.max(s.vy, ROBOT_J); s.robotT -= dt; }
-        else { s.robotT = 0; s.vy = clamp(s.vy - G * dt, MAXFALL); }
+        else { s.robotT = 0; s.vy = fall(s.vy - G * dt, 1, MAXFALL); }
         break;
       case 'ship':
         s.vy = clamp(s.vy + (held ? SHIP_UP : -SHIP_DOWN) * dt, SHIP_MAX); break;
       case 'ufo':
         if (wantTap) { s.vy = UFO_J; s.pressBuf = 0; s.jumps++; s.events.push({ e: 'jump' }); }
-        else s.vy = clamp(s.vy - UFO_G * dt, UFO_MAX);
+        else s.vy = fall(s.vy - UFO_G * dt, 1, UFO_MAX);
         break;
       case 'wave':
         s.vy = held ? s.speed : -s.speed; break;
       case 'ball':
         if (s.onGround && wantTap) { s.grav = -g; s.vy = -s.grav * 5; s.onGround = false; s.pressBuf = 0; s.jumps++; s.events.push({ e: 'flip' }); }
-        else s.vy = clamp(s.vy - BALL_G * g * dt, BALL_MAX);
+        else s.vy = fall(s.vy - BALL_G * g * dt, g, BALL_MAX);
         break;
       case 'spider':
         if (s.onGround && wantTap) {
           const ty = spiderTarget(s, near, H);
           if (ty != null) { s.events.push({ e: 'teleport', y0: s.y, y1: ty }); s.y = ty; s.grav = -g; s.vy = 0; s.pressBuf = 0; s.jumps++; }
-        } else s.vy = clamp(s.vy - G * g * dt, MAXFALL);
+        } else s.vy = fall(s.vy - G * g * dt, g, MAXFALL);
         break;
     }
     s.x += s.speed * dt;
@@ -192,6 +192,8 @@ const Engine = (() => {
     }
   }
   function clamp(v, m) { return Math.max(-m, Math.min(m, v)); }
+  // limit only the falling speed (in the gravity direction) so pads/orbs keep their full upward boost
+  function fall(v, g, m) { return g > 0 ? Math.max(-m, v) : Math.min(m, v); }
   return { expand, buildLevel, newState, clone, step, DT, SPEEDS, MODES, CORRIDOR, BOX };
 })();
 if (typeof module !== 'undefined') module.exports = Engine;

@@ -277,6 +277,14 @@ function generate(def) {
     if (!won) throw new Error(def.name + ' failed final check phase ' + i);
     if (i === 0) { const inp = []; for (let p = won.path; p; p = p.p) inp.push([p.h ? 1 : 0, p.n]); sol = inp.reverse(); }
   }
+  // every pad must be safe when the player simply runs over it without pressing anything
+  { const exp = []; for (const [h, n] of sol) for (let k = 0; k < n; k++) exp.push(h);
+    const s = E.newState(), states = []; for (const h of exp) { states.push(E.clone(s)); E.step(L, s, !!h); if (s.dead || s.won) break; }
+    for (const p of L.pads) { const st0 = states.find(q => q.x + 1 >= p.x - 3 && q.onGround); if (!st0 || E.CORRIDOR[st0.mode]) continue;
+      const c = E.clone(st0); while (!c.dead && c.x < p.x + 3 && !c.used.has(p.id)) E.step(L, c, false);
+      if (c.dead || !c.used.has(p.id)) throw new Error('pad not reachable by running at ' + p.x);
+      while (!c.dead && !(c.onGround && c.x > p.x + 2)) E.step(L, c, false);
+      if (c.dead) throw new Error('pad run-over dies at ' + p.x); } }
   return { objs, endX, sol, backtracks, beats: totalBeats };
 }
 
@@ -286,7 +294,7 @@ for (let i = 0; i < LEVELS.length; i++) {
   const def = LEVELS[i]; if (only && !only.includes(i)) continue;
   const t0 = Date.now();
   let g, seed = def.seed;
-  for (let a = 0; a < 5; a++) { try { g = generate({ ...def, seed }); break; } catch (e) { console.log('  retry', def.name, e.message); seed += 1000; } }
+  for (let a = 0; a < 12; a++) { try { g = generate({ ...def, seed }); break; } catch (e) { console.log('  retry', def.name, e.message); seed += 1000; } }
   if (!g) throw new Error('could not generate ' + def.name);
   const T = TIERS[def.tier];
   out.push({ name: def.name, diff: T.name, tier: def.tier, stars: def.stars, seed, bpm: def.bpm, phys: def.phys, objs: g.objs, len: g.endX });
