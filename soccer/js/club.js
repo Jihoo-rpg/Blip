@@ -69,7 +69,7 @@ function clubTab0(t) {
       <div class="sqwrap"><div class="pitch">${F.map((f, i) => `<div class="slot" style="left:${50 + f[2] * 40}%;top:${89 - (f[1] + .95) / 1.0 * 76}%">${cardHTML(xi[i], `data-slot="${i}"`, f[0])}</div>`).join('')}</div>
       <div>${CL.sell ? sellBar() : '<p class="hintp">선수를 누르고 → 바꿀 선수를 누르면 자리를 바꿔요</p>'}<div class="bench${CL.sell ? ' selling' : ''}">${bench.map(p => cardHTML(p, `data-bench="${p.id}"`) .replace('<div class="gem">', CL.sell ? `<span class="price">🪙${SELLC[p.r]}</span><div class="gem">` : '<div class="gem">')).join('') || '<p class="hintp">후보 선수가 없어요. 뽑기에서 선수를 얻어요!</p>'}</div></div></div>`;
   } else if (t === 'shop') {
-    B.innerHTML = `<div class="packs">${PACKS.map(k => `<button class="pack" data-pack="${k.k}" style="--pc:${k.c}"><div class="pk">${k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div><b>${k.n}</b><small>${k.d}</small><span>${k.k === 'gold' && c.freeGold ? '🎁 무료!' : '🪙 ' + k.p.toLocaleString()}</span></button>`).join('')}</div>
+    B.innerHTML = `<div class="packs">${PACKS.map(k => `<button class="pack" data-pack="${k.k}" style="--pc:${k.c}"><div class="pk">${k.k === 'sp' ? '✨' : k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div><b>${k.n}</b><small>${k.d}</small><span>${k.k === 'gold' && c.freeGold ? '🎁 무료!' : '🪙 ' + k.p.toLocaleString()}</span></button>`).join('')}</div>
       <p class="hintp">이미 있는 선수가 나오면 코인으로 바꿔 드려요 (브론즈 60 · 실버 120 · 골드 350 · 월드클래스 1,200 · 레전드 3,500)</p>
       <div class="odds">${PACKS.map(k => `<div><b>${k.n}</b> ${Object.entries(k.w).filter(([, v]) => v).map(([r, v]) => `${RAR(r).n} ${v}%`).join(' · ')}</div>`).join('')}</div>`;
   } else if (t === 'all') {
@@ -108,7 +108,7 @@ function buyPack(k) {
   saveClub(); clubHeader(); revealCard(p, dup, k, junk);
 }
 function revealCard(p, dup, k, junk) {
-  const ov = $('#reveal'), r = RAR(p.r); ov.hidden = false; ov.className = 'r' + p.r; ov.innerHTML = `<div class="rv"><div class="pack big" style="--pc:${k.c}"><div class="pk">${k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div></div></div>`;
+  const ov = $('#reveal'), r = RAR(p.r); ov.hidden = false; ov.className = 'r' + p.r; ov.innerHTML = `<div class="rv"><div class="pack big" style="--pc:${k.c}"><div class="pk">${k.k === 'sp' ? '✨' : k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div></div></div>`;
   sfx('kick', 1); vibrate(30);
   setTimeout(() => { sfx(p.r === 'W' || p.r === 'L' ? 'goal' : 'save'); if (p.r === 'W' || p.r === 'L') vibrate([60, 40, 120]);
     ov.innerHTML = `<div class="rv"><div class="glow" style="--rc:${r.c}"></div>${bigCard(p)}<div class="rvx"><div class="rvt" style="color:${r.c}">${r.n}!</div>${dup ? `<div class="dup">이미 있는 선수 → 🪙 ${DUPC[p.r]} 코인</div>` : '<div class="dup">새 선수 획득! 스쿼드에 넣어 보세요</div>'}<div class="row2" style="margin-top:14px"><button class="btn" id="rvClose">확인</button><button class="btn main" id="rvAgain">한 번 더 🪙${k.p.toLocaleString()}</button></div></div></div>`;
