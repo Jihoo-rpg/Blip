@@ -126,6 +126,7 @@ function generate(def) {
   };
   const evNames = Object.keys(T.ev), evW = evNames.map(n => T.ev[n]);
   function chooseEvent(ramp) {
+    if (totalBeats < 14) { const safe = T.name === 'Easy' ? ['rest', 'rest', 'spike1', 'spike1', 'up', 'down'] : ['rest', 'spike1', 'spike2', 'up', 'down']; return pick(safe); }
     if (rnd() < T.rest + (1 - ramp) * 0.15) return 'rest';
     let r = rnd() * evW.reduce((a, b) => a + b), i = 0; while ((r -= evW[i]) > 0) i++;
     return evNames[i];

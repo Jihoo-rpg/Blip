@@ -42,8 +42,8 @@ const Engine = (() => {
       else if (o.t === 'spike') {
         o.w = 1; o.h = 1;
         const sm = o.small;
-        if (o.dir === 'down') o.hb = { x: o.x + 0.4, y: o.y + (sm ? 0.72 : 0.52), w: 0.2, h: sm ? 0.28 : 0.48 };
-        else o.hb = { x: o.x + 0.4, y: o.y, w: 0.2, h: sm ? 0.28 : 0.48 };
+        if (o.dir === 'down') o.hb = { x: o.x + 0.32, y: o.y + (sm ? 0.68 : 0.42), w: 0.36, h: sm ? 0.32 : 0.58 };
+        else o.hb = { x: o.x + 0.32, y: o.y, w: 0.36, h: sm ? 0.32 : 0.58 };
         L.hazards.push(o);
       }
       else if (o.t === 'saw') { o.w = o.r * 2; o.h = o.r * 2; L.hazards.push(o); }
@@ -153,18 +153,18 @@ const Engine = (() => {
         s.y = b.y - H; s.vy = 0; if (gg === -1) grounded = true;
       }
     }
-    const ih = m === 'wave' ? 0.2 : 0.3;
-    const ix = px + W / 2 - ih / 2, iy = s.y + H / 2 - ih / 2;
-    for (const b of near) if (b.t === 'block' && ov(ix, iy, ih, ih, b.x, b.y, b.w, b.h)) { die(s); return; }
+    // inner hitbox: touching a block's side kills almost immediately (0.15 block of overlap)
+    const iw = W - 0.3, ih = H - 0.3, ix = px + 0.15, iy = s.y + 0.15;
+    for (const b of near) if (b.t === 'block' && ov(ix, iy, iw, ih, b.x, b.y, b.w, b.h)) { die(s); return; }
     s.onGround = grounded;
 
-    const sh = m === 'wave' ? 0.04 : 0.08;
+    const sh = m === 'wave' ? 0.03 : 0.05;
     const hx = px + sh, hy = s.y + sh, hw = W - sh * 2, hh = H - sh * 2;
     for (const o of near) {
       if (o.t === 'spike') {
         const h = o.hb; if (ov(hx, hy, hw, hh, h.x, h.y, h.w, h.h)) { die(s); return; }
       } else if (o.t === 'saw') {
-        if (circRect(o.x, o.y, o.r * 0.78, hx, hy, hw, hh)) { die(s); return; }
+        if (circRect(o.x, o.y, o.r * 0.88, hx, hy, hw, hh)) { die(s); return; }
       } else if (o.t === 'pad') {
         if (!s.used.has(o.id) && ov(px, s.y, W, H, o.x, o.y, 1, 0.3)) {
           s.used.add(o.id); s.vy = CORRIDOR[m] ? 8 : (o.pink ? PINK_PAD : PAD); s.onGround = false; s.robotT = 0; s.events.push({ e: 'pad', o });
