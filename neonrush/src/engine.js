@@ -10,9 +10,10 @@ const Engine = (() => {
   //  'P' portal a=mode(0 cube,1 ship) | 'S' speed a=v | 'C' color a=bg b=gr | 'E' end
   function expand(arr) {
     return arr.map(o => {
-      const [t, x, y, a, b] = o;
+      const [t, x, y, a, b, c] = o;
       switch (t) {
-        case 'b': return { t: 'block', x, y, w: a, h: b };
+        case 'b': return { t: 'block', x, y, w: a, h: b, chain: !!c };
+        case 'g': return { t: 'deco', x, y, v: a || 0 };
         case 's': return { t: 'spike', x, y, dir: a ? 'down' : 'up', small: !!b };
         case 'p': return { t: 'pad', x, y, pink: !!a };
         case 'o': return { t: 'orb', x, y, pink: !!a };
@@ -26,10 +27,11 @@ const Engine = (() => {
   }
 
   function buildLevel(objs) {
-    const L = { solids: [], hazards: [], pads: [], orbs: [], saws: [], triggers: [], all: objs, endX: 0, cols: [] };
+    const L = { decos: [], solids: [], hazards: [], pads: [], orbs: [], saws: [], triggers: [], all: objs, endX: 0, cols: [] };
     objs.forEach((o, i) => {
       o.id = i;
-      if (o.t === 'block') L.solids.push(o);
+      if (o.t === 'deco') L.decos.push(o);
+      else if (o.t === 'block') L.solids.push(o);
       else if (o.t === 'spike') {
         o.w = 1; o.h = 1;
         const sm = o.small;
@@ -43,7 +45,7 @@ const Engine = (() => {
       else { L.triggers.push(o); if (o.t === 'end') L.endX = o.x; }
     });
     L.triggers.sort((a, b) => a.x - b.x);
-    const maxX = Math.ceil(Math.max(L.endX, ...objs.map(o => o.x + (o.w || 1)))) + 5;
+    let maxX = L.endX; for (const o of objs) maxX = Math.max(maxX, o.x + (o.w || 1)); maxX = Math.ceil(maxX) + 5;
     for (let c = 0; c <= maxX; c++) L.cols.push([]);
     for (const o of [...L.solids, ...L.hazards, ...L.pads, ...L.orbs]) {
       const x0 = o.t === 'saw' ? o.x - o.r : o.x;
@@ -83,7 +85,7 @@ const Engine = (() => {
     const H = s.mode === 'ship' ? 0.6 : 1, W = 1;
 
     if (s.mode === 'cube') {
-      if (s.onGround && held) { s.vy = JUMP; s.onGround = false; s.jumps++; s.pressBuf = 0; s.events.push({ e: 'jump' }); }
+      if (s.onGround && (held || s.pressBuf > 0)) { s.vy = JUMP; s.onGround = false; s.jumps++; s.pressBuf = 0; s.events.push({ e: 'jump' }); }
       else s.vy = Math.max(s.vy - G * dt, -MAXFALL);
     } else {
       s.vy += (held ? SHIP_UP : -SHIP_DOWN) * dt;

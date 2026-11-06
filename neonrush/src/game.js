@@ -8,7 +8,7 @@
     DPR = Math.min(2, window.devicePixelRatio || 1);
     W = window.innerWidth; H = window.innerHeight;
     cv.width = W * DPR; cv.height = H * DPR; cv.style.width = W + 'px'; cv.style.height = H + 'px';
-    U = H / VIEW_H;
+    U = Math.min(H / VIEW_H, W / 17);
   }
   window.addEventListener('resize', resize); resize();
 
@@ -26,7 +26,7 @@
   // ---------- levels ----------
   const LV = LEVELS.map(l => ({ ...l, L: null }));
   const getL = i => LV[i].L || (LV[i].L = Engine.buildLevel(Engine.expand(LV[i].objs)));
-  const musicCfg = l => ({ bpm: 116 + l.tier * 6 + (l.seed % 9), prog: l.seed % 4, lead: (l.seed >> 2) % 4, tr: [0, 2, -3, 5, -2, 3][l.seed % 6], style: l.tier >= 3 ? 2 : l.tier >= 1 ? 1 : 0 });
+  const musicCfg = l => ({ bpm: l.bpm || 130, prog: l.seed % 4, lead: (l.seed >> 2) % 4, tr: [0, 2, -3, 5, -2, 3][l.seed % 6], style: l.tier >= 3 ? 2 : l.tier >= 1 ? 1 : 0 });
   const DIFF_NAMES = ['Easy', 'Normal', 'Hard', 'Harder', 'Insane', 'Demon'];
   let sel = Math.min(store.get('sel', 0), LV.length - 1);
   let cur = 0, L = getL(0), colorTrigs = [];
@@ -116,7 +116,7 @@
     const pr = P(LV[cur].name); pr.att++; saveProg();
   }
   const viewW = () => W / U;
-  function targetCamY() { return s.mode === 'ship' ? -1 : Math.max(-2.5, s.y - 6.5); }
+  function targetCamY() { const extra = Math.max(0, H / U - VIEW_H) * 0.45; return (s.mode === 'ship' ? -1 : Math.max(-2.5, s.y - 6.5)) - extra; }
 
   // ---------- input ----------
   function press() { Music.init(); if (mode === 'play') held = true; }
@@ -280,30 +280,57 @@
     for (let x = off - ts; x < W + ts; x += ts) cx.strokeRect(x + 3, flip ? gy - ts + 3 : gy + 3, ts - 6, ts - 6);
     cx.restore();
     const lg = cx.createLinearGradient(0, 0, W, 0);
-    lg.addColorStop(0, 'rgba(255,255,255,0)'); lg.addColorStop(0.5, `rgba(255,255,255,${0.85 + pulse * 0.15})`); lg.addColorStop(1, 'rgba(255,255,255,0)');
-    cx.fillStyle = lg; cx.fillRect(0, gy - 1.5, W, 3);
+    lg.addColorStop(0, rgb(LCa, 0)); lg.addColorStop(0.5, rgb(tint(LCa, 0.5), 0.9 + pulse * 0.1)); lg.addColorStop(1, rgb(LCa, 0));
+    cx.save(); cx.shadowColor = LC; cx.shadowBlur = U * 0.5; cx.fillStyle = lg; cx.fillRect(0, gy - 2, W, 4); cx.restore();
     cx.fillStyle = `rgba(255,255,255,${0.08 + pulse * 0.08})`; cx.fillRect(0, flip ? gy : gy - 6, W, 6);
   }
+  let LC = 'rgb(160,220,255)', LCa = [160, 220, 255];
+  const tint = (c, k) => c.map(v => v + (255 - v) * k);
   function drawBlock(b) {
     const x = SX(b.x), y = SY(b.y + b.h), w = b.w * U, h = b.h * U;
-    const g = cx.createLinearGradient(0, y, 0, y + h);
-    g.addColorStop(0, 'rgba(0,0,0,0.75)'); g.addColorStop(1, 'rgba(0,0,0,0.95)');
+    const g = cx.createLinearGradient(0, y, 0, y + Math.max(h, U));
+    g.addColorStop(0, 'rgba(0,0,0,0.96)'); g.addColorStop(0.55, 'rgba(0,0,0,0.9)'); g.addColorStop(1, rgb(mix(bgCol, 0.75), 0.9));
     cx.fillStyle = g; cx.fillRect(x, y, w, h);
-    cx.strokeStyle = 'rgba(255,255,255,0.16)'; cx.lineWidth = 1;
-    for (let i = 1; i < b.w; i++) { cx.beginPath(); cx.moveTo(x + i * U, y); cx.lineTo(x + i * U, y + h); cx.stroke(); }
-    for (let j = 1; j < b.h; j++) { cx.beginPath(); cx.moveTo(x, y + h - j * U); cx.lineTo(x + w, y + h - j * U); cx.stroke(); }
-    cx.strokeStyle = '#fff'; cx.lineWidth = Math.max(2, U * 0.06);
-    cx.shadowColor = 'rgba(255,255,255,0.6)'; cx.shadowBlur = 8; cx.strokeRect(x + 1, y + 1, w - 2, h - 2); cx.shadowBlur = 0;
+    if (b.chain) { // chain up to the sky
+      cx.strokeStyle = rgb(LCa, 0.9); cx.lineWidth = Math.max(2, U * 0.06);
+      for (let cy = y - U * 0.3; cy > -U; cy -= U * 0.42) { cx.beginPath(); cx.ellipse(x + w / 2, cy, U * 0.1, U * 0.2, 0, 0, 7); cx.stroke(); }
+    }
+    cx.strokeStyle = 'rgba(255,255,255,0.10)'; cx.lineWidth = 1; cx.strokeRect(x + U * 0.12, y + U * 0.12, w - U * 0.24, h - U * 0.24);
+    cx.save(); cx.strokeStyle = LC; cx.lineWidth = Math.max(2, U * 0.07); cx.shadowColor = LC; cx.shadowBlur = U * 0.35;
+    cx.strokeRect(x + 1, y + 1, w - 2, h - 2); cx.restore();
+  }
+  function drawDeco(o) { // glowing grass tufts
+    const x = SX(o.x), y = SY(o.y), n = 5 + o.v * 2;
+    cx.save(); cx.fillStyle = rgb(LCa, 0.45); cx.shadowColor = LC; cx.shadowBlur = U * 0.3;
+    cx.beginPath(); cx.moveTo(x, y);
+    for (let i = 0; i < n; i++) {
+      const px = x + (i + 0.5) / n * U * (1.2 + o.v * 0.5), hh = U * (0.15 + ((i * 37 + o.v * 11) % 7) / 28);
+      cx.lineTo(px - U * 0.08, y); cx.lineTo(px + ((i % 3) - 1) * U * 0.08, y - hh); cx.lineTo(px + U * 0.08, y);
+    }
+    cx.closePath(); cx.fill(); cx.restore();
+  }
+  function drawClouds() {
+    const par = 0.25, sp = 9 * U;
+    const ox = -((camX * par * U) % sp) - sp;
+    cx.fillStyle = rgb(tint(bgCol, 0.25), 0.22);
+    for (let i = 0; i * sp + ox < W + sp; i++) {
+      const k = (Math.floor(camX * par / 9) + i) * 2654435761 >>> 0;
+      if (k % 3 === 0) continue;
+      const bx = ox + i * sp + (k % 97) / 97 * U * 3, by = SY(-0.2) - U * (1 + (k % 5) * 0.4);
+      cx.beginPath();
+      cx.arc(bx, by, U * 1.4, Math.PI, 0); cx.arc(bx + U * 1.8, by - U * 0.6, U * 1.7, Math.PI, 0); cx.arc(bx + U * 3.8, by, U * 1.3, Math.PI, 0);
+      cx.lineTo(bx + U * 5.1, SY(-0.2)); cx.lineTo(bx - U * 1.4, SY(-0.2)); cx.closePath(); cx.fill();
+    }
   }
   function drawSpike(o) {
     const x = SX(o.x), down = o.dir === 'down', hh = o.small ? 0.45 : 1;
     const base = down ? SY(o.y + 1) : SY(o.y), tip = down ? SY(o.y + 1 - hh) : SY(o.y + hh);
     const g = cx.createLinearGradient(0, base, 0, tip);
-    g.addColorStop(0, 'rgba(0,0,0,0.95)'); g.addColorStop(1, 'rgba(40,40,40,0.85)');
+    g.addColorStop(0, rgb(mix(bgCol, 0.55), 0.95)); g.addColorStop(0.6, 'rgba(0,0,0,0.95)'); g.addColorStop(1, 'rgba(0,0,0,0.95)');
     cx.beginPath(); cx.moveTo(x + U * 0.04, base); cx.lineTo(x + U / 2, tip); cx.lineTo(x + U * 0.96, base); cx.closePath();
     cx.fillStyle = g; cx.fill();
-    cx.strokeStyle = '#fff'; cx.lineWidth = Math.max(2, U * 0.06); cx.lineJoin = 'round';
-    cx.shadowColor = 'rgba(255,255,255,0.6)'; cx.shadowBlur = 6; cx.stroke(); cx.shadowBlur = 0;
+    cx.save(); cx.strokeStyle = LC; cx.lineWidth = Math.max(2, U * 0.065); cx.lineJoin = 'round';
+    cx.shadowColor = LC; cx.shadowBlur = U * 0.3; cx.stroke(); cx.restore();
   }
   function drawSaw(o, t) { // spinning spiked disc
     const x = SX(o.x), y = SY(o.y), r = o.r * U, n = 14;
@@ -312,7 +339,7 @@
     for (let i = 0; i < n * 2; i++) { const a = i * Math.PI / n, rr = i % 2 ? r * 0.72 : r; cx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr); }
     cx.closePath();
     cx.fillStyle = '#050505'; cx.fill();
-    cx.strokeStyle = '#fff'; cx.lineWidth = Math.max(2, U * 0.05); cx.lineJoin = 'miter'; cx.shadowColor = '#fff'; cx.shadowBlur = 8; cx.stroke(); cx.shadowBlur = 0;
+    cx.strokeStyle = LC; cx.lineWidth = Math.max(2, U * 0.05); cx.lineJoin = 'miter'; cx.shadowColor = LC; cx.shadowBlur = 8; cx.stroke(); cx.shadowBlur = 0;
     const g = cx.createRadialGradient(-r * 0.2, -r * 0.2, 0, 0, 0, r * 0.6);
     g.addColorStop(0, '#666'); g.addColorStop(1, '#111');
     cx.fillStyle = g; cx.beginPath(); cx.arc(0, 0, r * 0.55, 0, 7); cx.fill();
@@ -403,7 +430,9 @@
     cx.setTransform(DPR, 0, 0, DPR, 0, 0);
     const sh = shake * shake * 10;
     cx.save(); if (sh) cx.translate((Math.random() - 0.5) * sh, (Math.random() - 0.5) * sh);
+    LCa = tint(bgCol, 0.62); LC = rgb(LCa);
     drawBG(pulse);
+    drawClouds();
     const x0 = camX - 3, x1 = camX + viewW() + 3;
     const vis = o => o.x + (o.w || 1) > x0 && o.x - (o.r || 0) < x1;
     for (const o of L.triggers) if (o.t === 'portal' && vis(o)) drawPortal(o, t, 'back');
@@ -416,6 +445,7 @@
         cx.fillStyle = '#fff'; cx.fillText('Attempt ' + attempt, ax, ay);
       }
     }
+    for (const o of L.decos) if (vis(o)) drawDeco(o);
     for (const o of L.hazards) if (o.t === 'saw' && vis(o)) drawSaw(o, t);
     for (const o of L.solids) if (vis(o)) drawBlock(o);
     for (const o of L.hazards) if (o.t === 'spike' && vis(o)) drawSpike(o);
@@ -464,7 +494,7 @@
     if (mode === 'play') { update(dt); draw(now / 1000, true); }
     else if (mode === 'paused') draw(now / 1000, true);
     else {
-      demoX += dt * 7; camX = (demoX % Math.max(30, L.endX - 20)) - 10; camY = lerp(camY, -2.5, 0.1);
+      demoX += dt * 7; camX = (demoX % Math.max(30, L.endX - 20)) - 10; camY = lerp(camY, -2.5 - Math.max(0, H / U - VIEW_H) * 0.45, 0.1);
       const [b, g] = colorAt(camX + 10); for (let i = 0; i < 3; i++) { bgCol[i] = lerp(bgCol[i], b[i], dt * 2); grCol[i] = lerp(grCol[i], g[i], dt * 2); }
       stepParticles(dt); draw(now / 1000, mode === 'win');
     }
