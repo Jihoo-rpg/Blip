@@ -3,17 +3,17 @@
 const EMBS = ['🦁', '🐯', '🦅', '🐺', '🐉', '⚡', '🔥', '👑', '⭐', '🌊', '🛡️', '🐻', '🦈', '🐂', '🌙', '💎'];
 const KITC = ['#d7142b', '#1b3f8f', '#141414', '#f4f4f4', '#ffd400', '#00663a', '#75aadb', '#f36c21', '#6b2fb5', '#ff5fa2', '#0f8a8a', '#8a1c2b'];
 const OPP = [
-  { id: 'BFC', n: '블립 FC 유스', f: '🐣', c: ['#9ad1ff', '#ffffff'], o: 62 }, { id: 'SWL', n: '수원 윙즈', f: '🕊️', c: ['#1e64d8', '#ffffff'], o: 66 }, { id: 'BSW', n: '부산 웨이브', f: '🌊', c: ['#0f8a8a', '#141414'], o: 70 },
+  { id: 'BFC', n: '블립 FC 유스', f: '🐣', c: ['#9ad1ff', '#ffffff'], o: 58 }, { id: 'SWL', n: '수원 윙즈', f: '🕊️', c: ['#1e64d8', '#ffffff'], o: 62 }, { id: 'BSW', n: '부산 웨이브', f: '🌊', c: ['#0f8a8a', '#141414'], o: 66 },
   { id: 'STG', n: '서울 타이거즈', f: '🐯', c: ['#ff7a00', '#141414'], o: 73 }, { id: 'TKS', n: '도쿄 사무라이즈', f: '⛩️', c: ['#141414', '#d7142b'], o: 76 }, { id: 'MXS', n: '멕시코시티 솔', f: '☀️', c: ['#00663a', '#f4f4f4'], o: 79 },
   { id: 'LDR', n: '런던 로열스', f: '👑', c: ['#6b2fb5', '#ffd400'], o: 82 }, { id: 'RIO', n: '리우 삼바스', f: '🥁', c: ['#ffdc02', '#1d4fae'], o: 84 }, { id: 'MLS', n: '밀라노 스텔라', f: '⭐', c: ['#8a1c2b', '#141414'], o: 86 },
   { id: 'MDB', n: '마드리드 블랑코스', f: '🤍', c: ['#f4f4f4', '#ffd400'], o: 88 }, { id: 'PRL', n: '파리 뤼미에르', f: '🗼', c: ['#1f2a5c', '#d7142b'], o: 90 }, { id: 'GAL', n: '갤럭시 올스타즈', f: '🌌', c: ['#ff4df0', '#22d3ee'], o: 94 },
   { id: 'RCL', n: '레알 클래식', f: '🏛️', c: ['#ffffff', '#6b2fb5'], o: 100 }, { id: 'WDT', n: '월드 드림팀', f: '🌍', c: ['#0b1020', '#22d3ee'], o: 110 }, { id: 'ICN', n: '명예의 전당 올스타', f: '👑', c: ['#fff1b0', '#141414'], o: 122 },
 ];
 const PACKS = [
-  { k: 'basic', n: '일반 팩', p: 200, w: { B: 50, S: 32, G: 16, W: 2, L: 0 }, c: '#c98a4b', d: '브론즈 · 실버가 많이 나와요', j: ['B', 'B'] },
-  { k: 'gold', n: '골드 팩', p: 800, w: { B: 0, S: 0, G: 78, W: 19, L: 3 }, c: '#ffd400', d: '골드 이상 확정 · 월드클래스 19%', j: ['B', 'S', 'S'] },
-  { k: 'wc', n: '월드클래스 팩', p: 2800, w: { B: 0, S: 0, G: 0, W: 80, L: 15, T: 5 }, c: '#22d3ee', d: '월드클래스 확정 · 레전드 15% · 스페셜 5%', j: ['S', 'S', 'G'] },
-  { k: 'sp', n: '스페셜 팩', p: 7000, w: { T: 88, I: 12 }, c: '#c86bff', d: '시즌 스페셜(100+) 확정 · 명예의 전당 12%', j: ['G', 'G', 'G', 'W'] },
+  { k: 'basic', n: '일반 팩', p: 150, w: { B: 50, S: 32, G: 16, W: 2, L: 0 }, c: '#c98a4b', d: '브론즈 · 실버가 많이 나와요', j: ['B', 'B'] },
+  { k: 'gold', n: '골드 팩', p: 600, w: { B: 0, S: 0, G: 78, W: 19, L: 3 }, c: '#ffd400', d: '골드 이상 확정 · 월드클래스 19%', j: ['B', 'S', 'S'] },
+  { k: 'wc', n: '월드클래스 팩', p: 2000, w: { B: 0, S: 0, G: 0, W: 80, L: 15, T: 5 }, c: '#22d3ee', d: '월드클래스 확정 · 레전드 15% · 스페셜 5%', j: ['S', 'S', 'G'] },
+  { k: 'sp', n: '스페셜 팩', p: 5000, w: { T: 88, I: 12 }, c: '#c86bff', d: '시즌 스페셜(100+) 확정 · 명예의 전당 12%', j: ['G', 'G', 'G', 'W'] },
 ];
 const DUPC = { B: 60, S: 120, G: 350, W: 1200, L: 3500, T: 3000, I: 9000 };
 /* 선수 팔기: 처음 받은 기본 선수 18명만 못 팔아요 (선발이어도 팔면 자동으로 채워요) · 강화할수록 비싸요 */
@@ -54,7 +54,9 @@ function cardHTML(p, extra, slot) { if (!p) return `<div class="pcard empty" ${e
 function clubTeamObj(c, xi, form) {
   return { id: (c.id || c.name.replace(/\s/g, '').slice(0, 3)).toUpperCase(), n: c.name || c.n, f: c.emb || c.f, home: [c.c1 || c.c[0], c.c2 || c.c[1], c.c1 || c.c[0]], away: ['#f4f4f4', c.c1 || c.c[0], '#f4f4f4'], num: colDist(c.c1 || c.c[0], '#ffffff') < .6 ? '#141414' : '#ffffff', r: [80, 80, 80, 80], skin: [0, 1, 2], hair: ['#120f0d'], names: ['선수'], xi, form };
 }
-function oppXI(o) { const rnd = mulberry([...o.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11)); const F = FORMS['4-3-3']; const used = new Set(), names = new Set(); return F.map(f => { const cand = PDB.filter(p => p.pos === f[0] && !used.has(p.id) && !names.has(p.n) && Math.abs(p.o - o.o) <= 4 && (o.o >= 90 || !p.leg)).sort((a, b) => Math.abs(a.o - o.o) - Math.abs(b.o - o.o) + (rnd() - .5) * 4); const p = cand[Math.floor(rnd() * Math.min(5, cand.length))] || PDB.filter(p => p.pos === f[0] && !used.has(p.id)).sort((a, b) => Math.abs(a.o - o.o) - Math.abs(b.o - o.o))[0]; used.add(p.id); names.add(p.n); return p; }); }
+function oppXI(o) { const rnd = mulberry([...o.id].reduce((a, c) => a * 31 + c.charCodeAt(0), 11)); const F = FORMS['4-3-3']; const used = new Set(), names = new Set(); return F.map(f => { const cand = PDB.filter(p => p.pos === f[0] && !used.has(p.id) && !names.has(p.n) && Math.abs(p.o - o.o) <= 4 && (o.o >= 90 || !p.leg)).sort((a, b) => Math.abs(a.o - o.o) - Math.abs(b.o - o.o) + (rnd() - .5) * 4); const p = cand[Math.floor(rnd() * Math.min(5, cand.length))] || PDB.filter(p => p.pos === f[0] && !used.has(p.id)).sort((a, b) => Math.abs(a.o - o.o) - Math.abs(b.o - o.o))[0]; used.add(p.id); names.add(p.n); return fitO(p, o.o); }); }
+// 상대 팀 수준 맞추기: 비슷한 선수가 없으면 빌려 온 선수 능력치를 팀 OVR에 맞춰요
+function fitO(p, o) { const d = Math.round(o + (p.o - o) * .25) - p.o; if (Math.abs(p.o - o) <= 3 || !d) return p; const st = {}; for (const k in p.st) st[k] = Math.max(20, (k === 'gk') !== (p.pos === 'GK') ? p.st[k] : p.st[k] + d); return Object.assign({}, p, { o: p.o + d, st }); }
 /* ---------- 구단 화면 ---------- */
 function clubHeader() { const c = club(); if (!c) return; $('#clHead').innerHTML = `<div class="crest" style="background:linear-gradient(135deg,${c.c1} 55%,${c.c2} 55%)">${c.emb}</div><div class="cn"><b>${esc(c.name)}</b><small>${c.w}승 ${c.d}무 ${c.l}패 · 팀 능력치 ${teamOvr(xiPlayers(), c.form)}</small></div><div class="coin">🪙 ${(c.coins || 0).toLocaleString()}</div>`; }
 function openClub() { if (!club()) return openCreate(); show('#club'); UI.screen = 'club'; clubHeader(); clubTab(CL.tab); }
@@ -121,7 +123,7 @@ function bigCard(p0) { const p = boost(p0, lvOf(p0.id)); const s = p.st; const s
 function startClubMatch(o) {
   const c = club(); if (c.xi.filter(x => x != null).length < 11) { toast('선수 11명이 필요해요. 자동 배치를 눌러 보세요'); return; }
   const me = clubTeamObj(c, xiPlayers().map(p => p && boost(p, lvOf(p.id))), c.form); const op = clubTeamObj({ id: o.id, n: o.n, f: o.f, c: o.c }, oppXI(o), '4-3-3');
-  CL.vs = o; startGame({ T0: me, T1: op, f0: c.form, f1: '4-3-3', mode: 'club' });
+  CL.vs = o; startGame({ T0: me, T1: op, f0: c.form, f1: '4-3-3', mode: 'club', diff: o.o < 70 ? 0 : o.o < 90 ? 1 : o.o < 110 ? 2 : 3 });
 }
 function clubReward(res, gf) { // res: 'w' 'd' 'l'
   const c = club(), o = CL.vs; if (!c || !o) return ''; const base = winCoins(o); let n = res === 'w' ? base : res === 'd' ? Math.round(base * .45) : 80; n += gf * 30; let bonus = 0; if (res === 'w' && !c.beat[o.id]) { bonus = 500 + Math.max(0, o.o - 60) * 20; c.beat[o.id] = 1; }
@@ -147,8 +149,8 @@ function renderMenu() {
   if (CH.ready) heroSet(best, kit);
 }
 /* 선물: 새로고침하면 한 번만 받아요 (구단이 없으면 만들 때 받아요) */
-const GIFTS = [{ id: 'coin5000_1106', coins: 5000, msg: '🎁 운영자 선물! 🪙5,000 코인을 받았어요' }];
-function giveGifts() { const c = club(); if (!c) return; SAVE.gifts = SAVE.gifts || {}; let got = 0; for (const g of GIFTS) if (!SAVE.gifts[g.id]) { SAVE.gifts[g.id] = 1; c.coins = (c.coins || 0) + g.coins; got++; setTimeout(() => { toast(g.msg, 4000); sfx('goal'); }, 1200 + got * 400); } if (got) { saveClub(); if (UI.screen === 'menu') renderMenu(); } }
+const GIFTS = [{ id: 'coin5000_1106', coins: 5000, msg: '🎁 운영자 선물! 🪙5,000 코인을 받았어요' }, { id: 'coin5000_limited_1107', coins: 5000, until: '2026-11-10T23:59:59+09:00', msg: '🎁 한정 선물! 🪙5,000 코인을 받았어요 (11/10까지)' }];
+function giveGifts() { const c = club(); if (!c) return; SAVE.gifts = SAVE.gifts || {}; let got = 0; for (const g of GIFTS) if (!SAVE.gifts[g.id] && (!g.until || Date.now() < Date.parse(g.until))) { SAVE.gifts[g.id] = 1; c.coins = (c.coins || 0) + g.coins; got++; setTimeout(() => { toast(g.msg, 4000); sfx('goal'); }, 1200 + got * 400); } if (got) { saveClub(); if (UI.screen === 'menu') renderMenu(); } }
 function onCloudLoaded() { giveGifts(); KMC = KM(); keysHelp(); if (UI.screen === 'menu') renderMenu(); else if (UI.screen === 'club') { clubHeader(); clubTab(CL.tab); } }
 function menuNav(tab) { auInit(); if (!club()) return openCreate(); CL.tab = tab; openClub(); }
 document.addEventListener('click', e => {
