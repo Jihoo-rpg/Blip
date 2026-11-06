@@ -168,8 +168,10 @@ function camTick(dt) {
     // 세트피스: 차는 선수 뒤에서 (코너킥 · 프리킥 · 페널티킥)
     if (M.phase === 'set' && sp && sp.ux != null && !sp.prep && (sp.type === 'corner' || sp.type === 'free' || sp.type === 'pen')) { const back = sp.type === 'pen' ? 6.5 : sp.type === 'corner' ? 5.4 : 9, up = sp.type === 'pen' ? 2.1 : sp.type === 'corner' ? 3 : 3.2, ahead = sp.type === 'pen' ? 8 : sp.type === 'corner' ? 7 : 10; CAM.want.set(sp.x - sp.ux * back, up, sp.z - sp.uz * back); CAM.wl.set(sp.x + sp.ux * ahead, .6, sp.z + sp.uz * ahead); fov = port ? 62 : 46; speed = 2; }
     // 골: 넣은 선수를 가까이 빙 돌며 보여 줘요
-    if (M.phase === 'goal' && M.celeBy && M.phT > .7) { const p = M.celeBy; CAM.orb += dt * .45; const a = CAM.orb + (p.team ? Math.PI : 0); CAM.want.set(p.x + Math.sin(a) * 6.5, 2.2, p.z + Math.cos(a) * 6.5 + 1); CAM.wl.set(p.x, 1.2, p.z); fov = port ? 55 : 38; speed = 2.2; }
+    if (M.phase === 'goal' && M.celeBy && M.phT > .7) { const p = M.celeBy; CAM.orb += dt * .45; const a = CAM.orb + (p.team ? Math.PI : 0); let ox = Math.sin(a) * 6.5; if (Math.abs(p.x + ox) > PL.hx - 1.5) ox = -Math.sign(p.x) * Math.max(Math.abs(ox), 3); CAM.want.set(clamp(p.x + ox, -PL.hx + 1.5, PL.hx - 1.5), 2.2, clamp(p.z + Math.cos(a) * 6.5 + 1, -PL.hz - 2, PL.hz + 3)); CAM.wl.set(p.x, 1.2, p.z); fov = port ? 55 : 38; speed = 2.2; }
     else CAM.orb = 0;
+    // 벽(관중석 · 광고판 · 골망) 안으로 카메라가 들어가지 않게: 낮은 카메라는 광고판 안쪽까지만
+    { const W = CAM.want; if (W.y < 18 && Math.abs(W.x) > PL.hx + 3.6) { W.x = Math.sign(W.x) * (PL.hx + 3.6); W.y = Math.max(W.y, 6); } if (W.y < 12 && Math.abs(W.z) > PL.hz + 3.4) { W.z = Math.sign(W.z) * (PL.hz + 3.4); W.y = Math.max(W.y, 5); } }
     // 하프타임 · 경기 끝: 높이 올라가요
     if (M.phase === 'half' || M.phase === 'over') { CAM.want.set(0, 34, 58); CAM.wl.set(0, 0, 0); speed = .8; }
   }
