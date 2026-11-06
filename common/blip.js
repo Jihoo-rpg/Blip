@@ -35,6 +35,7 @@
     seoul: { name: 'STA 1', icon: '🏙️', path: 'seoul/' },
     seoul2: { name: 'STA 2', icon: '🌆', path: 'seoul2/' },
     soccer: { name: '블립 풋볼 11', icon: '⚽', path: 'soccer/' },
+    neonrush: { name: '네온 러시', icon: '🔷', path: 'neonrush/' },
   };
   const AVAS = ['😺', '🐶', '🦊', '🐼', '🐸', '🐵', '🦁', '🐯', '🐰', '🐻', '🐧', '🦄', '👾', '🤖', '👻', '🐲'];
 
