@@ -3,7 +3,7 @@ const Engine = (() => {
   const SPEEDS = { 0: 8.4, 1: 10.4, 2: 12.9, 3: 15.6, 4: 19.2 };
   const MODES = ['cube', 'ship', 'ball', 'ufo', 'wave', 'robot', 'spider'];
   const CORRIDOR = { ship: 1, ball: 1, ufo: 1, wave: 1, spider: 1 };
-  const G = 110, JUMP = 22, PAD = 32, PINK_PAD = 25, ORB = 22.5, PINK_ORB = 17, MAXFALL = 26;
+  const G = 110, JUMP = 22, PAD = 34, PINK_PAD = 26, ORB = 22.5, PINK_ORB = 17, MAXFALL = 26;
   const SHIP_UP = 44, SHIP_DOWN = 38, SHIP_MAX = 10;
   const BALL_G = 80, BALL_MAX = 20;
   const UFO_G = 62, UFO_J = 12.5, UFO_MAX = 16;
@@ -34,7 +34,7 @@ const Engine = (() => {
   }
 
   function buildLevel(objs, cfg = {}) {
-    const L = { jump: JUMP * (cfg.jump || 1), stepUp: cfg.step || 0, decos: [], solids: [], hazards: [], pads: [], orbs: [], triggers: [], all: objs, endX: 0, cols: [] };
+    const L = { jump: JUMP * (cfg.jump || 1), stepUp: cfg.step != null ? cfg.step : 0.4, pad: (cfg.pad || 1), decos: [], solids: [], hazards: [], pads: [], orbs: [], triggers: [], all: objs, endX: 0, cols: [] };
     objs.forEach((o, i) => {
       o.id = i;
       if (o.t === 'deco') L.decos.push(o);
@@ -167,8 +167,8 @@ const Engine = (() => {
       } else if (o.t === 'saw') {
         if (circRect(o.x, o.y, o.r * 0.88, hx, hy, hw, hh)) { die(s); return; }
       } else if (o.t === 'pad') {
-        if (!s.used.has(o.id) && ov(px, s.y, W, H, o.x, o.y, 1, 0.3)) {
-          s.used.add(o.id); s.vy = CORRIDOR[m] ? 8 : (o.pink ? PINK_PAD : PAD); s.onGround = false; s.robotT = 0; s.events.push({ e: 'pad', o });
+        if (!s.used.has(o.id) && ov(px, s.y, W, H, o.x - 0.2, o.y, 1.4, 2.3)) { // tall zone: jumping just before a pad still triggers it
+          s.used.add(o.id); s.vy = CORRIDOR[m] ? 8 : (o.pink ? PINK_PAD : PAD) * L.pad * s.grav; s.onGround = false; s.robotT = 0; s.events.push({ e: 'pad', o });
         }
       } else if (o.t === 'orb') {
         if (!s.used.has(o.id) && s.pressBuf > 0 && ov(px, s.y, W, H, o.x - 0.2, o.y - 0.2, 1.4, 1.4)) {

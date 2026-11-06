@@ -37,7 +37,7 @@ const LEVELS = [
   ['Orange Crush', 2, 4, 5, 55, 128], ['Night Drive', 2, 5, 5, 66, 134], ['Metro Line', 2, 5, 6, 77, 138], ['Red Alert', 3, 6, 6, 88, 132],
   ['Overclock', 3, 7, 6, 99, 140], ['Static Storm', 3, 7, 7, 111, 136], ['Prism Break', 4, 8, 7, 122, 140], ['Hyperdrive', 4, 9, 7, 133, 144],
   ['Voltage', 4, 9, 7, 144, 146], ['Abyss', 5, 10, 7, 155, 140], ['Doomsday Engine', 5, 10, 8, 166, 148], ['Event Horizon', 5, 10, 8, 177, 150],
-].map(([name, tier, stars, secs, seed, bpm], i) => ({ name, tier, stars, secs, seed, bpm, ...UNLOCK[i], phys: i === 0 ? { jump: 1.15, step: 0.55 } : undefined }));
+].map(([name, tier, stars, secs, seed, bpm], i) => ({ name, tier, stars, secs, seed, bpm, ...UNLOCK[i], phys: i === 0 ? { jump: 1.15, step: 0.55, pad: 1.2 } : undefined }));
 
 // bright GD-like palettes: [bg, ground]
 const PALETTES = [
