@@ -6,18 +6,18 @@ const E = require(process.env.ENGINE || '../src/engine.js');
 const fs = require('fs');
 
 const TIERS = [
-  { name: 'Easy', N: 32, k: 4, rest: 0.42, shipGap: 5.6, shipMove: 1, speeds: [1], cube: [22, 28], ship: [12, 14],
-    ev: { spike1: 6, spike2: 3, small: 2, up: 4, down: 4, pad: 2, hang: 2 } },
-  { name: 'Normal', N: 24, k: 4, rest: 0.3, shipGap: 4.9, shipMove: 1, speeds: [1], cube: [24, 30], ship: [14, 16],
-    ev: { spike1: 4, spike2: 4, small: 2, up: 4, down: 4, pad: 3, hang: 2, pit: 3, orbPit: 2, saw: 2 } },
-  { name: 'Hard', N: 16, k: 4, rest: 0.2, shipGap: 4.3, shipMove: 2, speeds: [1, 1, 2], cube: [26, 32], ship: [16, 18],
-    ev: { spike1: 3, spike2: 4, spike3: 3, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 3, saw: 3, downSpike: 2 } },
-  { name: 'Harder', N: 12, k: 4, rest: 0.14, shipGap: 3.8, shipMove: 2, speeds: [1, 2], cube: [28, 34], ship: [16, 20],
-    ev: { spike1: 2, spike2: 3, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 4, saw: 3, downSpike: 3 } },
-  { name: 'Insane', N: 8, k: 4, rest: 0.08, shipGap: 3.3, shipMove: 2, speeds: [2, 2, 3], cube: [30, 36], ship: [18, 22],
+  { name: 'Easy', N: 24, k: 4, rest: 0.22, shipGap: 4.6, shipMove: 1, speeds: [1], cube: [26, 32], ship: [14, 16], half: 0,
+    ev: { spike1: 4, spike2: 4, spike3: 2, small: 2, up: 4, down: 3, pad: 3, hang: 2, pit: 3, orbPit: 2 } },
+  { name: 'Normal', N: 20, k: 4, rest: 0.14, shipGap: 4.1, shipMove: 2, speeds: [1, 1, 2], cube: [28, 34], ship: [16, 18], half: 0,
+    ev: { spike1: 2, spike2: 4, spike3: 3, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 3, saw: 3, downSpike: 2 } },
+  { name: 'Hard', N: 14, k: 4, rest: 0.08, shipGap: 3.6, shipMove: 2, speeds: [1, 2], cube: [30, 36], ship: [18, 20], half: 0.1,
+    ev: { spike2: 3, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 4, saw: 3, downSpike: 3 } },
+  { name: 'Harder', N: 10, k: 4, rest: 0.05, shipGap: 3.2, shipMove: 3, speeds: [2, 2, 3], cube: [32, 38], ship: [18, 22], half: 0.2,
     ev: { spike2: 3, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 4, saw: 4, downSpike: 4 } },
-  { name: 'Demon', N: 6, k: 3, rest: 0.04, shipGap: 2.9, shipMove: 3, speeds: [2, 3], cube: [32, 38], ship: [20, 24],
-    ev: { spike2: 2, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 4, saw: 4, downSpike: 4 } },
+  { name: 'Insane', N: 7, k: 4, rest: 0.03, shipGap: 2.8, shipMove: 3, speeds: [2, 3], cube: [34, 40], ship: [20, 24], half: 0.3,
+    ev: { spike2: 2, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 4, pit: 4, orbPit: 4, saw: 4, downSpike: 4 } },
+  { name: 'Demon', N: 5, k: 3, rest: 0, shipGap: 2.4, shipMove: 3, speeds: [3], cube: [36, 44], ship: [22, 26], half: 0.45,
+    ev: { spike2: 2, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 4, pit: 4, orbPit: 4, saw: 4, downSpike: 4 } },
 ];
 const LEVELS = [
   ['First Steps', 0, 1, 4, 11, 128], ['Blue Horizon', 0, 2, 5, 22, 132], ['Green Valley', 1, 3, 5, 33, 130], ['Pulse Runner', 1, 3, 5, 44, 136],
@@ -112,7 +112,7 @@ function generate(def) {
   };
   const evNames = Object.keys(T.ev), evW = evNames.map(n => T.ev[n]);
   function chooseEvent(ramp) {
-    if (rnd() < T.rest + (1 - ramp) * 0.25) return 'rest';
+    if (rnd() < T.rest + (1 - ramp) * 0.15) return 'rest';
     let r = rnd() * evW.reduce((a, b) => a + b), i = 0; while ((r -= evW[i]) > 0) i++;
     return evNames[i];
   }
@@ -146,7 +146,7 @@ function generate(def) {
   st.x = r2(bpb() * 3); // intro: 3 beats
   let totalBeats = 0, backtracks = 0;
   function cubeBeat(forceRest, ramp, wantH0) {
-    const w = bpb();
+    const w = bpb() * (!forceRest && !wantH0 && rnd() < T.half ? 0.5 : 1);
     let names = forceRest ? ['rest'] : [chooseEvent(ramp), chooseEvent(ramp), 'rest'];
     if (wantH0) names = st.h > 0 ? ['down', 'down', 'rest'] : ['rest'];
     for (const n of names) {
@@ -199,7 +199,7 @@ function generate(def) {
     const start = totalBeats;
     if (!ship) {
       while (totalBeats - start < nBeats) {
-        const ramp = Math.min(1, (sec * 30 + totalBeats - start) / 40);
+        const ramp = Math.min(1, (sec * 30 + totalBeats - start) / 16);
         withBacktrack(tries => cubeBeat(tries > 1, ramp));
       }
     } else {
