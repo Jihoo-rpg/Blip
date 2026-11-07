@@ -19,12 +19,12 @@ const DUPC = { B: 60, S: 120, G: 350, W: 1200, L: 3500, T: 3000, I: 9000 };
 /* 선수 팔기: 처음 받은 기본 선수 18명만 못 팔아요 (선발이어도 팔면 자동으로 채워요) · 강화할수록 비싸요 */
 const SELLC = DUPC; const isBase = id => { const c = club(); return c.base ? c.base.includes(id) : !!(PDB[id] && PDB[id].prospect); };
 const sellPrice = id => Math.round(SELLC[PDB[id].r] * Math.pow(1.45, Math.max(0, lvOf(id) - 1)) / 10) * 10;
-function sellBar() { const c = club(); const n = Object.keys(c.own).length; const p = CL.sellPick != null ? PDB[CL.sellPick] : null;
-  if (p) return `<div class="sellbar"><span><b>${esc(p.n)}</b> (${RAR(p.r).n} ${cardO(p)}${lvOf(p.id) > 1 ? ' · +' + lvOf(p.id) : ''}) 팔까요? → 🪙${sellPrice(p.id).toLocaleString()}</span><button class="btn main" data-sellok="1">팔기</button><button class="btn" data-sellno="1">취소</button></div>`;
-  return `<p class="hintp">💰 팔 선수를 누르세요 (선발도 돼요) · 처음 받은 기본 선수 18명은 못 팔아요 · 지금 ${n}명</p>`; }
+function sellBar() { const c = club(); const n = Object.keys(c.own).length; const S = (CL.sellSel = (CL.sellSel || []).filter(i => c.own[i] && !sellCheck(i))); const tot = S.reduce((a, i) => a + sellPrice(i), 0);
+  return `<div class="sellbar"><span>${S.length ? `<b>${S.length}명</b> 골랐어요 → 🪙${tot.toLocaleString()}` : '💰 팔 선수를 누르세요 (여러 명 돼요 · 선발도 돼요) · 처음 받은 기본 선수는 못 팔아요'}</span>
+    <button class="chip" data-sellq="B">브론즈 전부</button><button class="chip" data-sellq="S">실버 전부</button><button class="chip" data-sellq="BS">잡카드 전부</button>${S.length ? `<button class="chip" data-sellno="1">선택 해제</button><button class="btn main" data-sellok="1">${S.length}명 팔기</button>` : ''}</div><p class="hintp" style="margin-top:0">지금 ${n}명 · 잡카드 전부 = 선발이 아닌 브론즈 · 실버</p>`; }
 function sellCheck(id) { const c = club(), p = PDB[id]; if (!p || !c.own[id]) return '없는 선수예요'; if (isBase(id)) return '처음 받은 기본 선수는 못 팔아요'; return ''; }
 function dropFromXI(id) { const c = club(); const i = c.xi.indexOf(id); if (i < 0) return; const pos = FORMS[c.form][i][0]; const pool = owned().filter(q => q.id !== id && !c.xi.includes(q.id)).sort((a, b) => cardO(b) - cardO(a)); const r = pool.find(q => q.pos === pos) || pool[0]; c.xi[i] = r ? r.id : null; }
-function sellPlayer(id) { const c = club(), p = PDB[id]; const why = sellCheck(id); if (why) { toast(why, 2400); return; } const n = sellPrice(id); dropFromXI(id); delete c.own[id]; coins(n); saveClub(); toast(`💰 ${p.n} 선수를 팔았어요 · 🪙 +${n.toLocaleString()}`, 2600); sfx('goal'); }
+function sellPlayer(id, quiet) { const c = club(), p = PDB[id]; const why = sellCheck(id); if (why) { if (!quiet) toast(why, 2400); return 0; } const n = sellPrice(id); dropFromXI(id); delete c.own[id]; coins(n); saveClub(); if (quiet) return n; toast(`💰 ${p.n} 선수를 팔았어요 · 🪙 +${n.toLocaleString()}`, 2600); sfx('goal'); }
 const CL = { tab: 'play', sel: null, busy: false };
 const club = () => SAVE.club;
 function saveClub() { persist(); }
@@ -62,14 +62,14 @@ function clubHeader() { const c = club(); if (!c) return; $('#clHead').innerHTML
 function openClub() { if (!club()) return openCreate(); show('#club'); UI.screen = 'club'; clubHeader(); clubTab(CL.tab); }
 function clubTab(t) { clubTab0(t); fillPortraits($('#clBody')); }
 function clubTab0(t) {
-  if (t !== 'squad') { CL.sell = false; CL.sellPick = null; } CL.tab = t; CL.sel = null; $$('#clTabs [data-ctab]').forEach(b => b.classList.toggle('on', b.dataset.ctab === t)); const B = $('#clBody'); const c = club();
+  if (t !== 'squad') { CL.sell = false; CL.sellSel = []; } CL.tab = t; CL.sel = null; $$('#clTabs [data-ctab]').forEach(b => b.classList.toggle('on', b.dataset.ctab === t)); const B = $('#clBody'); const c = club();
   if (t === 'play') {
     B.innerHTML = `<p class="hintp">AI 구단을 이기면 코인을 받아요. 강한 팀일수록 코인이 많아요! 처음 이기면 보너스 🎁</p><div class="opps">${OPP.map((o, i) => { const lock = i > 0 && !c.beat[OPP[i - 1].id] && i > (c.w || 0) + 2; const rew = winCoins(o); return `<button class="opp ${lock ? 'lock' : ''}" data-opp="${o.id}"><div class="crest sm" style="background:linear-gradient(135deg,${o.c[0]} 55%,${o.c[1]} 55%)">${o.f}</div><div class="on"><b>${esc(o.n)}</b><small>능력치 ${o.o} ${c.beat[o.id] ? '· ✅ 이김' : ''}</small></div><div class="rw">${lock ? '🔒' : `🪙 ${rew}${c.beat[o.id] ? '' : ' 🎁'}`}</div></button>`; }).join('')}</div>`;
   } else if (t === 'squad') {
     const xi = xiPlayers(); const F = FORMS[c.form]; const bench = owned().filter(p => !c.xi.includes(p.id)).sort((a, b) => b.o - a.o);
     B.innerHTML = `<div class="sqtop"><div class="row">${Object.keys(FORMS).map(f => `<button class="chip ${c.form === f ? 'on' : ''}" data-cform="${f}">${f}</button>`).join('')}</div><div class="row"><button class="chip ${CL.sell ? 'on' : ''}" id="bSell">💰 선수 팔기</button><button class="chip" id="bAuto">✨ 자동 배치</button></div></div>
-      <div class="sqwrap"><div class="pitch">${F.map((f, i) => `<div class="slot" style="left:${50 + f[2] * 40}%;top:${89 - (f[1] + .95) / 1.0 * 76}%">${cardHTML(xi[i], `data-slot="${i}"`, f[0])}</div>`).join('')}</div>
-      <div>${CL.sell ? sellBar() : '<p class="hintp">선수를 누르고 → 바꿀 선수를 누르면 자리를 바꿔요</p>'}<div class="bench${CL.sell ? ' selling' : ''}">${bench.map(p => cardHTML(p, `data-bench="${p.id}"`) .replace('<div class="gem">', CL.sell ? `<span class="price">🪙${SELLC[p.r]}</span><div class="gem">` : '<div class="gem">')).join('') || '<p class="hintp">후보 선수가 없어요. 뽑기에서 선수를 얻어요!</p>'}</div></div></div>`;
+      <div class="sqwrap"><div class="pitch">${F.map((f, i) => `<div class="slot" style="left:${50 + f[2] * 40}%;top:${89 - (f[1] + .95) / 1.0 * 76}%">${cardHTML(xi[i], `data-slot="${i}"${CL.sell && xi[i] && (CL.sellSel || []).includes(xi[i].id) ? ' data-ssel="1"' : ''}`, f[0])}</div>`).join('')}</div>
+      <div>${CL.sell ? sellBar() : '<p class="hintp">선수를 누르고 → 바꿀 선수를 누르면 자리를 바꿔요</p>'}<div class="bench${CL.sell ? ' selling' : ''}">${bench.map(p => cardHTML(p, `data-bench="${p.id}"${CL.sell && (CL.sellSel || []).includes(p.id) ? ' data-ssel="1"' : ''}`) .replace('<div class="gem">', CL.sell ? `<span class="price">🪙${SELLC[p.r]}</span><div class="gem">` : '<div class="gem">')).join('') || '<p class="hintp">후보 선수가 없어요. 뽑기에서 선수를 얻어요!</p>'}</div></div></div>`;
   } else if (t === 'shop') {
     B.innerHTML = `<div class="packs">${PACKS.map(k => `<button class="pack" data-pack="${k.k}" style="--pc:${k.c}"><div class="pk">${k.k === 'sp' ? '✨' : k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div><b>${k.n}</b><small>${k.d}</small><span>${k.k === 'gold' && c.freeGold ? '🎁 무료!' : '🪙 ' + k.p.toLocaleString()}</span></button>`).join('')}</div>
       <p class="hintp">이미 있는 선수가 나오면 코인으로 바꿔 드려요 (브론즈 60 · 실버 120 · 골드 350 · 월드클래스 1,200 · 레전드 3,500)</p>
@@ -81,11 +81,12 @@ function clubTab0(t) {
 }
 function winCoins(o) { return 220 + Math.max(0, o.o - 60) * 24; }
 document.addEventListener('click', e => {
-  if (UI.screen !== 'club') return; const t = e.target.closest('[data-ctab],[data-opp],[data-cform],[data-slot],[data-bench],[data-pack],[data-rf],#bAuto,#bSell,[data-sellok],[data-sellno]'); if (!t) return; const c = club(); sfx('tick');
-  if (t.id === 'bSell') { CL.sell = !CL.sell; CL.sellPick = null; return clubTab('squad'); }
-  if (t.dataset.sellok) { const id = CL.sellPick; CL.sellPick = null; if (id != null) sellPlayer(id); return clubTab('squad'); }
-  if (t.dataset.sellno) { CL.sellPick = null; return clubTab('squad'); }
-  if (CL.sell && (t.dataset.bench != null || t.dataset.slot != null)) { if (t.dataset.slot != null) { toast('선발 선수는 먼저 후보로 빼야 팔 수 있어요', 2400); return; } const id = +t.dataset.bench; const why = sellCheck(id); if (why) { toast(why, 2400); return; } CL.sellPick = id; return clubTab('squad'); }
+  if (UI.screen !== 'club') return; const t = e.target.closest('[data-ctab],[data-opp],[data-cform],[data-slot],[data-bench],[data-pack],[data-rf],#bAuto,#bSell,[data-sellok],[data-sellno],[data-sellq]'); if (!t) return; const c = club(); sfx('tick');
+  if (t.id === 'bSell') { CL.sell = !CL.sell; CL.sellSel = []; return clubTab('squad'); }
+  if (t.dataset.sellq) { const rs = t.dataset.sellq.split(''); CL.sellSel = owned().filter(q => rs.includes(q.r) && !c.xi.includes(q.id) && !sellCheck(q.id)).map(q => q.id); if (!CL.sellSel.length) toast('고를 선수가 없어요'); return clubTab('squad'); }
+  if (t.dataset.sellok) { const L = (CL.sellSel || []).slice(); CL.sellSel = []; let sum = 0, cnt = 0; for (const id of L) { const g = sellPlayer(id, true); if (g) { sum += g; cnt++; } } if (cnt) { toast(`💰 ${cnt}명을 팔았어요 · 🪙 +${sum.toLocaleString()}`, 2800); sfx('goal'); } return clubTab('squad'); }
+  if (t.dataset.sellno) { CL.sellSel = []; return clubTab('squad'); }
+  if (CL.sell && (t.dataset.bench != null || t.dataset.slot != null)) { const id = t.dataset.bench != null ? +t.dataset.bench : c.xi[+t.dataset.slot]; if (id == null) return; const why = sellCheck(id); if (why) { toast(why, 2400); return; } const S = CL.sellSel = CL.sellSel || []; const k = S.indexOf(id); if (k >= 0) S.splice(k, 1); else S.push(id); return clubTab('squad'); }
   if (t.dataset.ctab) return clubTab(t.dataset.ctab);
   if (t.dataset.rf) { CL.rf = t.dataset.rf; return clubTab('all'); }
   if (t.id === 'bAuto') { autoXI(); clubHeader(); return clubTab('squad'); }
@@ -154,7 +155,8 @@ function giveGifts() { const c = club(); if (!c) return; SAVE.gifts = SAVE.gifts
 function onCloudLoaded() { giveGifts(); KMC = KM(); keysHelp(); if (UI.screen === 'menu') renderMenu(); else if (UI.screen === 'club') { clubHeader(); clubTab(CL.tab); } }
 function menuNav(tab) { auInit(); if (!club()) return openCreate(); CL.tab = tab; openClub(); }
 document.addEventListener('click', e => {
-  if (UI.screen !== 'menu' || $('#menu').hidden) return; const t = e.target.closest('[data-mnav],#mClub,#mTeam,#mDaily,#mKeys,#mMute,#mOnl2,#mAcc'); if (!t) return; sfx('tick');
+  if (UI.screen !== 'menu' || $('#menu').hidden) return; const t = e.target.closest('[data-mnav],#mClub,#mTeam,#mDaily,#mKeys,#mMute,#mOnl2,#mAcc,#mFr');
+  if (t && t.id === 'mFr') { sfx('tick'); return openFriends(); } if (!t) return; sfx('tick');
   if (t.dataset.mnav) return menuNav(t.dataset.mnav);
   if (t.id === 'mClub') return menuNav('play'); if (t.id === 'mTeam') return menuNav('squad'); if (t.id === 'mOnl2') { auInit(); return openOnline(); }
   if (t.id === 'mDaily') { const c = club(); if (!c) { toast('먼저 구단을 만들어요!'); return openCreate(); } if (c.daily === today()) { toast('오늘 출석 보상은 이미 받았어요. 내일 또 와요!'); return; } c.daily = today(); coins(300); toast('🎁 출석 보상 🪙300 받았어요!', 2600); sfx('goal'); return renderMenu(); }

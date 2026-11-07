@@ -285,8 +285,8 @@
         () => accept(r.code).then(() => notify(r.nick + '님과 친구가 됐어요!')).catch(() => { }), () => decline(r.code).catch(() => { }));
       for (const v of invs) {
         const g = GAMES[v.game], same = v.game === GAME;
-        card('i' + v.code + v.t, `<span class="a">${v.ava}</span><span class="x">${esc(v.nick)}님의 초대<small>${g.icon} ${esc(g.name)}${same ? ' · 지금 같은 게임이에요' : ''}</small></span>${same ? '' : '<button class="y">가기</button>'}<button class="n">${same ? '확인' : '거절'}</button>`,
-          () => { clearInvite(v.code); go(v.game, v.code); }, () => clearInvite(v.code));
+        card('i' + v.code + v.t, `<span class="a">${v.ava}</span><span class="x">${esc(v.nick)}님의 초대<small>${g.icon} ${esc(g.name)}${same ? ' · 지금 같은 게임이에요' : ''}</small></span>${same ? (window.BLIP && BLIP.onSameInvite ? '<button class="y">같이 하기</button>' : '') : '<button class="y">가기</button>'}<button class="n">${same ? '확인' : '거절'}</button>`,
+          () => { clearInvite(v.code); if (same && window.BLIP && BLIP.onSameInvite) BLIP.onSameInvite(v); else go(v.game, v.code); }, () => clearInvite(v.code));
       }
     } catch (e) { }
   }

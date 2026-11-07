@@ -342,6 +342,12 @@ body.mob #bKeys{display:none}
 #reveal.upfail .bcard{filter:grayscale(.6) brightness(.8)}
 .upinfo .row2{display:flex;gap:8px;flex-wrap:wrap}.upinfo .row2 .btn{flex:1 1 auto;min-width:0}
 @media (max-width:640px){.upwrap .uptop{flex-wrap:nowrap;gap:10px;align-items:flex-start}.upwrap .bcard{--w:118px;flex:0 0 auto}.upempty{width:118px;height:160px;font-size:48px}.upinfo{min-width:0;flex:1 1 0;padding:10px}.upinfo b{font-size:16px}.upinfo p{font-size:12px;margin:5px 0}.upinfo .rate{font-size:19px}.upinfo .up{font-size:18px}.upinfo .row2 .btn{height:38px;font-size:13px;padding:0 8px}}
+
+#frm .card{width:min(460px,94vw);max-height:92vh;overflow:auto}.frMe{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-weight:800;font-size:14px}.frMe b{font-family:"Black Han Sans";font-size:22px;letter-spacing:.12em;color:var(--gold)}.frMe .chip{height:30px}
+.frAddRow{display:flex;gap:8px;margin-top:10px}.frAddRow input{flex:1;min-width:0;height:44px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.08);color:#fff;padding:0 12px;font:700 15px Pretendard,sans-serif}.frAddRow .btn{height:44px;padding:0 14px;font-size:14px}
+.frH{margin:12px 0 6px;font-weight:900;font-size:13px;opacity:.8}.frRow{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.06);margin-bottom:6px}.frRow.req{background:rgba(255,212,0,.1)}.frRow .fa{font-size:26px}.frRow .fn{flex:1;min-width:0;font-weight:900}.frRow .fn small{display:block;font-weight:700;font-size:11px;opacity:.75;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.btn.sm{height:34px;padding:0 12px;font-size:13px}
+[data-ssel]{filter:drop-shadow(0 0 0 #ffd400) drop-shadow(0 0 7px #ffd400)!important;animation:none!important}[data-ssel]:before{content:'✓';position:absolute;z-index:4;right:-4px;top:-4px;width:22px;height:22px;border-radius:50%;background:#ffd400;color:#2a1d02;display:grid;place-items:center;font-weight:900;font-size:13px}
+.sellbar .chip{height:32px;font-size:12px}
 </style>
 </head>
 <body>
@@ -357,7 +363,7 @@ body.mob #bKeys{display:none}
     <div class="brand">블립 풋볼 <span>11</span></div>
     <div class="mRes"><button class="pill acc" id="mAcc">☁️</button><div class="pill c" id="mCoins">🪙 0</div><div class="pill" id="rec"></div><a href="../hub/" class="mIcon" title="허브">🏠</a><button class="mIcon" id="mMute">🔊</button></div>
   </div>
-  <div class="mLeft"><button class="mSide" id="mDaily"><span>🎁</span>출석 보상<i class="dot" id="mDailyDot"></i></button><button class="mSide" data-mnav="all"><span>📖</span>도감</button><button class="mSide" id="mKeys"><span>⌨️</span>조작 설정</button></div>
+  <div class="mLeft"><button class="mSide" id="mDaily"><span>🎁</span>출석 보상<i class="dot" id="mDailyDot"></i></button><button class="mSide" data-mnav="all"><span>📖</span>도감</button><button class="mSide" id="mFr"><span>👥</span>친구</button><button class="mSide" id="mKeys"><span>⌨️</span>조작 설정</button></div>
   <div class="mGrid">
     <button class="mFeat" id="bClub"><small>나만의 구단</small><p id="mFeatP">AI 구단을 이기고 코인을 모아요</p><div class="opp2" id="mNext"></div><span class="bal">⚽</span><em>▶ 경기 시작</em></button>
     <button class="mTeam" id="mTeam"></button>
@@ -406,6 +412,10 @@ body.mob #bKeys{display:none}
   <button class="btn main" id="bResume">계속하기</button><button class="btn" id="bRestart">처음부터 다시</button><button class="btn" id="bKeys">⌨️ 조작키 설정</button><button class="btn" id="bQuit">메뉴로 나가기</button></div></div>
 
 <div id="accReq" class="modal" hidden><div class="card col"><h2 class="h">🔐 허브 계정이 필요해요</h2><p class="hintp" style="font-size:14px;line-height:1.6">온라인 대결은 허브 계정으로 해요.<br>계정을 만들면 구단 · 코인 · 선수가 계정에 저장돼서<br>폰 · 컴퓨터 어디서든 이어서 할 수 있어요.</p><div class="row2"><button class="btn" id="accLogin">로그인</button><button class="btn main" id="accSignup">계정 만들기</button></div><button class="btn" id="accNo" style="height:40px;font-size:14px;margin-top:6px">나중에</button></div></div>
+<div id="frm" class="modal" hidden><div class="card col"><h2 class="h">👥 친구</h2>
+  <div class="frMe">내 친구 코드 <b id="frCode">------</b> <button class="chip" id="frCopy">복사</button><button class="chip" id="frRef">🔄</button></div>
+  <div class="frAddRow"><input id="frIn" maxlength="14" placeholder="친구 코드(6자리)나 아이디" autocomplete="off"><button class="btn main" id="frAdd">친구 추가</button></div>
+  <p class="hintp" id="frMsg"></p><div id="frList"></div><button class="btn" id="frClose" style="height:42px;font-size:14px;margin-top:8px">닫기</button></div></div>
 <div id="kset" class="modal" hidden><div class="card col"><h2 class="h">⌨️ 조작키 설정</h2><p class="hintp">바꿀 동작을 누르고 → 원하는 키를 누르세요 (화살표 · J K L 키도 같이 돼요)</p><div id="ksList"></div><div class="row2"><button class="btn" id="ksReset">기본값</button><button class="btn main" id="ksOk">완료</button></div></div></div>
 <div id="result" class="modal" hidden><div class="card">
   <h2 id="rTitle" class="h">승리!</h2><div id="rScore"></div><div id="rGoals"></div><div id="rStats"></div><div id="rMvp"></div><div id="rReward" hidden></div>
@@ -444,19 +454,20 @@ body.mob #bKeys{display:none}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="../seoul/lib/GLTFLoader.js"></script>
 <script src="../seoul/lib/SkeletonUtils.js"></script>
-<script src="js/base.js?v=202611071635"></script>
+<script src="js/base.js?v=202611072114"></script>
 <script src="../seoul/js/chars.js"></script>
-<script src="js/teams.js?v=202611071635"></script>
-<script src="js/db.js?v=202611071635"></script>
-<script src="js/stadium.js?v=202611071635"></script>
-<script src="js/players.js?v=202611071635"></script>
-<script src="js/match.js?v=202611071635"></script>
-<script src="js/ui.js?v=202611071635"></script>
-<script src="js/net.js?v=202611071635"></script>
-<script src="js/club.js?v=202611071635"></script>
-<script src="js/upgrade.js?v=202611071635"></script>
-<script src="../common/p2p.js?v=202611071635"></script>
-<script src="../common/blip.js?v=202611071635" data-game="soccer"></script>
+<script src="js/teams.js?v=202611072114"></script>
+<script src="js/db.js?v=202611072114"></script>
+<script src="js/stadium.js?v=202611072114"></script>
+<script src="js/players.js?v=202611072114"></script>
+<script src="js/match.js?v=202611072114"></script>
+<script src="js/ui.js?v=202611072114"></script>
+<script src="js/net.js?v=202611072114"></script>
+<script src="js/club.js?v=202611072114"></script>
+<script src="js/friends.js?v=202611072114"></script>
+<script src="js/upgrade.js?v=202611072114"></script>
+<script src="../common/p2p.js?v=202611072114"></script>
+<script src="../common/blip.js?v=202611072114" data-game="soccer"></script>
 <script>if (IS_MOBILE) document.body.classList.add('mob'); setupOnline(); boot();</script>
 </body>
 </html>

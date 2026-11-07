@@ -390,6 +390,8 @@ async function boot() {
   buildStadium(); buildBall(); setupUI();
   try { await loadChars(); } catch (e) { $('#load').innerHTML = '선수 모델을 못 불러왔어요 😢<br><small>새로고침해 보세요</small>'; return; }
   if (/[?&]online=1/.test(location.search)) setTimeout(() => { if (window.BLIP && BLIP.loggedIn) { history.replaceState(null, '', location.pathname); openOnline(); } }, 2600);
+  // 친구 초대: 같은 게임에서 받으면 '같이 하기', 다른 데서 '가기'로 오면 ?follow=친구코드
+  if (window.BLIP) { BLIP.onSameInvite = v => joinFriendRoom(v.code); if (BLIP.followCode) setTimeout(() => joinFriendRoom(BLIP.followCode), 2600); }
   if (window.BLIP) { const prev = BLIP._onAccount; BLIP._onAccount = () => { if (prev) prev(); cloudPull(); renderMenu(); }; setTimeout(cloudPull, 1500); }
   startDemo(); giveGifts(); show('#menu'); CAM.snap = 0; cam.position.set(30, 60, 110); CAM.look.set(0, 0, 0); CAM.flyT = 3; $('#splash').classList.add('on'); setTimeout(() => $('#splash').classList.add('out'), 1900); setTimeout(() => $('#splash').remove(), 2700); $('#mMute').textContent = SAVE.mute ? '🔇' : '🔊'; $('#load').classList.add('gone'); setTimeout(() => $('#load').remove(), 700);
   requestAnimationFrame(loop);
