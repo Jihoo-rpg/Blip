@@ -154,7 +154,7 @@ function bigCard(p0) { const p = boost(p0, lvOf(p0.id)); const s = p.st; const s
 function startClubMatch(o) {
   const c = club(); if (c.xi.filter(x => x != null).length < 11) { toast('선수 11명이 필요해요. 자동 배치를 눌러 보세요'); return; }
   const me = clubTeamObj(c, xiPlayers().map(p => p && boost(p, lvOf(p.id))), c.form); const op = clubTeamObj({ id: o.id, n: o.n, f: o.f, c: o.c }, oppXI(o), '4-3-3');
-  CL.vs = o; startGame({ T0: me, T1: op, f0: c.form, f1: '4-3-3', mode: 'club', diff: o.o < 70 ? 0 : o.o < 90 ? 1 : o.o < 110 ? 2 : 3 });
+  CL.vs = o; startGame({ T0: me, T1: op, f0: c.form, f1: '4-3-3', mode: 'club', diff: Math.max(0, (o.o < 70 ? 0 : o.o < 90 ? 1 : o.o < 110 ? 2 : 3) - (teamOvr(xiPlayers(), c.form) - o.o >= 20 ? 2 : teamOvr(xiPlayers(), c.form) - o.o >= 10 ? 1 : 0)) }); // 내 팀이 훨씬 세면 AI도 덜 빡빡하게
 }
 function clubReward(res, gf) { // res: 'w' 'd' 'l'
   const c = club(), o = CL.vs; if (!c || !o) return ''; const base = winCoins(o); let n = res === 'w' ? base : res === 'd' ? Math.round(base * .45) : 80; n += gf * 30; let bonus = 0; if (res === 'w' && !c.beat[o.id]) { bonus = 500 + Math.max(0, o.o - 60) * 20; c.beat[o.id] = 1; }

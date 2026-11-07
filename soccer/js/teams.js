@@ -48,7 +48,7 @@ const TEAM = id => TEAMS.find(t => t.id === id) || TEAMS[0];
 function teamRating(t) { return Math.round((t.r[0] + t.r[1] + t.r[2] + t.r[3]) / 4); }
 /* 같은 팀은 항상 같은 선수 (이름 · 얼굴 · 머리) */
 /* 99를 넘는 능력치(스페셜 · 강화)는 효과를 부드럽게 줄여요 — 150이어도 사람처럼 뛰게 */
-const softSt = v => v <= 99 ? v : Math.round(99 + (v - 99) * .45);
+const softSt = v => v <= 99 ? v : Math.round(99 + (v - 99) * .8); // 99 넘는 능력치도 경기에서 확실히 세게 (예전 .45는 145가 117로 깎였어요)
 function roster(t, form) {
   const F = FORMS[form] || FORMS['4-3-3'], NU = NUMS[form] || NUMS['4-3-3'];
   let xi = t.xi;

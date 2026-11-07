@@ -208,7 +208,7 @@ function introCam(dt, port) {
   const kk = 1 - Math.exp(-dt * speed); cam.position.lerp(CAM.want, kk); CAM.look.lerp(CAM.wl, kk); cam.lookAt(CAM.look);
   if (Math.abs(cam.fov - fov) > .05) { cam.fov = lerp(cam.fov, fov, Math.min(1, dt * 4)); cam.updateProjectionMatrix(); }
 }
-const ovrOf = d => d.o || Math.round((d.st.spd + d.st.sht + d.st.pas + d.st.drb + d.st.def) / 5 * .55 + Math.max(d.st.spd, d.st.sht, d.st.pas, d.st.def, d.st.gk) * .45);
+const ovrOf = d => d.o || d.ovr || Math.round((d.st.spd + d.st.sht + d.st.pas + d.st.drb + d.st.def) / 5 * .55 + Math.max(d.st.spd, d.st.sht, d.st.pas, d.st.def, d.st.gk) * .45);
 function introFill() {
   const tm = ti => { const T_ = ti ? M.t1 : M.t0, L = team(ti); const o = Math.round(L.reduce((a, p) => a + ovrOf(p.d), 0) / L.length); return `<div class="inTm"><i style="background:linear-gradient(135deg,${M.kits[ti][0]} 55%,${M.kits[ti][1]} 55%)">${T_.f}</i><b>${esc(T_.n)}</b><em>OVR ${o}</em></div>`; };
   $('#inTitle').innerHTML = `<div class="inT">${tm(0)}<div class="inVs">VS</div>${tm(1)}</div><p>${M.mode === 'club' ? '나만의 구단 리그' : '국가대표 친선 경기'} · 블립 스타디움</p>`;

@@ -123,7 +123,7 @@ function planSave(ti, onTarget) {
   const gk = gkOf(ti); if (!gk) return; const gx = ownGoalX(ti); const vx = ball.vx; if (Math.abs(vx) < 1) return;
   const t = (gx - Math.sign(gx) * .8 - ball.x) / vx; if (t <= 0 || t > 3) return; let zz = ball.z + ball.vz * t, yy = ball.y + ball.vy * t - .5 * G * t * t; yy = Math.max(PL.br, Math.abs(yy));
   const sp = Math.hypot(ball.vx, ball.vy, ball.vz); const reach = Math.abs(zz - gk.z); const df = DIFFOF(gk);
-  let pr = .92 - reach / 4.2 * .7 - Math.max(0, sp - 24) / 40 + clamp(t - .5, 0, .8) * .55 + (gk.st.gk - 80) / 48 + (gk.team === M.human[0] || gk.team === M.human[1] ? .03 : df.gk) - (yy > 1.9 ? .12 : 0);
+  let pr = .92 - reach / 4.2 * .7 - Math.max(0, sp - 24) / 40 + clamp(t - .5, 0, .8) * .55 + (Math.min(99, gk.st.gk) - 80) / 48 + Math.max(0, gk.st.gk - 99) / 160 + (gk.team === M.human[0] || gk.team === M.human[1] ? .03 : df.gk) - (yy > 1.9 ? .12 : 0);
   if (!onTarget) pr = 1; pr = clamp(pr, .08, .97);
   ball.shot = { gk, t, z: zz, y: yy, save: Math.random() < pr, catch: sp < 21 && reach < 1.2 && yy < 1.7, at: M.t + t, on: onTarget };
   if (onTarget && (reach > .7 || yy > 1.6)) { gk.act = 'dive'; gk.actT = -Math.max(0, t - .45); gk.diveSide = Math.sign(zz - gk.z) * (gk.yaw > 0 ? 1 : -1) * (M.dir[ti] > 0 ? 1 : -1) || 1; gk.diveH = clamp(yy - .4, .2, 1.4); gk.diveTo = zz; }
