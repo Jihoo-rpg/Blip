@@ -330,6 +330,8 @@ body.mob #bKeys{display:none}
 .pcard .lvb.l2{background:#e8edf3}.pcard .lvb.l3{background:linear-gradient(135deg,#fff3a8,#ffc21a)}.pcard .lvb.max{background:linear-gradient(90deg,#ff6b7a,#ffd400,#5ff0b0,#22d3ee,#c86bff);color:#fff;text-shadow:0 1px 2px #000}
 .pcard i{top:calc(10% + var(--w) * .37)}.pcard .fl{top:calc(10% + var(--w) * .52)}
 /* 잡카드 */
+.pnrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:0 0 10px}.pnrow b{margin-right:4px;font-size:14px}.pnl{font-size:13px;font-weight:800;display:flex;align-items:center;gap:4px}.pnrow input{width:64px;padding:6px 8px;border-radius:10px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.3);color:#fff;font-weight:900;font-size:14px}
+.rv.multi{display:block!important;width:min(94vw,760px);max-width:none;max-height:92vh;overflow:auto;text-align:center;padding:8px}.rv.multi .rvt{font-size:22px;line-height:1.2}.rv.multi .dup{font-size:13px}.rv.multi .row2{justify-content:center;position:sticky;bottom:0;padding:8px 0;background:linear-gradient(transparent,rgba(0,0,0,.85) 40%)}.mgrid{display:flex!important;flex-direction:row!important}.msum{font-weight:900;margin:4px 0}.mgrid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:10px}.mc{position:relative}.mc .pcard{--w:72px}.mc.d{opacity:.6}.mc .jd,.mc .nw{position:absolute;left:50%;bottom:-6px;transform:translateX(-50%);font-size:10px;font-weight:900;padding:1px 6px;border-radius:8px;background:#000c;color:var(--gold);white-space:nowrap}.mc .nw{color:#7dff9a}.pack.big .pkn{position:absolute;bottom:12px;left:0;right:0;font-size:22px;text-align:center}
 .junk{margin-top:14px;text-align:center}.junk p{margin:0 0 8px;font-weight:900}.junk small{opacity:.7;font-weight:700}.junk>div{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:flex-end}.junk .pcard{--w:62px}.junk .jd{font-size:10px;font-weight:900;color:var(--gold);align-self:center;margin-left:-4px}
 /* 강화 화면 */
 .upwrap .uptop{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}.upwrap .bcard{--w:190px}
@@ -454,20 +456,20 @@ body.mob #bKeys{display:none}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="../seoul/lib/GLTFLoader.js"></script>
 <script src="../seoul/lib/SkeletonUtils.js"></script>
-<script src="js/base.js?v=202611072114"></script>
+<script src="js/base.js?v=202611072123"></script>
 <script src="../seoul/js/chars.js"></script>
-<script src="js/teams.js?v=202611072114"></script>
-<script src="js/db.js?v=202611072114"></script>
-<script src="js/stadium.js?v=202611072114"></script>
-<script src="js/players.js?v=202611072114"></script>
-<script src="js/match.js?v=202611072114"></script>
-<script src="js/ui.js?v=202611072114"></script>
-<script src="js/net.js?v=202611072114"></script>
-<script src="js/club.js?v=202611072114"></script>
-<script src="js/friends.js?v=202611072114"></script>
-<script src="js/upgrade.js?v=202611072114"></script>
-<script src="../common/p2p.js?v=202611072114"></script>
-<script src="../common/blip.js?v=202611072114" data-game="soccer"></script>
+<script src="js/teams.js?v=202611072123"></script>
+<script src="js/db.js?v=202611072123"></script>
+<script src="js/stadium.js?v=202611072123"></script>
+<script src="js/players.js?v=202611072123"></script>
+<script src="js/match.js?v=202611072123"></script>
+<script src="js/ui.js?v=202611072123"></script>
+<script src="js/net.js?v=202611072123"></script>
+<script src="js/club.js?v=202611072123"></script>
+<script src="js/friends.js?v=202611072123"></script>
+<script src="js/upgrade.js?v=202611072123"></script>
+<script src="../common/p2p.js?v=202611072123"></script>
+<script src="../common/blip.js?v=202611072123" data-game="soccer"></script>
 <script>if (IS_MOBILE) document.body.classList.add('mob'); setupOnline(); boot();</script>
 </body>
 </html>
