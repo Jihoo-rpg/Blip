@@ -17,6 +17,8 @@ const PL = { L: 105, W: 68, hx: 52.5, hz: 34, gw: 7.32, gh: 2.44, br: .11 };
 const cv = $('#cv');
 const ren = new T.WebGLRenderer({ canvas: cv, antialias: true, powerPreference: 'high-performance' });
 ren.setPixelRatio(Math.min(devicePixelRatio, IS_MOBILE ? 1.5 : 1.75));
+/* 폰 메모리가 모자라 그래픽(WebGL)을 뺏기면 화면이 까매져요 → 저장하고 자동으로 다시 불러와요 */
+cv.addEventListener('webglcontextlost', e => { e.preventDefault(); try { if (typeof persist === 'function') persist(); } catch (er) { } const d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;z-index:99;display:grid;place-items:center;background:#05070f;color:#fff;font:800 16px sans-serif;text-align:center'; d.innerHTML = '⚽<br>화면을 다시 불러오는 중…'; document.body.appendChild(d); setTimeout(() => location.reload(), 1200); }, false);
 ren.outputEncoding = T.sRGBEncoding; ren.toneMapping = T.ACESFilmicToneMapping; ren.toneMappingExposure = 1.12;
 ren.shadowMap.enabled = true; ren.shadowMap.type = T.PCFSoftShadowMap;
 const scene = new T.Scene();

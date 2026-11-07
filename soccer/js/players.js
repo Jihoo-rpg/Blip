@@ -90,8 +90,10 @@ function porRun() {
     const id = d.id; POR.cache[id] = 'pending'; const cbs = POR.wait[id] = (POR.wait[id] || []).concat(cb ? [cb] : []);
     POR.ren.domElement.toBlob(bl => { const u = bl ? URL.createObjectURL(bl) : POR.ren.domElement.toDataURL(); POR.cache[id] = u; (POR.wait[id] || []).forEach(f => f(u)); delete POR.wait[id]; }, 'image/png');
   }
-  if (POR.q.length) requestAnimationFrame(porRun); else POR.busy = false;
+  if (POR.q.length) requestAnimationFrame(porRun); else { POR.busy = false; clearTimeout(POR.idle); POR.idle = setTimeout(porRelease, 6000); }
 }
+// 카드 사진용 그래픽은 안 쓸 때 돌려줘요 (폰 메모리 아끼기 → 화면 까매짐 예방)
+function porRelease() { if (POR.busy || !POR.ren) return; try { POR.ren.dispose(); POR.ren.forceContextLoss(); } catch (e) { } POR.ren = null; }
 function fillPortraits(root) {
   const go = img => { const d = PDB[+img.dataset.por]; if (d) portrait(d, u => { img.src = u; }); };
   if (!POR.io && 'IntersectionObserver' in window) POR.io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { POR.io.unobserve(e.target); go(e.target); } }), { rootMargin: '200px' });
