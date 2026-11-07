@@ -14,14 +14,16 @@ const PACKS = [
   { k: 'gold', n: '골드 팩', p: 500, w: { B: 0, S: 0, G: 78, W: 19, L: 3 }, c: '#ffd400', d: '골드 이상 확정 · 월드클래스 19%', j: ['B', 'S', 'S'] },
   { k: 'wc', n: '월드클래스 팩', p: 1700, w: { B: 0, S: 0, G: 0, W: 80, L: 15, T: 5 }, c: '#22d3ee', d: '월드클래스 확정 · 레전드 15% · 스페셜 5%', j: ['S', 'S', 'G'] },
   { k: 'sp', n: '스페셜 팩', p: 4700, w: { T: 88, I: 12 }, c: '#c86bff', d: '시즌 스페셜(100+) 확정 · 명예의 전당 12%', j: ['G', 'G', 'G', 'W'] },
+  { k: 'goat', n: 'GOAT 팩', p: 15000, w: { I: 93, X: 7 }, c: '#ff4d4d', d: '명예의 전당 확정 · GOAT 7% (게임 최고 카드 136~145)', j: ['W', 'W', 'L'] },
 ];
-const DUPC = { B: 60, S: 120, G: 350, W: 1200, L: 3500, T: 3000, I: 9000 };
+/* 되팔기 · 중복 코인: 팩 값의 1/3쯤만 돌아와요 (뽑고 팔기로 돈 복사 막기) */
+const DUPC = { B: 10, S: 20, G: 60, W: 250, L: 800, T: 900, I: 3000, X: 12000 };
 /* 선수 팔기: 처음 받은 기본 선수 18명만 못 팔아요 (선발이어도 팔면 자동으로 채워요) · 강화할수록 비싸요 */
 const SELLC = DUPC; const isBase = id => { const c = club(); return c.base ? c.base.includes(id) : !!(PDB[id] && PDB[id].prospect); };
 const sellPrice = id => Math.round(SELLC[PDB[id].r] * Math.pow(1.45, Math.max(0, lvOf(id) - 1)) / 10) * 10;
 function sellBar() { const c = club(); const n = Object.keys(c.own).length; const S = (CL.sellSel = (CL.sellSel || []).filter(i => c.own[i] && !sellCheck(i))); const tot = S.reduce((a, i) => a + sellPrice(i), 0);
   return `<div class="sellbar"><span>${S.length ? `<b>${S.length}명</b> 골랐어요 → 🪙${tot.toLocaleString()}` : '💰 팔 선수를 누르세요 (여러 명 돼요 · 선발도 돼요) · 처음 받은 기본 선수는 못 팔아요'}</span>
-    <button class="chip" data-sellq="BS">잡카드 전부</button>${['B', 'S', 'G', 'W', 'L', 'T', 'I'].map(r => `<button class="chip" data-sellq="${r}" style="color:${RAR(r).c}">${RAR(r).n} 전부</button>`).join('')}${S.length ? `<button class="chip" data-sellno="1">선택 해제</button><button class="btn main" data-sellok="1">${S.length}명 팔기</button>` : ''}</div><p class="hintp" style="margin-top:0">지금 ${n}명 · "전부" 버튼은 선발이 아닌 선수만 골라요 · 선발도 직접 누르면 팔 수 있어요</p>`; }
+    <button class="chip" data-sellq="BS">잡카드 전부</button>${['B', 'S', 'G', 'W', 'L', 'T', 'I', 'X'].map(r => `<button class="chip" data-sellq="${r}" style="color:${RAR(r).c}">${RAR(r).n} 전부</button>`).join('')}${S.length ? `<button class="chip" data-sellno="1">선택 해제</button><button class="btn main" data-sellok="1">${S.length}명 팔기</button>` : ''}</div><p class="hintp" style="margin-top:0">지금 ${n}명 · "전부" 버튼은 선발이 아닌 선수만 골라요 · 선발도 직접 누르면 팔 수 있어요</p>`; }
 function sellCheck(id) { const c = club(), p = PDB[id]; if (!p || !c.own[id]) return '없는 선수예요'; if (isBase(id)) return '처음 받은 기본 선수는 못 팔아요'; return ''; }
 function dropFromXI(id) { const c = club(); const i = c.xi.indexOf(id); if (i < 0) return; const pos = FORMS[c.form][i][0]; const pool = owned().filter(q => q.id !== id && !c.xi.includes(q.id)).sort((a, b) => cardO(b) - cardO(a)); const r = pool.find(q => q.pos === pos) || pool[0]; c.xi[i] = r ? r.id : null; }
 function sellPlayer(id, quiet) { const c = club(), p = PDB[id]; const why = sellCheck(id); if (why) { if (!quiet) toast(why, 2400); return 0; } const n = sellPrice(id); dropFromXI(id); delete c.own[id]; coins(n); saveClub(); if (quiet) return n; toast(`💰 ${p.n} 선수를 팔았어요 · 🪙 +${n.toLocaleString()}`, 2600); sfx('goal'); }
@@ -72,12 +74,12 @@ function clubTab0(t) {
       <div>${CL.sell ? sellBar() : '<p class="hintp">선수를 누르고 → 바꿀 선수를 누르면 자리를 바꿔요</p>'}<div class="bench${CL.sell ? ' selling' : ''}">${bench.map(p => cardHTML(p, `data-bench="${p.id}"${CL.sell && (CL.sellSel || []).includes(p.id) ? ' data-ssel="1"' : ''}`) .replace('<div class="gem">', CL.sell ? `<span class="price">🪙${SELLC[p.r]}</span><div class="gem">` : '<div class="gem">')).join('') || '<p class="hintp">후보 선수가 없어요. 뽑기에서 선수를 얻어요!</p>'}</div></div></div>`;
   } else if (t === 'shop') {
     const pn = CL.pn || 1; B.innerHTML = `<div class="pnrow"><b>몇 개 뽑을까요?</b>${[1, 5, 10, 30, 50].map(n => `<button class="chip ${!CL.pmax && pn === n ? 'on' : ''}" data-pn="${n}">${n}개</button>`).join('')}<button class="chip ${CL.pmax ? 'on' : ''}" data-pn="max">최대 (코인만큼)</button><label class="pnl">직접 <input id="pnIn" type="number" min="1" max="200" value="${CL.pmax ? '' : pn}" placeholder="개수" inputmode="numeric">개</label></div>
-      <div class="packs">${PACKS.map(k => `<button class="pack" data-pack="${k.k}" style="--pc:${k.c}"><div class="pk">${k.k === 'sp' ? '✨' : k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div><b>${k.n}</b><small>${k.d}</small><span>${packN(k) > 1 ? `${packN(k)}개 🪙 ${(k.p * (packN(k) - (k.k === 'gold' && c.freeGold ? 1 : 0))).toLocaleString()}` : k.k === 'gold' && c.freeGold ? '🎁 무료!' : '🪙 ' + k.p.toLocaleString()}</span></button>`).join('')}</div>
-      <p class="hintp">이미 있는 선수가 나오면 코인으로 바꿔 드려요 (브론즈 60 · 실버 120 · 골드 350 · 월드클래스 1,200 · 레전드 3,500)</p>
+      <div class="packs">${PACKS.map(k => `<button class="pack" data-pack="${k.k}" style="--pc:${k.c}"><div class="pk">${k.k === 'goat' ? '🐐' : k.k === 'sp' ? '✨' : k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div><b>${k.n}</b><small>${k.d}</small><span>${packN(k) > 1 ? `${packN(k)}개 🪙 ${(k.p * (packN(k) - (k.k === 'gold' && c.freeGold ? 1 : 0))).toLocaleString()}` : k.k === 'gold' && c.freeGold ? '🎁 무료!' : '🪙 ' + k.p.toLocaleString()}</span></button>`).join('')}</div>
+      <p class="hintp">이미 있는 선수가 나오면 코인으로 바꿔 드려요 · 팔 때도 같은 값이에요 (${Object.entries(DUPC).map(([r, v]) => `${RAR(r).n} ${v.toLocaleString()}`).join(' · ')})</p>
       <div class="odds">${PACKS.map(k => `<div><b>${k.n}</b> ${Object.entries(k.w).filter(([, v]) => v).map(([r, v]) => `${RAR(r).n} ${v}%`).join(' · ')}</div>`).join('')}</div>`;
   } else if (t === 'all') {
     const own = club().own; const L = PDB.filter(p => !p.prospect).sort((a, b) => b.o - a.o); const n = L.filter(p => own[p.id]).length;
-    B.innerHTML = `<p class="hintp">선수 도감 ${n} / ${L.length} · 아직 없는 선수는 흐리게 보여요</p><div class="rfilter">${['all', 'I', 'T', 'L', 'W', 'G', 'S', 'B'].map(r => `<button class="chip ${CL.rf === r || (!CL.rf && r === 'all') ? 'on' : ''}" data-rf="${r}">${r === 'all' ? '전체' : RAR(r).n}</button>`).join('')}</div><div class="bench all">${L.filter(p => !CL.rf || CL.rf === 'all' || p.r === CL.rf).map(p => cardHTML(p, own[p.id] ? '' : 'data-miss="1"')).join('')}</div>`;
+    B.innerHTML = `<p class="hintp">선수 도감 ${n} / ${L.length} · 아직 없는 선수는 흐리게 보여요</p><div class="rfilter">${['all', 'X', 'I', 'T', 'L', 'W', 'G', 'S', 'B'].map(r => `<button class="chip ${CL.rf === r || (!CL.rf && r === 'all') ? 'on' : ''}" data-rf="${r}">${r === 'all' ? '전체' : RAR(r).n}</button>`).join('')}</div><div class="bench all">${L.filter(p => !CL.rf || CL.rf === 'all' || p.r === CL.rf).map(p => cardHTML(p, own[p.id] ? '' : 'data-miss="1"')).join('')}</div>`;
   }
 }
 function winCoins(o) { return 220 + Math.max(0, o.o - 60) * 24; }
@@ -118,7 +120,7 @@ function rollOne(k) { // 팩 하나 열기 (코인은 밖에서) → {p, dup, ju
   return { p, dup, junk };
 }
 const packN = k => { const c = club(); const fr = k.k === 'gold' && c.freeGold ? 1 : 0; return CL.pmax ? Math.max(1, Math.min(200, Math.floor((c.coins || 0) / k.p) + fr)) : (CL.pn || 1); };
-const RORD = { I: 7, T: 6, L: 5, W: 4, G: 3, S: 2, B: 1 };
+const RORD = { X: 8, I: 7, T: 6, L: 5, W: 4, G: 3, S: 2, B: 1 };
 function buyMany(k, n) {
   const c = club(); const free = k.k === 'gold' && c.freeGold ? 1 : 0; const cost = k.p * (n - free);
   if ((c.coins || 0) < cost) { const can = Math.floor((c.coins || 0) / k.p) + free; toast(can ? `🪙 코인이 부족해요 · 지금은 ${can}개까지 살 수 있어요` : '🪙 코인이 부족해요. 경기에서 이기면 받아요!', 2600); sfx('tick'); return; }
@@ -128,7 +130,7 @@ function buyMany(k, n) {
 }
 function revealMany(k, n, R, gain) {
   const ov = $('#reveal'); const best = R.slice().sort((a, b) => RORD[b.p.r] - RORD[a.p.r] || b.p.o - a.p.o)[0]; ov.hidden = false; ov.className = 'r' + best.p.r;
-  ov.innerHTML = `<div class="rv"><div class="pack big" style="--pc:${k.c}"><div class="pk">${k.k === 'sp' ? '✨' : k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div><b class="pkn">× ${n}</b></div></div>`; sfx('kick', 1); vibrate(30);
+  ov.innerHTML = `<div class="rv"><div class="pack big" style="--pc:${k.c}"><div class="pk">${k.k === 'goat' ? '🐐' : k.k === 'sp' ? '✨' : k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div><b class="pkn">× ${n}</b></div></div>`; sfx('kick', 1); vibrate(30);
   setTimeout(() => { const top = RORD[best.p.r] >= 4; sfx(top ? 'goal' : 'save'); if (top) vibrate([60, 40, 120]);
     const main = R.slice().sort((a, b) => RORD[b.p.r] - RORD[a.p.r] || b.p.o - a.p.o); const nw = R.filter(x => !x.dup).length + R.reduce((a, x) => a + x.junk.filter(j => !j.dup).length, 0); const jn = R.reduce((a, x) => a + x.junk.length, 0);
     const cnt = {}; for (const x of R) cnt[x.p.r] = (cnt[x.p.r] || 0) + 1; const sum = Object.keys(cnt).sort((a, b) => RORD[b] - RORD[a]).map(r => `<span style="color:${RAR(r).c}">${RAR(r).n} ${cnt[r]}</span>`).join(' · ');
@@ -139,9 +141,9 @@ function revealMany(k, n, R, gain) {
   }, 1300);
 }
 function revealCard(p, dup, k, junk) {
-  const ov = $('#reveal'), r = RAR(p.r); ov.hidden = false; ov.className = 'r' + p.r; ov.innerHTML = `<div class="rv"><div class="pack big" style="--pc:${k.c}"><div class="pk">${k.k === 'sp' ? '✨' : k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div></div></div>`;
+  const ov = $('#reveal'), r = RAR(p.r); ov.hidden = false; ov.className = 'r' + p.r; ov.innerHTML = `<div class="rv"><div class="pack big" style="--pc:${k.c}"><div class="pk">${k.k === 'goat' ? '🐐' : k.k === 'sp' ? '✨' : k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div></div></div>`;
   sfx('kick', 1); vibrate(30);
-  setTimeout(() => { sfx(p.r === 'W' || p.r === 'L' ? 'goal' : 'save'); if (p.r === 'W' || p.r === 'L') vibrate([60, 40, 120]);
+  setTimeout(() => { const big = RANK[p.r] >= 3; sfx(big ? 'goal' : 'save'); if (big) vibrate(p.r === 'X' ? [80, 40, 80, 40, 200] : [60, 40, 120]);
     ov.innerHTML = `<div class="rv"><div class="glow" style="--rc:${r.c}"></div>${bigCard(p)}<div class="rvx"><div class="rvt" style="color:${r.c}">${r.n}!</div>${dup ? `<div class="dup">이미 있는 선수 → 🪙 ${DUPC[p.r]} 코인</div>` : '<div class="dup">새 선수 획득! 스쿼드에 넣어 보세요</div>'}<div class="row2" style="margin-top:14px"><button class="btn" id="rvClose">확인</button><button class="btn main" id="rvAgain">한 번 더 🪙${k.p.toLocaleString()}</button></div></div></div>`;
     if (junk && junk.length) { const j = document.createElement('div'); j.className = 'junk'; j.innerHTML = `<p>+ 잡카드 ${junk.length}장 <small>(팔거나 강화 재료로 써요)</small></p><div>${junk.map(x => cardHTML(x.p) + (x.dup ? `<span class="jd">중복 🪙${DUPC[x.p.r]}</span>` : '')).join('')}</div>`; ov.querySelector('.rv').appendChild(j); }
     fillPortraits(ov); $('#rvClose').onclick = () => { ov.hidden = true; if (UI.screen === 'menu') renderMenu(); else clubTab(CL.tab); }; $('#rvAgain').onclick = () => { ov.hidden = true; buyPack(k); };

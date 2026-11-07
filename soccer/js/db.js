@@ -314,13 +314,15 @@ const PDB = []; (function () {
     p.st = { spd: clamp(base[0], 30, 99), sht: clamp(base[1], 25, 99), pas: clamp(base[2], 30, 99), drb: clamp(base[3], 30, 99), def: clamp(base[4], 20, 99), gk: clamp(base[5], 20, 99) }; p.r = o >= 72 ? 'S' : 'B'; PDB.push(p); }
 })();
 /* 스페셜 카드: 시즌 스페셜(현역 스타 100~116) · 명예의 전당(레전드 110~131) → 10강 하면 최대 150 */
-RARITY.unshift({ k: 'I', n: '명예의 전당', c: '#fff1b0', min: 0 }, { k: 'T', n: '시즌 스페셜', c: '#c86bff', min: 0 });
+RARITY.unshift({ k: 'X', n: 'GOAT', c: '#ff4d4d', min: 0 }, { k: 'I', n: '명예의 전당', c: '#fff1b0', min: 0 }, { k: 'T', n: '시즌 스페셜', c: '#c86bff', min: 0 });
 (function () { const base = PDB.slice(); const rnd = mulberry(4242);
   const mk = (p, r, o, tag) => { const d = o - p.o; const st = {}; for (const k in p.st) st[k] = (k === 'gk') !== (p.pos === 'GK') ? p.st[k] : p.st[k] + d; PDB.push(Object.assign({}, p, { id: PDB.length, o, st, r, tag, base: p.id })); };
   base.filter(p => !p.leg && !p.prospect && p.o >= 85).forEach(p => mk(p, 'T', Math.min(116, p.o + 11 + Math.floor(rnd() * 6)), '시즌 스페셜'));
   const legs = base.filter(p => p.leg).sort((a, b) => b.o - a.o); legs.forEach((p, i) => mk(p, 'I', Math.round(131 - i * 21 / Math.max(1, legs.length - 1)), '명예의 전당'));
+  // GOAT: 역대 최고 10명 (136~145) — 게임에서 제일 좋은 카드
+  ['펠레', '디에고 마라도나', '리오넬 메시', '크리스티아누 호날두', '호나우두', '지네딘 지단', '요한 크루이프', '프란츠 베켄바워', '호나우지뉴', '레프 야신'].forEach((n, i) => { const p = base.find(q => q.n === n); if (p) mk(p, 'X', 145 - i, 'GOAT'); });
 })();
-const RANK = { B: 0, S: 1, G: 2, W: 3, L: 4, T: 5, I: 6 };
+const RANK = { B: 0, S: 1, G: 2, W: 3, L: 4, T: 5, I: 6, X: 7 };
 const RAR = k => RARITY.find(r => r.k === k);
 const POSN = { GK: '골키퍼', DF: '수비수', MF: '미드필더', FW: '공격수' };
 /* 선수 생김새: 나라 · 이름으로 정해져요 */

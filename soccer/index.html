@@ -322,9 +322,11 @@ body.mob #bKeys{display:none}
 /* 스페셜 · 명예의 전당 카드 */
 .rT{--f1:#5b1fa8;--f2:#f3c4ff;--f3:#c86bff;--b1:#1c0b33;--b2:#5a2a9a;--tx:#fbe9ff}
 .rI{--f1:#a07a1e;--f2:#ffffff;--f3:#ffe9a0;--b1:#2b2210;--b2:#7a6430;--tx:#fff8dc}
+.rX{--f1:#7a0010;--f2:#ffd36b;--f3:#ff4d4d;--b1:#140004;--b2:#5c0012;--tx:#fff0e0}
+.pcard.rX .fr{background:linear-gradient(120deg,#ff2a2a,#ffd36b 20%,#1a0006 40%,#ff4d4d 60%,#ffd36b 80%,#ff2a2a);background-size:300% 300%;animation:sh 1.8s linear infinite}.pcard.rX{filter:drop-shadow(0 0 6px rgba(255,60,60,.7))}
 .pcard.rT .fr,.pcard.rI .fr{background-size:200% 200%;animation:sh 2.4s linear infinite}
 .pcard.rI .fr{background:linear-gradient(120deg,#ffe9a0,#fff 20%,#a8f0ff 40%,#ffd1f0 60%,#fff 80%,#ffe9a0);background-size:300% 300%}
-.pcard.rT:after,.pcard.rI:after{content:'';position:absolute;inset:0;clip-path:polygon(0 9%,14% 0,36% 0,50% 3.5%,64% 0,86% 0,100% 9%,100% 86%,50% 100%,0 86%);background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.4) 48%,transparent 60%);background-size:250% 100%;animation:sw 2.2s ease-in-out infinite;pointer-events:none}
+.pcard.rT:after,.pcard.rI:after,.pcard.rX:after{content:'';position:absolute;inset:0;clip-path:polygon(0 9%,14% 0,36% 0,50% 3.5%,64% 0,86% 0,100% 9%,100% 86%,50% 100%,0 86%);background:linear-gradient(115deg,transparent 35%,rgba(255,255,255,.4) 48%,transparent 60%);background-size:250% 100%;animation:sw 2.2s ease-in-out infinite;pointer-events:none}
 /* 강화 단계 배지 */
 .pcard .lvb{position:absolute;left:9%;top:calc(10% + var(--w) * .25);padding:0 calc(var(--w) * .04);border-radius:4px;font:900 calc(var(--w) * .11) Pretendard,sans-serif;line-height:1.35;color:#2a1d02;background:#e0a46a}
 .pcard .lvb.l2{background:#e8edf3}.pcard .lvb.l3{background:linear-gradient(135deg,#fff3a8,#ffc21a)}.pcard .lvb.max{background:linear-gradient(90deg,#ff6b7a,#ffd400,#5ff0b0,#22d3ee,#c86bff);color:#fff;text-shadow:0 1px 2px #000}
@@ -456,20 +458,20 @@ body.mob #bKeys{display:none}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="../seoul/lib/GLTFLoader.js"></script>
 <script src="../seoul/lib/SkeletonUtils.js"></script>
-<script src="js/base.js?v=202611072131"></script>
+<script src="js/base.js?v=202611072143"></script>
 <script src="../seoul/js/chars.js"></script>
-<script src="js/teams.js?v=202611072131"></script>
-<script src="js/db.js?v=202611072131"></script>
-<script src="js/stadium.js?v=202611072131"></script>
-<script src="js/players.js?v=202611072131"></script>
-<script src="js/match.js?v=202611072131"></script>
-<script src="js/ui.js?v=202611072131"></script>
-<script src="js/net.js?v=202611072131"></script>
-<script src="js/club.js?v=202611072131"></script>
-<script src="js/friends.js?v=202611072131"></script>
-<script src="js/upgrade.js?v=202611072131"></script>
-<script src="../common/p2p.js?v=202611072131"></script>
-<script src="../common/blip.js?v=202611072131" data-game="soccer"></script>
+<script src="js/teams.js?v=202611072143"></script>
+<script src="js/db.js?v=202611072143"></script>
+<script src="js/stadium.js?v=202611072143"></script>
+<script src="js/players.js?v=202611072143"></script>
+<script src="js/match.js?v=202611072143"></script>
+<script src="js/ui.js?v=202611072143"></script>
+<script src="js/net.js?v=202611072143"></script>
+<script src="js/club.js?v=202611072143"></script>
+<script src="js/friends.js?v=202611072143"></script>
+<script src="js/upgrade.js?v=202611072143"></script>
+<script src="../common/p2p.js?v=202611072143"></script>
+<script src="../common/blip.js?v=202611072143" data-game="soccer"></script>
 <script>if (IS_MOBILE) document.body.classList.add('mob'); setupOnline(); boot();</script>
 </body>
 </html>
