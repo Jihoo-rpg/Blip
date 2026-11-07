@@ -607,7 +607,7 @@ function openLogin(tab) {
       if (isUp) await BLIP.signup(id, pw, document.getElementById('aNick').value); else await BLIP.login(id, pw);
       msg.className = 'msg ok'; msg.textContent = '환영해요, ' + BLIP.me.nick + '님!';
       FR.list = []; FR.reqs = []; FR.invs = []; showMe(); render(); pollFriends();
-      setTimeout(closeDetail, 700);
+      const BACK = new URLSearchParams(location.search).get('back'); setTimeout(() => { if (BACK && /^\.\.\/[a-z0-9]+\//.test(BACK)) location.href = BACK; else closeDetail(); }, 700);
     } catch (err) { msg.className = 'msg err'; msg.textContent = err.message || '다시 시도해 주세요'; btn.disabled = false; }
   };
 }
@@ -714,6 +714,7 @@ async function loadMail(rerender) {
 }
 async function pollMailHub() { if (BLIP.mail.isOwner() && view !== 'req') await BLIP.mail.poll(() => { }); loadMail(false); }
 if (new URLSearchParams(location.search).get('v') === 'req' || OWNER_MODE) view = 'req';
+{ const lq = new URLSearchParams(location.search).get('login'); if (lq) setTimeout(() => { if (window.BLIP && BLIP.loggedIn) { const B = new URLSearchParams(location.search).get('back'); if (B && /^\.\.\/[a-z0-9]+\//.test(B)) location.href = B; } else openLogin(lq === 'signup' ? 'signup' : 'login'); }, 400); }
 setTimeout(pollMailHub, 1500); setInterval(pollMailHub, 30000);
 applyTheme(); showMe(); render(); loadCatJump(); pollFriends(); setInterval(pollFriends, 6000);
 </script>

@@ -189,6 +189,10 @@ function camTick(dt) {
     if (M.phase === 'half' || M.phase === 'over') { CAM.want.set(0, 34, 58); CAM.wl.set(0, 0, 0); speed = .8; }
   }
   if (CAM.snap) { CAM.snap = 0; cam.position.copy(CAM.want); CAM.look.copy(CAM.wl); cam.fov = fov; cam.updateProjectionMatrix(); }
+  // 안전장치: 숫자가 깨지면(NaN) 화면이 까매지니까 바로 공 쪽 기본 위치로
+  if (![CAM.want.x, CAM.want.y, CAM.want.z, CAM.wl.x, CAM.wl.y, CAM.wl.z].every(Number.isFinite)) { CAM.want.set(clamp(ball.x || 0, -40, 40), 20, (ball.z || 0) * .25 + 37); CAM.wl.set(ball.x || 0, 0, (ball.z || 0) * .6); }
+  if (![cam.position.x, cam.position.y, cam.position.z, CAM.look.x, CAM.look.y, CAM.look.z].every(Number.isFinite)) { cam.position.copy(CAM.want); CAM.look.copy(CAM.wl); }
+  if (!Number.isFinite(CAM.tx) || !Number.isFinite(CAM.tz)) { CAM.tx = ball.x || 0; CAM.tz = ball.z || 0; }
   const kk = 1 - Math.exp(-dt * speed); cam.position.lerp(CAM.want, kk); CAM.look.lerp(CAM.wl, kk);
   if (CAM.shake > 0) { CAM.shake -= dt; cam.position.x += (Math.random() - .5) * CAM.shake; cam.position.y += (Math.random() - .5) * CAM.shake; }
   cam.lookAt(CAM.look); if (Math.abs(cam.fov - fov) > .05) { cam.fov = lerp(cam.fov, fov, Math.min(1, dt * 3)); cam.updateProjectionMatrix(); }
@@ -362,6 +366,7 @@ function setupUI() {
   $('#bRestart').onclick = () => { UI.paused = false; if (M.mode === 'club') return startClubMatch(CL.vs); startGame(); };
   $('#rAgain').onclick = () => { if (M.mode === 'online') return netRematch(); if (M.mode === 'club') return startClubMatch(CL.vs); startGame(); }; $('#rMenu').onclick = () => quitToMenu();
   keysHelp(); document.addEventListener('click', e => { if (e.target.closest('.ksOpen')) openKeys(); }); $('#bKeys').onclick = () => openKeys();
+  const goAcc = t => { location.href = '../hub/?login=' + t + '&back=' + encodeURIComponent('../soccer/?online=1'); }; $('#accSignup').onclick = () => goAcc('signup'); $('#accLogin').onclick = () => goAcc('login'); $('#accNo').onclick = () => { $('#accReq').hidden = true; };
   $('#intro').onclick = () => skipIntro(); $('#rlOk').onclick = () => { SAVE.portraitOK = 1; persist(); $('#rotLock').hidden = true; }; $('#rlTry').onclick = () => mobileLandscape();
   $('#bCam').onclick = () => cycleCam(); $('#bPause').onclick = () => togglePause(); $('#bSkip').onclick = () => REPLAY.skip = true;
   $('#bMute').onclick = () => { SAVE.mute = !SAVE.mute; persist(); if (AU.master) AU.master.gain.value = SAVE.mute ? 0 : .8; $('#bMute').textContent = SAVE.mute ? '🔇' : '🔊'; }; $('#bMute').textContent = SAVE.mute ? '🔇' : '🔊';
@@ -384,6 +389,7 @@ function loop(now) {
 async function boot() {
   buildStadium(); buildBall(); setupUI();
   try { await loadChars(); } catch (e) { $('#load').innerHTML = '선수 모델을 못 불러왔어요 😢<br><small>새로고침해 보세요</small>'; return; }
+  if (/[?&]online=1/.test(location.search)) setTimeout(() => { if (window.BLIP && BLIP.loggedIn) { history.replaceState(null, '', location.pathname); openOnline(); } }, 2600);
   if (window.BLIP) { const prev = BLIP._onAccount; BLIP._onAccount = () => { if (prev) prev(); cloudPull(); renderMenu(); }; setTimeout(cloudPull, 1500); }
   startDemo(); giveGifts(); show('#menu'); CAM.snap = 0; cam.position.set(30, 60, 110); CAM.look.set(0, 0, 0); CAM.flyT = 3; $('#splash').classList.add('on'); setTimeout(() => $('#splash').classList.add('out'), 1900); setTimeout(() => $('#splash').remove(), 2700); $('#mMute').textContent = SAVE.mute ? '🔇' : '🔊'; $('#load').classList.add('gone'); setTimeout(() => $('#load').remove(), 700);
   requestAnimationFrame(loop);

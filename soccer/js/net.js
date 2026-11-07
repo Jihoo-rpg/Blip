@@ -11,12 +11,13 @@ const r2 = v => Math.round(v * 100) / 100, r1 = v => Math.round(v * 10) / 10;
 /* 온라인은 내 구단으로: 구단 이름 · 엠블럼 · 색 · 포메이션 · 베스트 11을 주고받아요 */
 function myPack() { const c = club(); if (!c) return null; return { n: c.name, f: c.emb, c: [c.c1, c.c2], form: c.form, xi: c.xi.slice(0, 11), lv: c.xi.slice(0, 11).map(i => i == null ? 1 : lvOf(i)) }; }
 function teamFromPack(pk, side) { if (!pk || !pk.xi) return null; const xi = pk.xi.map((i, k) => i == null || !PDB[i] ? null : boost(PDB[i], (pk.lv && pk.lv[k]) || 1)); let id = (pk.n || 'FC').replace(/\s/g, '').slice(0, 3); if (side && NET.cfg && NET.cfg.A && (NET.cfg.A.n || '').replace(/\s/g, '').slice(0, 3) === id) id = id.slice(0, 2) + '2'; return clubTeamObj({ id, n: pk.n, f: pk.f, c: pk.c }, xi, pk.form); }
+function needAccount() { if (window.BLIP && BLIP.loggedIn) return false; $('#accReq').hidden = false; return true; }
 function needClub() { const c = club(); if (!c) { toast('온라인은 내 구단으로 해요. 먼저 구단을 만들어요!', 2600); openCreate(); return true; } if (c.xi.filter(x => x != null).length < 11) { toast('선수 11명이 필요해요. 스쿼드에서 자동 배치를 눌러요', 2600); CL.tab = 'squad'; openClub(); return true; } return false; }
 /* 실시간 받기: Firebase 스트리밍(서버가 바로 밀어줘요) — 안 되면 원래처럼 물어보기 */
 function fbStream(path, onData) { if (!window.EventSource) return null; try { const es = new EventSource(FBS() + path + '.json'); es.addEventListener('put', e => { try { const m = JSON.parse(e.data); if (m.path === '/' && m.data) onData(m.data); } catch (er) { } }); es.onopen = () => { es.ok = true; }; es.onerror = () => { es.ok = false; }; return es; } catch (e) { return null; } }
 function onlStatus(t, sub) { $('#onlSt').innerHTML = t + (sub ? `<small>${sub}</small>` : ''); }
 function openOnline(code) {
-  if (needClub()) return; const c = club();
+  if (needAccount()) return; if (needClub()) return; const c = club();
   show('#onl'); UI.screen = 'menu'; $('#onlTeam').innerHTML = `<span class="crest" style="display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;vertical-align:middle;background:linear-gradient(135deg,${c.c1} 55%,${c.c2} 55%)">${c.emb}</span> ${esc(c.name)} <small>팀 능력치 ${teamOvr(xiPlayers(), c.form)} · 내 구단으로 대결해요</small>`; onlStatus('친구와 방 코드로 하거나, 빠른 대결로 아무나 만나요.');
   $('#onlBtns').hidden = false; $('#onlCode').value = code || ''; if (code) joinRoom(code);
 }
@@ -77,7 +78,7 @@ function hostSend() {
   if (NET.role !== 'host' || !M.on) return; const now = performance.now(); const fast = NET.p2p && NET.p2p.any(); if (now - lastSend < (fast ? 33 : 66)) return; lastSend = now; const full = NET.sq < 40 || NET.sq % 30 === 0;
   for (const e of NET.ev) if (!e.i) e.i = ++NET.evId; NET.ev = NET.ev.slice(-20);
   const s = { q: ++NET.sq, mt: r2(M.t), ph: M.phase, ck: Math.round(M.clock), h: M.half, sc: M.score, d: M.dir, b: [r2(ball.x), r2(ball.y), r2(ball.z)], c: [M.players.indexOf(M.ctrl[0]), M.players.indexOf(M.ctrl[1])], ch: M.ctrl[1] ? r2(M.ctrl[1].charge || 0) : 0,
-    p: M.players.map(p => p.act ? [r1(p.x), r1(p.z), r1(p.yaw), r1(Math.hypot(p.vx, p.vz)), p.act, r1(p.actT), p.diveSide || 1, r1(p.diveH || .6), p.celeKind || 0] : [r1(p.x), r1(p.z), r1(p.yaw), r1(Math.hypot(p.vx, p.vz))]), ev: NET.ev.length ? NET.ev : 0, sp: M.sp ? [M.sp.type, M.sp.team, M.players.indexOf(M.sp.taker)] : 0, ko: M.phase === 'kickoff' ? [M.koTeam, M.players.indexOf(M.koTaker)] : 0 };
+    p: M.players.map(p => p.act ? [r1(p.x), r1(p.z), r1(p.yaw), r1(Math.hypot(p.vx, p.vz)), p.act, r1(p.actT), p.diveSide || 1, r1(p.diveH || .6), p.celeKind || 0] : [r1(p.x), r1(p.z), r1(p.yaw), r1(Math.hypot(p.vx, p.vz))]), ev: NET.ev.length ? NET.ev : 0, sp: M.sp ? [M.sp.type, M.sp.team, M.players.indexOf(M.sp.taker), r1(M.sp.x || 0), r1(M.sp.z || 0), r2(M.sp.ux || 0), r2(M.sp.uz || 0), r1(M.sp.ax != null ? M.sp.ax : M.sp.x || 0), r1(M.sp.az != null ? M.sp.az : M.sp.z || 0), M.sp.prep ? 1 : 0, M.sp.ready ? 1 : 0] : 0, ko: M.phase === 'kickoff' ? [M.koTeam, M.players.indexOf(M.koTaker)] : 0 };
   if (full) Object.assign(s, { cfg: NET.cfg, st: M.stats, gs: M.scorers, hn: myInfo().nick });
   if (fast) NET.p2p.send({ k: 's', s }); if ((!fast && !NET.putBusy) || now - (NET.slowT || 0) > 900) { NET.putBusy = true; NET.slowT = now; nreq('rooms/' + NET.code + '/s', 'PUT', s).catch(() => { }).finally(() => { NET.putBusy = false; }); }
 }
@@ -96,7 +97,7 @@ function applySnap(s) {
   const prevPh = M.phase; M.phase = s.ph; M.clock = s.ck; M.half = s.h; M.score = s.sc; M.dir = s.d; if (s.st) M.stats = s.st; if (s.gs) M.scorers = s.gs;
   NET.tgt = s; const now = performance.now() / 1000; NET.buf = (NET.buf || []).concat([{ s, lt: now }]).slice(-12); if (s.mt != null) { const off = now - s.mt; NET.off = NET.off == null || off < NET.off ? off : NET.off + (off - NET.off) * .02; }
   M.ctrl[0] = M.players[s.c[1]] || M.ctrl[0]; M.ctrl[1] = M.players[s.c[0]] || M.ctrl[1]; if (M.ctrl[0]) M.ctrl[0].charge = s.ch;
-  M.sp = s.sp ? { type: s.sp[0], team: s.sp[1], taker: M.players[s.sp[2]] } : null; if (s.ko) { M.koTeam = s.ko[0]; M.koTaker = M.players[s.ko[1]]; }
+  M.sp = s.sp ? { type: s.sp[0], team: s.sp[1], taker: M.players[s.sp[2]], x: s.sp[3] || 0, z: s.sp[4] || 0, ux: s.sp[5] || 0, uz: s.sp[6] || 0, ax: s.sp[7], az: s.sp[8], prep: !!s.sp[9], ready: !!s.sp[10] } : null; if (s.ko) { M.koTeam = s.ko[0]; M.koTaker = M.players[s.ko[1]]; }
   for (const e of (s.ev || [])) if (e.i > NET.evSeen) { NET.evSeen = e.i; if (e.k === 's') sfx(e.n, e.v); else if (e.k === 'b') banner(e.t, e.s, e.c, e.d, e.m); else if (e.k === 'c') comm(e.t); }
   $('#replay').hidden = s.ph !== 'replay'; if (s.ph === 'over' && prevPh !== 'over') setTimeout(showResult, 3000); if ((s.ph === 'kickoff' && prevPh === 'goal') || s.ph === 'replay') NET.buf = [{ s, lt: now }];
   if (s.ph === 'goal' && prevPh !== 'goal') { STAD.jump = 6; vibrate([60, 40, 120]); }
