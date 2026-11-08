@@ -24,33 +24,37 @@ function renderUp() {
   const B = $('#clBody'), c = club(); CL.upM = (CL.upM || []).filter(i => c.own[i] && canMat(i)); if (CL.upT != null && !c.own[CL.upT]) CL.upT = null;
   const t = CL.upT != null ? PDB[CL.upT] : null; const lv = t ? lvOf(t.id) : 0, g = upGauge(); const max = lv ? (ENH.rate[lv - 1] || 0) : 0; const rate = max * g;
   const list = owned().sort((a, b) => cardO(b) - cardO(a));
-  const info = !t ? `<div class="upinfo"><b>⚡ 강화</b><p>1. 아래에서 강화할 선수를 누르세요<br>2. 재료로 쓸 선수(잡카드)를 최대 5명 고르세요<br>3. 게이지가 찰수록 성공 확률이 올라가요</p><p class="tiny">확률은 FC온라인과 같아요 (풀게이지 1→2강 100% … 9→10강 4%) · 10강이면 OVR +19</p></div>`
+  const info = !t ? `<div class="upinfo"><b>⚡ 강화</b><p>1. 아래에서 강화할 선수를 누르세요<br>2. 재료로 쓸 선수(잡카드)를 최대 5명 고르세요<br>3. 게이지가 찰수록 성공 확률이 올라가요</p><p class="tiny">🎫 강화권 ${club().tix || 0}장 — 팩 열 때 15%로 나와요 · 쓰면 재료 없이 무조건 +1강</p><p class="tiny">확률은 FC온라인과 같아요 (풀게이지 1→2강 100% … 9→10강 4%) · 10강이면 OVR +19</p></div>`
     : lv >= 10 ? `<div class="upinfo"><b>+10 최고 단계예요! 🏆</b><p>OVR ${cardO(t)}</p><button class="btn" id="bUpReset">다른 선수 고르기</button></div>`
     : `<div class="upinfo"><b>+${lv} → +${lv + 1}</b><p>OVR ${cardO(t)} → <b class="up">${t.o + ENH.bonus[lv]}</b></p>
       <div class="gauge"><i style="width:${Math.round(g * 100)}%"></i><span>게이지 ${Math.round(g * 100)}%</span></div>
       <p>성공 확률 <b class="rate">${(rate * 100).toFixed(rate < .1 ? 1 : 0)}%</b> <small>(풀게이지 ${Math.round(max * 100)}%)</small></p>
       <p class="tiny">실패하면 ${ENH.drop[lv - 1].map((w, i) => `+${i + 1} ${Math.round(w * 100)}%`).join(' · ')}로 떨어져요 · 재료는 사라져요</p>
-      <div class="row2"><button class="btn" id="bUpReset">다른 선수</button><button class="btn main" id="bUp" ${(CL.upM || []).length ? '' : 'disabled'}>⚡ 강화 🪙${upFee(lv)}</button></div></div>`;
+      <div class="row2"><button class="btn" id="bUpReset">다른 선수</button><button class="btn main" id="bUp" ${(CL.upM || []).length ? '' : 'disabled'}>⚡ 강화 🪙${upFee(lv)}</button></div>
+      <button class="btn tixbtn" id="bTix" ${(c.tix || 0) > 0 ? '' : 'disabled'}>🎫 강화권 쓰기 · 무조건 +${lv + 1} <small>(${c.tix || 0}장)</small></button></div>`;
   B.innerHTML = `<div class="upwrap"><div class="uptop">${t ? bigCard(t) : '<div class="upempty">⚡</div>'}${info}</div>
     ${t ? `<div class="uphint"><p class="hintp">재료 ${(CL.upM || []).length} / 5 · 처음 받은 기본 선수는 재료로 못 써요 · 선발을 쓰면 자리는 자동으로 채워요</p>${lv < 10 ? '<button class="chip" id="bUpAuto">✨ 재료 자동</button>' : ''}</div>${owned().some(p => canMat(p.id)) ? '' : '<p class="hintp">재료로 쓸 선수가 없어요 — 선수 뽑기 잡카드를 모아 보세요</p>'}` : '<p class="hintp">강화할 선수를 고르세요</p>'}
     <div class="bench uplist">${list.map(p => { const cls = p.id === CL.upT ? ' tgt' : (CL.upM || []).includes(p.id) ? ' mat' : t && !canMat(p.id) ? ' no' : ''; return `<div class="upc${cls}${c.xi.includes(p.id) ? ' inxi' : ''}" data-upc="${p.id}">${cardHTML(p)}</div>`; }).join('')}</div></div>`;
 }
 document.addEventListener('click', e => {
-  if (UI.screen !== 'club' || CL.tab !== 'up') return; const el = e.target.closest('[data-upc],#bUp,#bUpReset,#bUpAuto'); if (!el) return; sfx('tick');
+  if (UI.screen !== 'club' || CL.tab !== 'up') return; const el = e.target.closest('[data-upc],#bUp,#bUpReset,#bUpAuto,#bTix'); if (!el) return; sfx('tick');
   if (el.id === 'bUpAuto') { CL.upM = autoMats(); if (!CL.upM.length) toast('재료로 쓸 선수가 없어요'); return clubTab('up'); }
   if (el.id === 'bUpReset') { CL.upT = null; CL.upM = []; return clubTab('up'); }
   if (el.id === 'bUp') return doUpgrade();
+  if (el.id === 'bTix') return doUpgrade(true);
   const id = +el.dataset.upc;
   if (CL.upT == null || id === CL.upT) { CL.upT = id === CL.upT ? null : id; CL.upM = []; return clubTab('up'); }
   if (!canMat(id)) { toast('처음 받은 기본 선수는 재료로 못 써요', 2200); return; }
   const M_ = CL.upM = CL.upM || []; const k = M_.indexOf(id); if (k >= 0) M_.splice(k, 1); else if (M_.length < 5) M_.push(id); else toast('재료는 5명까지예요'); clubTab('up');
 });
-function doUpgrade() {
-  const c = club(), t = PDB[CL.upT]; if (!t) return; const lv = lvOf(t.id); if (lv >= 10) return; const mats = (CL.upM || []).filter(canMat); if (!mats.length) { toast('재료를 넣어 주세요'); return; }
+function doUpgrade(tix) {
+  const c = club(), t = PDB[CL.upT]; if (!t) return; const lv = lvOf(t.id); if (lv >= 10) return;
+  let rate, ok, nl, crit = false;
+  if (tix) { if (!(c.tix > 0)) { toast('🎫 강화권이 없어요 · 팩을 열면 15%로 나와요'); return; } c.tix--; rate = 1; ok = true; }
+  else { const mats = (CL.upM || []).filter(canMat); if (!mats.length) { toast('재료를 넣어 주세요'); return; }
   const fee = upFee(lv); if ((c.coins || 0) < fee) { toast('🪙 코인이 부족해요'); return; }
-  const rate = (ENH.rate[lv - 1] || 0) * upGauge(); coins(-fee);
-  for (const i of mats) delete c.own[i]; CL.upM = []; refillXI();
-  let nl, ok = Math.random() < rate, crit = false;
+  rate = (ENH.rate[lv - 1] || 0) * upGauge(); coins(-fee);
+  for (const i of mats) delete c.own[i]; CL.upM = []; refillXI(); ok = Math.random() < rate; }
   if (ok) { nl = lv + 1; if (lv <= 3 && Math.random() < .08) { nl = Math.min(10, lv + 2); crit = true; } }
   else { const w = ENH.drop[lv - 1]; let x = Math.random(); nl = 1; for (let i = 0; i < w.length; i++) { x -= w[i]; if (x <= 0) { nl = i + 1; break; } } }
   c.own[t.id] = nl; saveClub(); clubHeader();

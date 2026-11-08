@@ -112,12 +112,14 @@ function buyPack(k) {
   const c = club(); const free = k.k === 'gold' && c.freeGold; if (!free && (c.coins || 0) < k.p) { toast('🪙 코인이 부족해요. 경기에서 이기면 받아요!'); sfx('tick'); return; }
   if (free) c.freeGold = 0; else coins(-k.p); const p = rollPack(k); const dup = !!c.own[p.id]; if (dup) coins(DUPC[p.r]); else c.own[p.id] = 1;
   const junk = (k.j || []).map(r => { let L = PDB.filter(q => q.r === r && !q.prospect); if (!L.length) L = PDB.filter(q => q.r === r); if (!L.length) L = PDB.filter(q => q.r === 'B' || q.r === 'S'); const q = pick(L); const d = !!c.own[q.id]; if (d) coins(DUPC[q.r]); else c.own[q.id] = 1; return { p: q, dup: d }; }); // 잡카드도 같이
-  saveClub(); clubHeader(); revealCard(p, dup, k, junk);
+  const tk = tixRoll(); saveClub(); clubHeader(); revealCard(p, dup, k, junk, tk);
 }
+// 🎫 강화권: 팩 하나 열 때마다 15% — 쓰면 재료·코인 없이 무조건 +1강
+const TIX_P = .15; function tixRoll() { const c = club(); if (Math.random() < TIX_P) { c.tix = (c.tix || 0) + 1; return 1; } return 0; }
 function rollOne(k) { // 팩 하나 열기 (코인은 밖에서) → {p, dup, junk}
   const c = club(); const p = rollPack(k); const dup = !!c.own[p.id]; if (dup) coins(DUPC[p.r]); else c.own[p.id] = 1;
   const junk = (k.j || []).map(r => { let L = PDB.filter(q => q.r === r && !q.prospect); if (!L.length) L = PDB.filter(q => q.r === r); if (!L.length) L = PDB.filter(q => q.r === 'B' || q.r === 'S'); const q = pick(L); const d = !!c.own[q.id]; if (d) coins(DUPC[q.r]); else c.own[q.id] = 1; return { p: q, dup: d }; });
-  return { p, dup, junk };
+  return { p, dup, junk, tk: tixRoll() };
 }
 const packN = k => { const c = club(); const fr = k.k === 'gold' && c.freeGold ? 1 : 0; return CL.pmax ? Math.max(1, Math.min(200, Math.floor((c.coins || 0) / k.p) + fr)) : (CL.pn || 1); };
 const RORD = { X: 8, I: 7, T: 6, L: 5, W: 4, G: 3, S: 2, B: 1 };
@@ -134,17 +136,17 @@ function revealMany(k, n, R, gain) {
   setTimeout(() => { const top = RORD[best.p.r] >= 4; sfx(top ? 'goal' : 'save'); if (top) vibrate([60, 40, 120]);
     const main = R.slice().sort((a, b) => RORD[b.p.r] - RORD[a.p.r] || b.p.o - a.p.o); const nw = R.filter(x => !x.dup).length + R.reduce((a, x) => a + x.junk.filter(j => !j.dup).length, 0); const jn = R.reduce((a, x) => a + x.junk.length, 0);
     const cnt = {}; for (const x of R) cnt[x.p.r] = (cnt[x.p.r] || 0) + 1; const sum = Object.keys(cnt).sort((a, b) => RORD[b] - RORD[a]).map(r => `<span style="color:${RAR(r).c}">${RAR(r).n} ${cnt[r]}</span>`).join(' · ');
-    ov.innerHTML = `<div class="rv multi"><div class="rvt" style="color:${RAR(best.p.r).c}">${k.n} ${n}개 열었어요!</div><div class="msum">${sum}</div><div class="dup">새 선수 ${nw}명 · 잡카드 ${jn}장${gain ? ` · 중복 → 🪙 +${gain.toLocaleString()}` : ''}</div>
+    ov.innerHTML = `<div class="rv multi"><div class="rvt" style="color:${RAR(best.p.r).c}">${k.n} ${n}개 열었어요!</div><div class="msum">${sum}</div><div class="dup">새 선수 ${nw}명 · 잡카드 ${jn}장${gain ? ` · 중복 → 🪙 +${gain.toLocaleString()}` : ''}</div>${R.some(x => x.tk) ? `<div class="tixgot">🎫 강화권 +${R.filter(x => x.tk).length}장!</div>` : ''}
       <div class="mgrid">${main.map(x => `<div class="mc${x.dup ? ' d' : ''}">${cardHTML(x.p)}${x.dup ? `<span class="jd">🪙${DUPC[x.p.r]}</span>` : '<span class="nw">NEW</span>'}</div>`).join('')}</div>
       <div class="row2" style="margin-top:12px"><button class="btn" id="rvClose">확인</button><button class="btn main" id="rvAgain">${n}개 더 🪙${(k.p * n).toLocaleString()}</button></div></div>`;
     fillPortraits(ov); $('#rvClose').onclick = () => { ov.hidden = true; if (UI.screen === 'menu') renderMenu(); else clubTab(CL.tab); }; $('#rvAgain').onclick = () => { ov.hidden = true; buyMany(k, n); };
   }, 1300);
 }
-function revealCard(p, dup, k, junk) {
+function revealCard(p, dup, k, junk, tk) {
   const ov = $('#reveal'), r = RAR(p.r); ov.hidden = false; ov.className = 'r' + p.r; ov.innerHTML = `<div class="rv"><div class="pack big" style="--pc:${k.c}"><div class="pk">${k.k === 'goat' ? '🐐' : k.k === 'sp' ? '✨' : k.k === 'wc' ? '💎' : k.k === 'gold' ? '🏆' : '⚽'}</div></div></div>`;
   sfx('kick', 1); vibrate(30);
   setTimeout(() => { const big = RANK[p.r] >= 3; sfx(big ? 'goal' : 'save'); if (big) vibrate(p.r === 'X' ? [80, 40, 80, 40, 200] : [60, 40, 120]);
-    ov.innerHTML = `<div class="rv"><div class="glow" style="--rc:${r.c}"></div>${bigCard(p)}<div class="rvx"><div class="rvt" style="color:${r.c}">${r.n}!</div>${dup ? `<div class="dup">이미 있는 선수 → 🪙 ${DUPC[p.r]} 코인</div>` : '<div class="dup">새 선수 획득! 스쿼드에 넣어 보세요</div>'}<div class="row2" style="margin-top:14px"><button class="btn" id="rvClose">확인</button><button class="btn main" id="rvAgain">한 번 더 🪙${k.p.toLocaleString()}</button></div></div></div>`;
+    ov.innerHTML = `<div class="rv"><div class="glow" style="--rc:${r.c}"></div>${bigCard(p)}<div class="rvx"><div class="rvt" style="color:${r.c}">${r.n}!</div>${dup ? `<div class="dup">이미 있는 선수 → 🪙 ${DUPC[p.r]} 코인</div>` : '<div class="dup">새 선수 획득! 스쿼드에 넣어 보세요</div>'}${tk ? '<div class="tixgot">🎫 강화권 +1장! <small>(강화 탭에서 써요 · 무조건 성공)</small></div>' : ''}<div class="row2" style="margin-top:14px"><button class="btn" id="rvClose">확인</button><button class="btn main" id="rvAgain">한 번 더 🪙${k.p.toLocaleString()}</button></div></div></div>`;
     if (junk && junk.length) { const j = document.createElement('div'); j.className = 'junk'; j.innerHTML = `<p>+ 잡카드 ${junk.length}장 <small>(팔거나 강화 재료로 써요)</small></p><div>${junk.map(x => cardHTML(x.p) + (x.dup ? `<span class="jd">중복 🪙${DUPC[x.p.r]}</span>` : '')).join('')}</div>`; ov.querySelector('.rv').appendChild(j); }
     fillPortraits(ov); $('#rvClose').onclick = () => { ov.hidden = true; if (UI.screen === 'menu') renderMenu(); else clubTab(CL.tab); }; $('#rvAgain').onclick = () => { ov.hidden = true; buyPack(k); };
   }, 1300);
