@@ -71,11 +71,44 @@ clubTab0 = function (t) { if (t === 'up') { CL.tab = 'up'; CL.sel = null; CL.sel
    🛡️ 인터셉트: 태클 잘 뺏음 · 💪 몸싸움: 안 뺏김 · 🧤 거미손: 선방 ↑
    플러스(+)는 효과 2배: GOAT · 명예의 전당 · 시즌 스페셜 · 레전드 · 8강 이상 */
 const PSD = { P: ['🚀', '치고 달리기'], S: ['🎯', '피니셔'], A: ['🧠', '킬 패스'], D: ['🪄', '테크니션'], F: ['🛡️', '인터셉트'], H: ['💪', '몸싸움'], G: ['🧤', '거미손'] };
+// 플레이스타일 = 기본(특기) + 뽑은 것(c.xps[id] = {S:1, D:2 …} · 1 보통 · 2 플러스) — 경기용 선수에는 p.xps가 붙어 와요
 function psOf(p) {
   if (!p) return null; let k = p.pos === 'GK' ? ['G'] : [...new Set((p.tg || '').split(''))].filter(x => PSD[x] && x !== 'G');
   if (p.pos !== 'GK' && !k.length) k = [{ FW: 'S', MF: 'A', DF: 'F' }[p.pos]];
   if (p.r === 'X' && p.pos !== 'GK') k = [...new Set(k.concat({ FW: ['S', 'D', 'P'], MF: ['A', 'D', 'S'], DF: ['F', 'H', 'P'] }[p.pos]))];
-  let lv = p.lv || 1; try { if (!p.lv && typeof lvOf === 'function' && club()) lv = lvOf(p.id) || 1; } catch (e) { }
-  return { k, plus: ['X', 'I', 'T', 'L'].includes(p.r) || p.leg || lv >= 8 };
+  const inMatch = p.xps !== undefined; let lv = p.lv || 1, xps = p.xps || {};
+  if (!inMatch) { try { const c = club(); if (c) { if (!p.lv) lv = lvOf(p.id) || 1; xps = (c.xps && c.xps[p.id]) || {}; } } catch (e) { } }
+  const bp = ['X', 'I', 'T', 'L'].includes(p.r) || p.leg || lv >= 8 ? 2 : 1; const L = {}; for (const x of k) L[x] = bp; for (const x in xps) if (PSD[x]) L[x] = Math.max(L[x] || 0, xps[x]);
+  const keys = Object.keys(L); return { k: keys, lv: L, base: k, plus: keys.some(x => L[x] > 1) };
 }
-const psHTML = p => { const s = psOf(p); return s ? `<div class="pss">${s.k.map(x => `<span class="ps${s.plus ? ' plus' : ''}" title="${PSD[x][1]}${s.plus ? '+' : ''}">${PSD[x][0]}${s.plus ? '<sup>+</sup>' : ''}</span>`).join('')}</div>` : ''; };
+const psHTML = p => { const s = psOf(p); return s ? `<div class="pss">${s.k.map(x => `<span class="ps${s.lv[x] > 1 ? ' plus' : ''}${s.base.includes(x) ? '' : ' got'}" title="${PSD[x][1]}${s.lv[x] > 1 ? '+' : ''}">${PSD[x][0]}${s.lv[x] > 1 ? '<sup>+</sup>' : ''}</span>`).join('')}</div>` : ''; };
+/* ===== 플레이스타일 뽑기 🎲 : 선수 한 명을 골라 코인으로 플레이스타일을 뽑아요 (뽑은 칸 최대 3개 · 플러스 15%) ===== */
+const PS_COST = 800, PS_MAX = 3;
+const psBase = p => psOf(Object.assign({}, p, { xps: {} })).k; const psSlots = (p, xs) => Object.keys(xs).filter(x => !psBase(p).includes(x));
+const psPool = p => p.pos === 'GK' ? ['G', 'A', 'H'] : ['P', 'S', 'A', 'D', 'F', 'H'];
+function renderPs() {
+  const B = $('#clBody'), c = club(); c.xps = c.xps || {}; if (CL.psT != null && !c.own[CL.psT]) CL.psT = null; const t = CL.psT != null ? PDB[CL.psT] : null; const list = owned().sort((a, b) => cardO(b) - cardO(a));
+  const xs = t ? c.xps[t.id] || {} : {}; const R = CL.psR;
+  const res = R && t && R.id === t.id ? `<div class="psres ${R.lv > 1 ? 'plus' : ''}"><div class="psbig">${PSD[R.k][0]}${R.lv > 1 ? '<sup>+</sup>' : ''}</div><b>${PSD[R.k][1]}${R.lv > 1 ? '+' : ''}</b><p>${R.msg}</p>
+      ${R.full ? `<div class="pschoose">${psSlots(t, xs).map(x => `<button class="chip" data-psrep="${x}">${PSD[x][0]} ${PSD[x][1]}${xs[x] > 1 ? '+' : ''} 대신 넣기</button>`).join('')}<button class="chip" data-psrep="-">버리기</button></div>` : ''}</div>` : '';
+  B.innerHTML = `<div class="upwrap"><div class="uptop">${t ? bigCard(t) : '<div class="upempty">🎲</div>'}<div class="upinfo">${!t ? `<b>🎲 플레이스타일 뽑기</b><p>1. 아래에서 선수를 고르세요<br>2. 🪙${PS_COST}로 플레이스타일을 뽑아요<br>3. 15% 확률로 플러스(+)! 효과 2배</p><p class="tiny">${Object.values(PSD).map(([i, n]) => i + ' ' + n).join(' · ')}</p>`
+    : `<b>${esc(t.n)}</b><p class="tiny">기본: ${psOf(Object.assign({}, t, { xps: {} })).k.map(x => PSD[x][0] + PSD[x][1]).join(' · ')}</p><p class="tiny">뽑은 칸 ${psSlots(t, xs).length} / ${PS_MAX}: ${psSlots(t, xs).map(x => PSD[x][0] + PSD[x][1] + (xs[x] > 1 ? '+' : '')).join(' · ') || '없음'}</p>${res}
+      <div class="row2"><button class="btn" id="bPsReset">다른 선수</button><button class="btn main" id="bPsRoll" ${R && R.full ? 'disabled' : ''}>🎲 뽑기 🪙${PS_COST}</button></div>`}</div></div>
+    <p class="hintp">${t ? '뽑은 플레이스타일은 카드에 반짝이는 아이콘으로 보여요 · 경기에서 바로 효과가 있어요' : '플레이스타일을 뽑을 선수를 고르세요'}</p>
+    <div class="bench uplist">${list.map(p => `<div class="upc${p.id === CL.psT ? ' tgt' : ''}" data-psc="${p.id}">${cardHTML(p)}</div>`).join('')}</div></div>`;
+}
+function psRoll() {
+  const c = club(), t = PDB[CL.psT]; if (!t) return; if ((c.coins || 0) < PS_COST) { toast('🪙 코인이 부족해요'); return; } coins(-PS_COST);
+  c.xps = c.xps || {}; const xs = c.xps[t.id] = c.xps[t.id] || {}; const k = pick(psPool(t)), lv = Math.random() < .15 ? 2 : 1; const cur = psOf(t).lv[k] || 0; let msg, full = false;
+  if (cur >= lv) msg = cur > 1 ? '이미 플러스로 갖고 있어요… 꽝!' : '이미 갖고 있어요… 꽝!';
+  else if (xs[k] || psSlots(t, xs).length < PS_MAX || psBase(t).includes(k)) { xs[k] = lv; msg = cur ? '플러스(+)로 올라갔어요! 🎉' : '새 플레이스타일을 얻었어요! 🎉'; }
+  else { full = true; msg = `뽑은 칸이 ${PS_MAX}개 다 찼어요. 바꿀 걸 고르세요`; }
+  if (!Object.keys(xs).length) delete c.xps[t.id]; CL.psR = { id: t.id, k, lv, msg, full }; saveClub(); clubHeader(); sfx(lv > 1 ? 'goal' : 'save'); if (lv > 1) vibrate([40, 30, 90]); clubTab('ps');
+}
+document.addEventListener('click', e => {
+  if (UI.screen !== 'club' || CL.tab !== 'ps') return; const el = e.target.closest('[data-psc],#bPsRoll,#bPsReset,[data-psrep]'); if (!el) return; sfx('tick');
+  if (el.id === 'bPsRoll') return psRoll(); if (el.id === 'bPsReset') { CL.psT = null; CL.psR = null; return clubTab('ps'); }
+  if (el.dataset.psrep) { const c = club(), R = CL.psR; if (R && R.full) { const xs = c.xps[R.id] = c.xps[R.id] || {}; if (el.dataset.psrep !== '-') { delete xs[el.dataset.psrep]; xs[R.k] = R.lv; R.msg = '바꿨어요! 🎉'; } else R.msg = '버렸어요'; R.full = false; saveClub(); } return clubTab('ps'); }
+  CL.psT = +el.dataset.psc; CL.psR = null; clubTab('ps');
+});
+{ const _ct = clubTab0; clubTab0 = function (t) { if (t === 'ps') { CL.tab = 'ps'; CL.sel = null; CL.sell = false; $$('#clTabs [data-ctab]').forEach(b => b.classList.toggle('on', b.dataset.ctab === 'ps')); return renderPs(); } return _ct(t); }; }

@@ -175,7 +175,7 @@ function goal(ti) {
 /* ---------- 선수 움직임 ---------- */
 function maxSpd(p, sprint) { const s = p.st.spd / 100; return (sprint ? 5.2 + s * 5 : 4 + s * 3) * (ball.owner === p ? .72 + p.st.drb / 560 : 1) * (p.boostT > 0 ? 1.1 : 1) * (sprint ? 1 + .045 * psv(p, 'P') : 1) * (ball.owner === p ? 1 + .03 * psv(p, 'D') : 1); }
 // 플레이스타일: 0 = 없음 · 1 = 있음 · 2 = 플러스(+)
-const psv = (p, k) => { const s = p && p.d && p.d.ps; return s && s.k.includes(k) ? (s.plus ? 2 : 1) : 0; };
+const psv = (p, k) => { const s = p && p.d && p.d.ps; return (s && s.lv && s.lv[k]) || 0; };
 function steer(p, tx, tz, spd, dt, face) {
   const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz); let wx = 0, wz = 0; if (d > .25) { const s = Math.min(spd, d * 2.2); wx = dx / d * s; wz = dz / d * s; }
   accel(p, wx, wz, dt); if (face != null) p.yaw += angDiff(p.yaw, face) * Math.min(1, dt * 8);
