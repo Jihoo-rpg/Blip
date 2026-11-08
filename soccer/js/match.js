@@ -455,9 +455,13 @@ function endHalf() {
 const SHADOW_GEO = new T.CircleGeometry(.42, 20), SHADOW_MAT = new T.MeshBasicMaterial({ map: ctex(64, 64, (g, W) => { const r = g.createRadialGradient(W / 2, W / 2, 0, W / 2, W / 2, W / 2); r.addColorStop(0, 'rgba(0,0,0,.3)'); r.addColorStop(.6, 'rgba(0,0,0,.12)'); r.addColorStop(1, 'rgba(0,0,0,0)'); g.fillStyle = r; g.fillRect(0, 0, W, W); }), transparent: true, depthWrite: false });
 function animPlayer(p, dt) {
   if (!Number.isFinite(p.x) || !Number.isFinite(p.z) || !Number.isFinite(p.yaw)) { p.x = Number.isFinite(p.x) ? p.x : 0; p.z = Number.isFinite(p.z) ? p.z : 0; p.yaw = Number.isFinite(p.yaw) ? p.yaw : 0; p.vx = p.vz = 0; }
-  const P = p.P; P.root.position.set(p.x, 0, p.z); P.root.rotation.y = p.yaw; if (P.blob) P.blob.position.set(p.x, .015, p.z);
-  const sp = Math.hypot(p.vx, p.vz); const an = sp > 2.9 ? 'run' : sp > .45 ? 'walk' : 'idle'; setAnim(P, an, an === 'run' ? clamp(sp / 4.6, .85, 2) : an === 'walk' ? clamp(sp / 1.35, .55, 2.1) : 1); // 발이 미끄러지지 않게 걸음 속도를 실제 속도에 맞춰요
-  P.mixer.update(dt); footballPose(p);
+  const P = p.P; P.root.position.set(p.x, 0, p.z); if (P.blob) P.blob.position.set(p.x, .015, p.z);
+  // 보이는 방향은 부드럽게 돌아요 (킥·패스 때 몸이 순간이동하듯 확 도는 것 막기) · 개인기 회전은 빠르게 따라가요
+  if (p.ry == null || !Number.isFinite(p.ry) || dt > .3) p.ry = p.yaw; else { const d = angDiff(p.ry, p.yaw); p.ry += d * Math.min(1, dt * (p.act === 'skill' ? 30 : 16)); } P.root.rotation.y = p.ry;
+  // 걷기·뛰기가 경계에서 깜빡이지 않게 (켜는 속도와 끄는 속도를 다르게)
+  const sp = Math.hypot(p.vx, p.vz); const pv = p._an || 'idle'; const an = pv === 'run' ? (sp > 2.5 ? 'run' : sp > .35 ? 'walk' : 'idle') : pv === 'walk' ? (sp > 3.1 ? 'run' : sp > .3 ? 'walk' : 'idle') : (sp > 3.1 ? 'run' : sp > .6 ? 'walk' : 'idle'); p._an = an;
+  p._ts = lerp(p._ts || 1, an === 'run' ? clamp(sp / 4.6, .85, 2) : an === 'walk' ? clamp(sp / 1.35, .55, 2.1) : 1, Math.min(1, dt * 8)); setAnim(P, an, p._ts); // 발이 미끄러지지 않게 걸음 속도를 실제 속도에 맞춰요
+  P.mixer.update(dt); footballPose(p, dt);
 }
 function syncBallMesh(dt) {
   const m = ball.mesh; const dx = ball.x - m.position.x, dz = ball.z - m.position.z; m.position.set(ball.x, ball.y, ball.z);

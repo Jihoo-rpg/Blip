@@ -66,7 +66,7 @@ function clubTab(t) { clubTab0(t); fillPortraits($('#clBody')); }
 function clubTab0(t) {
   if (t !== 'squad') { CL.sell = false; CL.sellSel = []; } CL.tab = t; CL.sel = null; $$('#clTabs [data-ctab]').forEach(b => b.classList.toggle('on', b.dataset.ctab === t)); const B = $('#clBody'); const c = club();
   if (t === 'play') {
-    B.innerHTML = `<p class="hintp">AI 구단을 이기면 코인을 받아요. 강한 팀일수록 코인이 많아요! 처음 이기면 보너스 🎁</p><div class="opps">${OPP.map((o, i) => { const lock = i > 0 && !c.beat[OPP[i - 1].id] && i > (c.w || 0) + 2; const rew = winCoins(o); return `<button class="opp ${lock ? 'lock' : ''}" data-opp="${o.id}"><div class="crest sm" style="background:linear-gradient(135deg,${o.c[0]} 55%,${o.c[1]} 55%)">${o.f}</div><div class="on"><b>${esc(o.n)}</b><small>능력치 ${o.o} ${c.beat[o.id] ? '· ✅ 이김' : ''}</small></div><div class="rw">${lock ? '🔒' : `🪙 ${rew}${c.beat[o.id] ? '' : ' 🎁'}`}</div></button>`; }).join('')}</div>`;
+    B.innerHTML = `<p class="hintp">AI 구단을 이기면 코인을 받아요. 강한 팀일수록 코인이 많아요! 처음 이기면 보너스 🎁</p><div class="opps">${OPP.map((o, i) => { const my = teamOvr(xiPlayers(), c.form); const lock = i > 0 && !c.beat[OPP[i - 1].id] && i > (c.w || 0) + 2 && my < o.o; const rew = winCoins(o); return `<button class="opp ${lock ? 'lock' : ''}" data-opp="${o.id}"><div class="crest sm" style="background:linear-gradient(135deg,${o.c[0]} 55%,${o.c[1]} 55%)">${o.f}</div><div class="on"><b>${esc(o.n)}</b><small>능력치 ${o.o} ${c.beat[o.id] ? '· ✅ 이김' : ''}</small></div><div class="rw">${lock ? `🔒<small class="lk">${o.o}↑</small>` : `🪙 ${rew}${c.beat[o.id] ? '' : ' 🎁'}`}</div></button>`; }).join('')}</div>`;
   } else if (t === 'squad') {
     const xi = xiPlayers(); const F = FORMS[c.form]; const bench = owned().filter(p => !c.xi.includes(p.id)).sort((a, b) => b.o - a.o);
     B.innerHTML = `<div class="sqtop"><div class="row">${Object.keys(FORMS).map(f => `<button class="chip ${c.form === f ? 'on' : ''}" data-cform="${f}">${f}</button>`).join('')}</div><div class="row"><button class="chip ${CL.sell ? 'on' : ''}" id="bSell">💰 선수 팔기</button><button class="chip" id="bAuto">✨ 자동 배치</button></div></div>
@@ -94,7 +94,7 @@ document.addEventListener('click', e => {
   if (t.dataset.rf) { CL.rf = t.dataset.rf; return clubTab('all'); }
   if (t.id === 'bAuto') { autoXI(); clubHeader(); return clubTab('squad'); }
   if (t.dataset.cform) { c.form = t.dataset.cform; autoXI(); clubHeader(); return clubTab('squad'); }
-  if (t.dataset.opp) { if (t.classList.contains('lock')) { toast('앞 구단들을 먼저 이겨야 해요'); return; } return startClubMatch(OPP.find(o => o.id === t.dataset.opp)); }
+  if (t.dataset.opp) { if (t.classList.contains('lock')) { toast(`앞 구단을 이기거나, 팀 능력치를 ${OPP.find(o => o.id === t.dataset.opp).o} 이상으로 올리면 열려요`, 2600); return; } return startClubMatch(OPP.find(o => o.id === t.dataset.opp)); }
   if (t.dataset.pn) { CL.pn = t.dataset.pn === 'max' ? 'max' : +t.dataset.pn; if (CL.pn === 'max') { CL.pn = 1; CL.pmax = 1; } else CL.pmax = 0; return clubTab('shop'); }
   if (t.dataset.pack) { const k = PACKS.find(x => x.k === t.dataset.pack); const n = packN(k); return n > 1 ? buyMany(k, n) : buyPack(k); }
   // 자리 바꾸기

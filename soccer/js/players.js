@@ -115,19 +115,29 @@ function heroTick(dt, on) {
 /* ---------- 몸 동작 (뼈를 직접 움직여요) ---------- */
 const _f = new T.Vector3(), _up = new T.Vector3(0, 1, 0), _rt = new T.Vector3();
 function V3(a, b, c) { return new T.Vector3().addScaledVector(_f, a).addScaledVector(_up, b).addScaledVector(_rt, c).normalize(); }
-function arm2(P, S, u, l, w) { aimBone(P, S + 'Arm', S + 'ForeArm', u, w); aimBone(P, S + 'ForeArm', S + 'Hand', l, w); }
+let PW = 1; // 동작 섞는 비율 (부드럽게 들어가고 나와요)
+function arm2(P, S, u, l, w) { w *= PW; aimBone(P, S + 'Arm', S + 'ForeArm', u, w); aimBone(P, S + 'ForeArm', S + 'Hand', l, w); }
 // 다리: 무릎은 뒤로만 굽고, 옆으로 너무 벌어지지 않게 막아요
 function legFix(v, side) { let a = v.dot(_f), b = v.dot(_up), c = v.dot(_rt); c = clamp(c * side, -.12, .3) * side; return [a, b, c]; }
-function leg2(P, S, u, l, w) {
+function leg2(P, S, u, l, w) { w *= PW;
   const side = S === 'Right' ? 1 : -1; const [ua, ub, uc] = legFix(u, side); let [la, lb, lc] = legFix(l, side);
   const pt = Math.atan2(ua, -ub), ps = Math.atan2(la, -lb); if (ps > pt) { const L = Math.hypot(la, lb); la = Math.sin(pt) * L; lb = -Math.cos(pt) * L; } // 무릎이 앞으로 꺾이지 않게
   const U = new T.Vector3().addScaledVector(_f, ua).addScaledVector(_up, ub).addScaledVector(_rt, uc).normalize(), Lw = new T.Vector3().addScaledVector(_f, la).addScaledVector(_up, lb).addScaledVector(_rt, lc).normalize();
   aimBone(P, S + 'UpLeg', S + 'Leg', U, w); aimBone(P, S + 'Leg', S + 'Foot', Lw, w);
 }
-function footballPose(p) {
-  const P = p.P, a = p.act, t = p.actT; const root = P.root; root.position.y = 0; root.rotation.x = 0; root.rotation.z = 0;
-  if (!a) return;
-  P.root.updateMatrixWorld(true); _f.set(Math.sin(p.yaw), 0, Math.cos(p.yaw)); _rt.set(-_f.z, 0, _f.x);
+// 동작이 갑자기 켜졌다 꺼지지 않게: 시작은 0.08초, 끝은 0.18초 동안 섞어요
+function footballPose(p, dt) {
+  const root = p.P.root; root.position.y = 0; root.rotation.x = 0; root.rotation.z = 0; dt = dt || 1 / 60;
+  let a = p.act, t = p.actT, w = 1;
+  if (a) { if (a !== p._pa) { p._chain = (a === 'hold' && (p._pa === 'catch' || p._pa === 'dive')) || (p._pa && p._fo < .05); p._pa = a; } p._pt = t; p._fo = 0; if (!p._chain) w = clamp(t / .08, 0, 1); }
+  else if (p._pa) { p._fo = (p._fo || 0) + dt; w = 1 - p._fo / .18; if (w <= 0) { p._pa = null; return; } a = p._pa; t = p._pt; }
+  else return;
+  w = w * w * (3 - 2 * w); PW = w; try { poseCore(p, a, t); } finally { PW = 1; }
+  if (w < 1) { root.position.y *= w; root.rotation.x *= w; root.rotation.z *= w; }
+}
+function poseCore(p, a, t) {
+  const P = p.P; const root = P.root;
+  P.root.updateMatrixWorld(true); const yw = p.ry != null ? p.ry : p.yaw; _f.set(Math.sin(yw), 0, Math.cos(yw)); _rt.set(-_f.z, 0, _f.x);
   const S = p.foot || 'Right', s = S === 'Right' ? 1 : -1, O = S === 'Right' ? 'Left' : 'Right';
   if (a === 'kick' || a === 'pass' || a === 'cross') {
     const D = a === 'pass' ? .32 : .42, k = t / D; const big = a === 'pass' ? .6 : 1;
@@ -139,7 +149,7 @@ function footballPose(p) {
     const k = Math.min(1, t / .18); root.rotation.x = -1.15 * k; root.position.y = .32 * k;
     leg2(P, S, V3(1, -.15, s * .1), V3(1, -.05, 0), k); leg2(P, O, V3(.75, .05, -s * .08), V3(.35, -.94, 0), k);
     arm2(P, 'Left', V3(-.4, -.7, -.6), V3(-.2, -.9, -.2), k); arm2(P, 'Right', V3(-.4, -.7, .6), V3(-.2, -.9, .2), k);
-  } else if (a === 'dive') {
+  } else if (a === 'dive') { t = Math.max(0, t); // 기다리는 동안(시간이 음수) 반대로 눕거나 땅에 꺼지던 것 고침
     const k = Math.min(1, t / .25) * (t > .9 ? Math.max(0, 1 - (t - .9) / .4) : 1); const ds = p.diveSide || 1; root.rotation.z = -ds * 1.35 * k; root.position.y = Math.sin(Math.min(1, t / .5) * Math.PI) * (p.diveH || .6) + .35 * k;
     arm2(P, 'Left', V3(0, 1, -.3 * ds), V3(0, 1, 0), k); arm2(P, 'Right', V3(0, 1, -.3 * ds), V3(0, 1, 0), k);
   } else if (a === 'catch') {
