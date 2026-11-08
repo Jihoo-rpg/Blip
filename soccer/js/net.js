@@ -19,37 +19,41 @@ function onlStatus(t, sub) { $('#onlSt').innerHTML = t + (sub ? `<small>${sub}</
 function openOnline(code) {
   if (needAccount()) return; if (needClub()) return; const c = club();
   show('#onl'); UI.screen = 'menu'; $('#onlTeam').innerHTML = `<span class="crest" style="display:inline-grid;place-items:center;width:28px;height:28px;border-radius:8px;vertical-align:middle;background:linear-gradient(135deg,${c.c1} 55%,${c.c2} 55%)">${c.emb}</span> ${esc(c.name)} <small>팀 능력치 ${teamOvr(xiPlayers(), c.form)} · 내 구단으로 대결해요</small>`; onlStatus('친구와 방 코드로 하거나, 빠른 대결로 아무나 만나요.');
-  $('#onlBtns').hidden = false; $('#onlCode').value = code || ''; if (code) joinRoom(code);
+  $('#onlBtns').hidden = false; $('#onlCode').value = code || ''; rkLoad(); if (code) joinRoom(code);
 }
 function netClear() { for (const t of NET.timers) clearInterval(t); NET.timers = []; for (const es of NET.es || []) try { es.close(); } catch (e) { } NET.es = []; }
 function netLeave() {
   netClear(); const c = NET.code, r = NET.role; if (c) { if (r === 'host') nreq('rooms/' + c, 'DELETE').catch(() => { }); else if (r === 'guest') nreq('rooms/' + c + '/g', 'DELETE').catch(() => { }); }
-  if (NET.qid) nreq('q/' + NET.qid, 'DELETE').catch(() => { }); if (NET.p2p) try { NET.p2p.close(); } catch (e) { }
+  if (NET.qid) nreq(NET.qid, 'DELETE').catch(() => { }); if (NET.p2p) try { NET.p2p.close(); } catch (e) { }
   Object.assign(NET, { role: null, code: '', p2p: null, qid: null, peer: null, ev: [], evSeen: 0, acts: [], actDone: 0 }); $('#netTag').hidden = true;
 }
 function newCode() { return String(Math.floor(1000 + Math.random() * 9000)); }
-async function hostRoom(quick) {
-  if (needClub()) return; netLeave(); const me = myInfo(); const code = newCode(); NET.code = code; NET.role = 'host-wait';
-  try { await nreq('rooms/' + code + '/h', 'PUT', { nick: me.nick, ava: me.ava, club: myPack(), len: PICK.len, t: { '.sv': 'timestamp' } }); } catch (e) { onlStatus('서버에 연결하지 못했어요 😢', '인터넷을 확인하고 다시 해 보세요'); NET.role = null; return; }
-  if (quick) { NET.qid = me.id; nreq('q/' + me.id, 'PUT', { code, nick: me.nick, t: { '.sv': 'timestamp' } }).catch(() => { }); NET.timers.push(setInterval(() => nreq('q/' + me.id + '/t', 'PUT', { '.sv': 'timestamp' }).catch(() => { }), 8000)); }
-  onlStatus(quick ? '상대를 찾는 중… ⏳' : `방 코드 <b class="code">${code}</b>`, quick ? '조금만 기다려 주세요' : '친구에게 이 코드를 알려 주세요 · <a href="#" id="cpLink">링크 복사</a>');
+async function hostRoom(quick, rk) {
+  if (needClub()) return; netLeave(); NET.rank = !!rk; const me = myInfo(); const code = newCode(); NET.code = code; NET.role = 'host-wait'; const QP = rk ? 'rq/' : 'q/';
+  try { await nreq('rooms/' + code + '/h', 'PUT', { nick: me.nick, ava: me.ava, club: myPack(), len: PICK.len, rk: rk ? RK.pts : null, t: { '.sv': 'timestamp' } }); } catch (e) { onlStatus('서버에 연결하지 못했어요 😢', '인터넷을 확인하고 다시 해 보세요'); NET.role = null; return; }
+  if (quick) { NET.qid = QP + me.id; nreq(QP + me.id, 'PUT', { code, nick: me.nick, pts: rk ? RK.pts : 0, t: { '.sv': 'timestamp' } }).catch(() => { }); NET.timers.push(setInterval(() => nreq(QP + me.id + '/t', 'PUT', { '.sv': 'timestamp' }).catch(() => { }), 8000));
+    // 둘이 동시에 찾으면 둘 다 방장이 돼서 영원히 기다려요 → 3초마다 대기열을 보고, 코드가 더 큰 쪽이 상대 방으로 들어가요
+    NET.timers.push(setInterval(async () => { if (NET.role !== 'host-wait' || NET.qBusy) return; NET.qBusy = true; try { const q = await nreq(QP.slice(0, -1)).catch(() => null); const now = Date.now();
+      const o = Object.entries(q || {}).filter(([k, v]) => k !== me.id && k < me.id && v && v.code && v.code !== code && Math.abs(now - (v.t || 0)) < 25000)[0];
+      if (o && NET.role === 'host-wait') { await nreq(QP + o[0], 'DELETE').catch(() => { }); if (!(await joinRoom(o[1].code, true, rk))) hostRoom(true, rk); } } finally { NET.qBusy = false; } }, 3000)); }
+  onlStatus(quick ? (rk ? '🏆 랭킹전 상대를 찾는 중… ⏳' : '상대를 찾는 중… ⏳') : `방 코드 <b class="code">${code}</b>`, quick ? '조금만 기다려 주세요' : '친구에게 이 코드를 알려 주세요 · <a href="#" id="cpLink">링크 복사</a>');
   const cp = $('#cpLink'); if (cp) cp.onclick = e => { e.preventDefault(); const u = location.origin + location.pathname + '?room=' + code; navigator.clipboard && navigator.clipboard.writeText(u).then(() => toast('링크를 복사했어요')); };
   $('#onlBtns').hidden = true;
-  NET.timers.push(setInterval(async () => { if (NET.role !== 'host-wait') return; const g = await nreq('rooms/' + code + '/g').catch(() => null); if (g && g.nick) { NET.peer = g; if (NET.qid) { nreq('q/' + NET.qid, 'DELETE').catch(() => { }); NET.qid = null; } netClear(); hostStart(g); } }, 900));
+  NET.timers.push(setInterval(async () => { if (NET.role !== 'host-wait') return; const g = await nreq('rooms/' + code + '/g').catch(() => null); if (g && g.nick) { NET.peer = g; NET.rank = NET.rank && g.rk != null; if (NET.qid) { nreq(NET.qid, 'DELETE').catch(() => { }); NET.qid = null; } netClear(); hostStart(g); } }, 900));
 }
-async function quickMatch() {
-  if (needClub()) return; onlStatus('상대를 찾는 중… ⏳'); $('#onlBtns').hidden = true; const me = myInfo();
-  const q = await nreq('q').catch(() => null); const now = Date.now();
-  const list = Object.entries(q || {}).filter(([k, v]) => k !== me.id && v && v.code && Math.abs(now - (v.t || 0)) < 25000).sort((a, b) => a[1].t - b[1].t);
-  for (const [k, v] of list) { await nreq('q/' + k, 'DELETE').catch(() => { }); if (await joinRoom(v.code, true)) return; }
-  hostRoom(true);
+async function quickMatch(rk) {
+  if (needClub()) return; if (rk) await rkLoad(); onlStatus(rk ? '🏆 랭킹전 상대를 찾는 중… ⏳' : '상대를 찾는 중… ⏳'); $('#onlBtns').hidden = true; const me = myInfo(); const QP = rk ? 'rq' : 'q';
+  const q = await nreq(QP).catch(() => null); const now = Date.now();
+  const list = Object.entries(q || {}).filter(([k, v]) => k !== me.id && v && v.code && Math.abs(now - (v.t || 0)) < 25000).sort((a, b) => rk ? Math.abs((a[1].pts || 1000) - RK.pts) - Math.abs((b[1].pts || 1000) - RK.pts) : a[1].t - b[1].t); // 랭킹전은 점수가 비슷한 사람부터
+  for (const [k, v] of list) { await nreq(QP + '/' + k, 'DELETE').catch(() => { }); if (await joinRoom(v.code, true, rk)) return; }
+  hostRoom(true, rk);
 }
-async function joinRoom(code, silent) {
+async function joinRoom(code, silent, rk) {
   code = String(code || '').trim(); if (!/^\d{4}$/.test(code)) { onlStatus('방 코드는 숫자 4자리예요'); return false; }
   const h = await nreq('rooms/' + code + '/h').catch(() => null); if (!h) { if (!silent) onlStatus('그런 방이 없어요', '코드를 다시 확인해 주세요'); return false; }
   const ex = await nreq('rooms/' + code + '/g').catch(() => null); if (ex && ex.nick) { if (!silent) onlStatus('이미 두 명이 다 찼어요'); return false; }
-  if (needClub()) return false; netLeave(); const me = myInfo(); NET.code = code; NET.role = 'guest-wait'; NET.peer = h;
-  await nreq('rooms/' + code + '/g', 'PUT', { nick: me.nick, ava: me.ava, club: myPack(), id: me.id }).catch(() => { });
+  if (needClub()) return false; netLeave(); NET.rank = !!(rk && h.rk != null); const me = myInfo(); NET.code = code; NET.role = 'guest-wait'; NET.peer = h;
+  await nreq('rooms/' + code + '/g', 'PUT', { nick: me.nick, ava: me.ava, club: myPack(), id: me.id, rk: NET.rank ? RK.pts : null }).catch(() => { });
   $('#onlBtns').hidden = true; onlStatus(`${esc(h.nick)}님의 방에 들어왔어요`, `${esc((h.club && h.club.n) || '')} vs ${esc(club().name)} · 곧 시작해요…`);
   startP2P(); const es = fbStream('rooms/' + code + '/s', s => applySnap(s)); if (es) NET.es.push(es);
   NET.timers.push(setInterval(pollSnap, 150)); NET.timers.push(setInterval(sendInput, 50));
@@ -124,7 +128,7 @@ function netRematch(fromGuest) {
   if (NET.role === 'host') { NET.cfg.A = myPack() || NET.cfg.A; netStartGame(true); }
 }
 function setupOnline() {
-  $('#onlQuick').onclick = () => quickMatch(); $('#onlHost').onclick = () => hostRoom(false); $('#onlJoin').onclick = () => joinRoom($('#onlCode').value);
+  $('#onlQuick').onclick = () => quickMatch(); $('#onlRank').onclick = () => quickMatch(true); $('#onlBoard').onclick = () => rkBoard(); $('#onlHost').onclick = () => hostRoom(false); $('#onlJoin').onclick = () => joinRoom($('#onlCode').value);
   $('#onlBack').onclick = () => { netLeave(); show('#menu'); };
   addEventListener('pagehide', () => netLeave());
   NET.timers = [];

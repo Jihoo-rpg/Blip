@@ -337,6 +337,10 @@ body.mob #bKeys{display:none}
 .bcard .pss{position:absolute;right:7%;top:22%;display:flex;flex-direction:column;flex-wrap:wrap-reverse;align-content:flex-end;max-height:40%;gap:3px;z-index:3}.ps{font-size:11px;line-height:1;padding:2px 4px;border-radius:7px;background:rgba(0,0,0,.35);border:1px solid rgba(255,255,255,.25)}.ps.plus{border-color:#ffd36b;box-shadow:0 0 6px rgba(255,211,107,.6)}.ps sup{color:#ffd36b;font-size:9px;font-weight:900;margin-left:1px;vertical-align:top}.bcard .ps{font-size:13px;padding:3px 4px}
 .ps.got{background:rgba(120,60,200,.45)}.psres{margin:8px 0;padding:10px;border-radius:14px;background:rgba(0,0,0,.35);text-align:center}.psres.plus{box-shadow:0 0 18px rgba(255,211,107,.7);border:1px solid #ffd36b}.psbig{font-size:40px;line-height:1.1}.psbig sup{font-size:18px;color:#ffd36b}.psres p{font-size:13px;margin:4px 0}.pschoose{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:6px}
 .tixgot{margin-top:8px;font-weight:900;color:#7dd3ff;font-size:15px}.tixgot small{font-size:11px;color:#cfe;opacity:.8}.tixbtn{width:100%;margin-top:8px;background:linear-gradient(135deg,#1e6fff,#7dd3ff);color:#fff}.tixbtn small{opacity:.85}.tixbtn:disabled{opacity:.4}
+.rkbox{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 12px;border-radius:12px;background:rgba(255,255,255,.07);font-size:14px}.rkbox small{opacity:.7;margin-left:4px}.tier{font-weight:900;white-space:nowrap}.rkbtn{background:linear-gradient(135deg,#ff9a3d,#ffd34d);color:#2a1600}
+.rkTop{font-size:14px;text-align:center}.rkList{max-height:52vh;overflow:auto;display:flex;flex-direction:column;gap:6px}.rkRow{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.06)}.rkRow.me{outline:2px solid #ffd34d}.rkRow .fn{flex:1;min-width:0;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.rkRow .fn small{display:block;font-weight:600;opacity:.65;font-size:11px}.rkRow b{min-width:44px;text-align:right}.rkN{width:26px;text-align:center;font-weight:900}
+.rkres{font-size:15px}.rkres .up{color:#7dff9a}.rkres .dn{color:#ff6b7a}.rkup{color:#ffd34d;font-weight:900;margin-top:4px}.rkdn{color:#ff9aa6;margin-top:4px}
+.mktabs,.mkf{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}.mklist{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}.mkit{display:flex;gap:8px;align-items:center;padding:8px;border-radius:14px;background:rgba(255,255,255,.06)}.mki{display:flex;flex-direction:column;gap:4px;min-width:0}.mki b{color:var(--gold);white-space:nowrap}.mki small{opacity:.7;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mksell{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;margin-bottom:10px}.mksell .upinfo{flex:1;min-width:220px}.mkpr{display:flex;align-items:center;gap:6px;margin:6px 0}.mkpr input{flex:1;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.25);background:rgba(0,0,0,.3);color:#fff;font-weight:900;font-size:18px}
 .junk{margin-top:14px;text-align:center}.junk p{margin:0 0 8px;font-weight:900}.junk small{opacity:.7;font-weight:700}.junk>div{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;align-items:flex-end}.junk .pcard{--w:62px}.junk .jd{font-size:10px;font-weight:900;color:var(--gold);align-self:center;margin-left:-4px}
 /* 강화 화면 */
 .upwrap .uptop{display:flex;gap:18px;align-items:center;justify-content:center;flex-wrap:wrap;margin-bottom:8px}.upwrap .bcard{--w:190px}
@@ -433,16 +437,19 @@ body.mob #bKeys{display:none}
   <div style="font-weight:700;opacity:.85">내 팀: <span id="onlTeam"></span></div>
   <div id="onlSt"></div>
   <div class="col" id="onlBtns">
-    <button class="btn main" id="onlQuick">⚡ 빠른 대결 (아무나)</button>
+    <div class="rkbox"><span id="rkMe">🏆 랭킹전</span><button class="chip" id="onlBoard">📊 순위표</button></div>
+    <button class="btn main rkbtn" id="onlRank">🏆 랭킹전 (점수가 비슷한 상대 · 이기면 점수↑ 🪙300)</button>
+    <button class="btn" id="onlQuick">⚡ 빠른 대결 (아무나)</button>
     <button class="btn" id="onlHost">🏠 방 만들기 (친구랑)</button>
     <div class="row2"><input id="onlCode" inputmode="numeric" maxlength="4" placeholder="방 코드"><button class="btn" id="onlJoin" style="flex:0 0 auto">참가</button></div>
   </div>
   <button class="btn" id="onlBack">← 뒤로</button>
 </div></div>
+<div id="rkm" class="modal" hidden><div class="card col"><h2 class="h">📊 랭킹전 순위표</h2><div id="rkTop" class="rkTop"></div><div id="rkList" class="rkList"></div><p class="tiny" style="opacity:.7">티어: 브론즈 · 실버 1080 · 골드 1160 · 플래티넘 1260 · 다이아 1380 · 마스터 1520 · 챌린저 1700</p><button class="btn" id="rkClose">닫기</button></div></div>
 <div id="club" class="scr" hidden>
   <div class="cwrap">
     <div class="ctop"><button class="btn" id="clBack" style="height:42px;padding:0 14px">←</button><div id="clHead"></div></div>
-    <div id="clTabs"><button data-ctab="play" class="on">⚽ 경기</button><button data-ctab="squad">📋 스쿼드</button><button data-ctab="shop">🎁 선수 뽑기</button><button data-ctab="up">⚡ 강화</button><button data-ctab="ps">🎲 스타일</button><button data-ctab="all">📖 도감</button></div>
+    <div id="clTabs"><button data-ctab="play" class="on">⚽ 경기</button><button data-ctab="squad">📋 스쿼드</button><button data-ctab="shop">🎁 선수 뽑기</button><button data-ctab="up">⚡ 강화</button><button data-ctab="ps">🎲 스타일</button><button data-ctab="mk">💱 거래소</button><button data-ctab="all">📖 도감</button></div>
     <div id="clBody"></div>
   </div>
 </div>
@@ -461,20 +468,22 @@ body.mob #bKeys{display:none}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="../seoul/lib/GLTFLoader.js"></script>
 <script src="../seoul/lib/SkeletonUtils.js"></script>
-<script src="js/base.js?v=202611081418"></script>
+<script src="js/base.js?v=202611081453"></script>
 <script src="../seoul/js/chars.js"></script>
-<script src="js/teams.js?v=202611081418"></script>
-<script src="js/db.js?v=202611081418"></script>
-<script src="js/stadium.js?v=202611081418"></script>
-<script src="js/players.js?v=202611081418"></script>
-<script src="js/match.js?v=202611081418"></script>
-<script src="js/ui.js?v=202611081418"></script>
-<script src="js/net.js?v=202611081418"></script>
-<script src="js/club.js?v=202611081418"></script>
-<script src="js/friends.js?v=202611081418"></script>
-<script src="js/upgrade.js?v=202611081418"></script>
-<script src="../common/p2p.js?v=202611081418"></script>
-<script src="../common/blip.js?v=202611081418" data-game="soccer"></script>
+<script src="js/teams.js?v=202611081453"></script>
+<script src="js/db.js?v=202611081453"></script>
+<script src="js/stadium.js?v=202611081453"></script>
+<script src="js/players.js?v=202611081453"></script>
+<script src="js/match.js?v=202611081453"></script>
+<script src="js/ui.js?v=202611081453"></script>
+<script src="js/net.js?v=202611081453"></script>
+<script src="js/club.js?v=202611081453"></script>
+<script src="js/rank.js?v=202611081453"></script>
+<script src="js/market.js?v=202611081453"></script>
+<script src="js/friends.js?v=202611081453"></script>
+<script src="js/upgrade.js?v=202611081453"></script>
+<script src="../common/p2p.js?v=202611081453"></script>
+<script src="../common/blip.js?v=202611081453" data-game="soccer"></script>
 <script>if (IS_MOBILE) document.body.classList.add('mob'); setupOnline(); boot();</script>
 </body>
 </html>

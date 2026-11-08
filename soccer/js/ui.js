@@ -349,7 +349,8 @@ function showResult() {
   $('#rMvp').innerHTML = `🏅 경기 최우수 선수 <b>${mvp.d.num} ${esc(mvp.d.name)}</b> <small>${M[mvp.team ? 't1' : 't0'].f} · ${mvp.goals ? mvp.goals + '골' : ROLE_NAMES[mvp.role]}</small>`;
   if (M.mode === 'ai') { SAVE.rec = SAVE.rec || { w: 0, d: 0, l: 0 }; SAVE.rec[w < 0 ? 'd' : w === me ? 'w' : 'l']++; persist(); }
   $('#rReward').innerHTML = M.mode === 'club' ? clubReward(w < 0 ? 'd' : w === me ? 'w' : 'l', M.score[me]) : ''; $('#rReward').hidden = M.mode !== 'club';
-  $('#rAgain').hidden = M.mode === 'online' && NET.role === 'guest'; $('#result').hidden = false;
+  if (M.mode === 'online' && NET.rank) { $('#rReward').hidden = false; $('#rReward').innerHTML = '🏆 랭킹 점수 계산 중…'; rkResult(w < 0 ? 'd' : w === me ? 'w' : 'l'); }
+  $('#rAgain').hidden = M.mode === 'online' && (NET.role === 'guest' || NET.rank); $('#result').hidden = false;
 }
 function quitToMenu() { try { screen.orientation && screen.orientation.unlock && screen.orientation.unlock(); } catch (e) { } const wasClub = M.mode === 'club'; if (NET.role) netLeave(); UI.paused = false; $('#result').hidden = true; startDemo(); if (wasClub) openClub(); else show('#menu'); renderRecord(); if (window.BLIP) BLIP.setGame('soccer'); }
 function renderRecord() { const r = SAVE.rec; $('#rec').textContent = r ? `내 전적 ${r.w}승 ${r.d}무 ${r.l}패` : ''; }
