@@ -91,7 +91,7 @@ function kickBall(p, vx, vy, vz, spin) {
   if (M.phase === 'set' || M.phase === 'kickoff') { M.phase = 'play'; M.phT = 0; M.sp = null; }
 }
 function passVel(p, tx, tz, kind, pow) {
-  const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz) || 1; const acc = Math.max(.02, (106 - p.st.pas) / 75) * (DIFFOF(p).err);
+  const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz) || 1; const acc = Math.max(.02, (106 - p.st.pas) / 75) * (DIFFOF(p).err) * (1 - .22 * psv(p, 'A'));
   const ea = (Math.random() - .5) * acc * (kind === 'ground' ? .12 : .2), c = Math.cos(ea), s = Math.sin(ea); const ux = (dx * c - dz * s) / d, uz = (dx * s + dz * c) / d;
   const pm = pow ? lerp(1, 1.3, pow) : 1; // 세게 누를수록 빠르게
   if (kind === 'ground') { const v = clamp((Math.sqrt(2 * 3.4 * d) + 3.5 + d * .05) * pm, 7, 34); return [ux * v, .3, uz * v]; }
@@ -110,9 +110,9 @@ function doPass(p, target, kind, pow) {
 function doShoot(p, power, aimZ) {
   const gx = goalX(p.team), gk = gkOf(1 - p.team); power = clamp(power, .15, 1);
   let tz = aimZ != null ? clamp(aimZ, -1, 1) * (PL.gw / 2 - .45) : (gk ? (gk.z > 0 ? -1 : 1) : 1) * (PL.gw / 2 - rand(.5, 1.4));
-  const d = Math.hypot(gx - p.x, tz - p.z); const sk = p.st.sht / 100; const er = Math.max(.06, 1.32 - sk) * 1.2 * DIFFOF(p).err * (.55 + power * .9) * (1 + d / 22) * (ball.owner === p || ball.y < .3 ? 1 : 1.4);
+  const d = Math.hypot(gx - p.x, tz - p.z); const sk = p.st.sht / 100; const er = Math.max(.06, 1.32 - sk) * 1.2 * DIFFOF(p).err * (.55 + power * .9) * (1 + d / 22) * (ball.owner === p || ball.y < .3 ? 1 : 1.4) * (1 - .2 * psv(p, 'S'));
   tz += (Math.random() - .5) * er * 7; let ty = .2 + power * power * 1.55 + (Math.random() - .35) * er * 3.2; if (ball.y > .5) ty += .3;
-  const v = Math.min(44, 11 + power * 12 + Math.max(0, p.st.sht - 40) / 50 * 14); const tf = d / v; const vy = (ty - ball.y) / tf + .5 * G * tf * .92;
+  const v = Math.min(46, 11 + power * 12 + Math.max(0, p.st.sht - 40) / 50 * 14 + psv(p, 'S') * 1.5); const tf = d / v; const vy = (ty - ball.y) / tf + .5 * G * tf * .92;
   const ux = (gx - p.x) / d, uz = (tz - p.z) / d; p.yaw = Math.atan2(ux, uz); p.act = 'kick'; p.actT = 0;
   kickBall(p, ux * v, clamp(vy, -2, 14), uz * v, (Math.random() - .5) * power * 3);
   M.stats.sh[p.team]++; M.lastShotT = M.t; ball.passTo = null;
@@ -123,7 +123,7 @@ function planSave(ti, onTarget) {
   const gk = gkOf(ti); if (!gk) return; const gx = ownGoalX(ti); const vx = ball.vx; if (Math.abs(vx) < 1) return;
   const t = (gx - Math.sign(gx) * .8 - ball.x) / vx; if (t <= 0 || t > 3) return; let zz = ball.z + ball.vz * t, yy = ball.y + ball.vy * t - .5 * G * t * t; yy = Math.max(PL.br, Math.abs(yy));
   const sp = Math.hypot(ball.vx, ball.vy, ball.vz); const reach = Math.abs(zz - gk.z); const df = DIFFOF(gk);
-  let pr = .92 - reach / 4.2 * .7 - Math.max(0, sp - 24) / 40 + clamp(t - .5, 0, .8) * .55 + (Math.min(99, gk.st.gk) - 80) / 48 + Math.max(0, gk.st.gk - 99) / 160 + (gk.team === M.human[0] || gk.team === M.human[1] ? .03 : df.gk) - (yy > 1.9 ? .12 : 0);
+  let pr = .92 - reach / 4.2 * .7 - Math.max(0, sp - 24) / 40 + clamp(t - .5, 0, .8) * .55 + (Math.min(99, gk.st.gk) - 80) / 48 + Math.max(0, gk.st.gk - 99) / 160 + (gk.team === M.human[0] || gk.team === M.human[1] ? .03 : df.gk) + .04 * psv(gk, 'G') - (yy > 1.9 ? .12 : 0);
   if (!onTarget) pr = 1; pr = clamp(pr, .08, .97);
   ball.shot = { gk, t, z: zz, y: yy, save: Math.random() < pr, catch: sp < 21 && reach < 1.2 && yy < 1.7, at: M.t + t, on: onTarget };
   if (onTarget && (reach > .7 || yy > 1.6)) { gk.act = 'dive'; gk.actT = -Math.max(0, t - .45); gk.diveSide = Math.sign(zz - gk.z) * (gk.yaw > 0 ? 1 : -1) * (M.dir[ti] > 0 ? 1 : -1) || 1; gk.diveH = clamp(yy - .4, .2, 1.4); gk.diveTo = zz; }
@@ -173,7 +173,9 @@ function goal(ti) {
   vibrate([60, 40, 120]);
 }
 /* ---------- 선수 움직임 ---------- */
-function maxSpd(p, sprint) { const s = p.st.spd / 100; return (sprint ? 5.2 + s * 5 : 4 + s * 3) * (ball.owner === p ? .72 + p.st.drb / 560 : 1) * (p.boostT > 0 ? 1.1 : 1); }
+function maxSpd(p, sprint) { const s = p.st.spd / 100; return (sprint ? 5.2 + s * 5 : 4 + s * 3) * (ball.owner === p ? .72 + p.st.drb / 560 : 1) * (p.boostT > 0 ? 1.1 : 1) * (sprint ? 1 + .045 * psv(p, 'P') : 1) * (ball.owner === p ? 1 + .03 * psv(p, 'D') : 1); }
+// 플레이스타일: 0 = 없음 · 1 = 있음 · 2 = 플러스(+)
+const psv = (p, k) => { const s = p && p.d && p.d.ps; return s && s.k.includes(k) ? (s.plus ? 2 : 1) : 0; };
 function steer(p, tx, tz, spd, dt, face) {
   const dx = tx - p.x, dz = tz - p.z, d = Math.hypot(dx, dz); let wx = 0, wz = 0; if (d > .25) { const s = Math.min(spd, d * 2.2); wx = dx / d * s; wz = dz / d * s; }
   accel(p, wx, wz, dt); if (face != null) p.yaw += angDiff(p.yaw, face) * Math.min(1, dt * 8);
@@ -275,7 +277,7 @@ function tryTackle(p, slide) {
   const o = ball.owner; if (p.tkCd > 0 || p.stun > 0) return false; p.tkCd = slide ? 1.4 : .7;
   if (slide) { p.act = 'slide'; p.actT = 0; const f = p.yaw; p.vx = Math.sin(f) * 8.5; p.vz = Math.cos(f) * 8.5; p.faceLock = .8; return true; }
   if (!o || o.team === p.team || o.held) return false; const d = dist(p, o); if (d > 1.5) return false;
-  const pr = clamp(.45 + (p.st.def - o.st.drb) / 65 + (p.team === M.human[0] || p.team === M.human[1] ? .03 : DIFFOF(p).tk), .12, .9) * (o.skill ? .25 : o.boostT > 0 ? .7 : 1); // 개인기 중엔 잘 안 뺏겨요
+  const pr = clamp(.45 + (p.st.def - o.st.drb) / 65 + (p.team === M.human[0] || p.team === M.human[1] ? .03 : DIFFOF(p).tk) + .06 * psv(p, 'F') - .06 * psv(o, 'D') - .04 * psv(o, 'H'), .08, .92) * (o.skill ? .25 : o.boostT > 0 ? .7 : 1); // 개인기 중엔 잘 안 뺏겨요
   p.act = 'pass'; p.actT = .08; p.yaw = Math.atan2(o.x - p.x, o.z - p.z);
   if (Math.random() < pr) { looseBall(o, p); M.stats.tk[p.team]++; sfx('tackle'); comm(pick([`${shortName(p)}, 깔끔한 태클!`, '공을 빼앗았어요!'])); return true; }
   p.stun = .45; return false;

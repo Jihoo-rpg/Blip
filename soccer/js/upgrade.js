@@ -17,19 +17,18 @@ const needVal = p => Math.pow(2, (cardO(p) - 70) / 10) * (1 + .35 * (lvOf(p.id) 
 function upGauge() { const t = CL.upT != null ? PDB[CL.upT] : null; if (!t) return 0; const s = (CL.upM || []).reduce((a, i) => a + matVal(PDB[i]), 0); return Math.min(1, s / needVal(t)); }
 const upFee = lv => 50 * lv;
 const canMat = id => id !== CL.upT && !isBase(id); // 선발도 재료로 쓸 수 있어요 (자리는 자동으로 채워요)
-function autoMats() { const c = club(); const L = owned().filter(p => canMat(p.id)).sort((a, b) => (c.xi.includes(a.id) - c.xi.includes(b.id)) || (matVal(a) - matVal(b))); const need = needVal(PDB[CL.upT]); const out = []; let sum = 0; for (const p of L) { if (out.length >= 5 || sum >= need) break; out.push(p.id); sum += matVal(p); } return out; }
+function autoMats() { const c = club(); const L = owned().filter(p => canMat(p.id)).sort((a, b) => (c.xi.includes(a.id) - c.xi.includes(b.id)) || (matVal(a) - matVal(b))); const need = needVal(PDB[CL.upT]); const out = []; let sum = 0; for (const p of L) { if (out.length >= 1) break; out.push(p.id); sum += matVal(p); } return out; }
 
 function refillXI() { const c = club(); const F = FORMS[c.form]; c.xi = c.xi.map((id, k) => { if (id != null && c.own[id]) return id; const pool = owned().filter(q => !c.xi.includes(q.id)).sort((a, b) => cardO(b) - cardO(a)); const r = pool.find(q => q.pos === F[k][0]) || pool[0]; return r ? r.id : null; }); }
 function renderUp() {
   const B = $('#clBody'), c = club(); CL.upM = (CL.upM || []).filter(i => c.own[i] && canMat(i)); if (CL.upT != null && !c.own[CL.upT]) CL.upT = null;
-  const t = CL.upT != null ? PDB[CL.upT] : null; const lv = t ? lvOf(t.id) : 0, g = upGauge(); const max = lv ? (ENH.rate[lv - 1] || 0) : 0; const rate = max * g;
+  const t = CL.upT != null ? PDB[CL.upT] : null; const lv = t ? lvOf(t.id) : 0, g = upGauge(); const max = 1, rate = lv && lv < 10 ? 1 : 0;
   const list = owned().sort((a, b) => cardO(b) - cardO(a));
-  const info = !t ? `<div class="upinfo"><b>⚡ 강화</b><p>1. 아래에서 강화할 선수를 누르세요<br>2. 재료로 쓸 선수(잡카드)를 최대 5명 고르세요<br>3. 게이지가 찰수록 성공 확률이 올라가요</p><p class="tiny">확률은 FC온라인과 같아요 (풀게이지 1→2강 100% … 9→10강 4%) · 10강이면 OVR +19</p></div>`
+  const info = !t ? `<div class="upinfo"><b>⚡ 강화</b><p>1. 아래에서 강화할 선수를 누르세요<br>2. 재료로 쓸 선수(잡카드)를 1명 이상 고르세요<br>3. 강화 버튼을 누르면 무조건 성공!</p><p class="tiny">강화는 무조건 성공해요 · 10강이면 OVR +19 · 펠레 같은 GOAT도 돼요</p><p class="tiny">플레이스타일: ${Object.values(PSD).map(([i, n]) => i + ' ' + n).join(' · ')} — 경기에서 진짜 효과가 있어요 · 레전드 이상이나 8강부터 플러스(+)로 효과 2배</p></div>`
     : lv >= 10 ? `<div class="upinfo"><b>+10 최고 단계예요! 🏆</b><p>OVR ${cardO(t)}</p><button class="btn" id="bUpReset">다른 선수 고르기</button></div>`
     : `<div class="upinfo"><b>+${lv} → +${lv + 1}</b><p>OVR ${cardO(t)} → <b class="up">${t.o + ENH.bonus[lv]}</b></p>
-      <div class="gauge"><i style="width:${Math.round(g * 100)}%"></i><span>게이지 ${Math.round(g * 100)}%</span></div>
-      <p>성공 확률 <b class="rate">${(rate * 100).toFixed(rate < .1 ? 1 : 0)}%</b> <small>(풀게이지 ${Math.round(max * 100)}%)</small></p>
-      <p class="tiny">실패하면 ${ENH.drop[lv - 1].map((w, i) => `+${i + 1} ${Math.round(w * 100)}%`).join(' · ')}로 떨어져요 · 재료는 사라져요</p>
+      <p>성공 확률 <b class="rate">100%</b> <small>재료 1명만 넣어도 무조건 성공!</small></p>
+      <p class="tiny">재료로 넣은 선수는 사라져요 · 강화할수록 플레이스타일도 세져요 (+8강부터 플레이스타일+)</p>
       <div class="row2"><button class="btn" id="bUpReset">다른 선수</button><button class="btn main" id="bUp" ${(CL.upM || []).length ? '' : 'disabled'}>⚡ 강화 🪙${upFee(lv)}</button></div></div>`;
   B.innerHTML = `<div class="upwrap"><div class="uptop">${t ? bigCard(t) : '<div class="upempty">⚡</div>'}${info}</div>
     ${t ? `<div class="uphint"><p class="hintp">재료 ${(CL.upM || []).length} / 5 · 처음 받은 기본 선수는 재료로 못 써요 · 선발을 쓰면 자리는 자동으로 채워요</p>${lv < 10 ? '<button class="chip" id="bUpAuto">✨ 재료 자동</button>' : ''}</div>${owned().some(p => canMat(p.id)) ? '' : '<p class="hintp">재료로 쓸 선수가 없어요 — 선수 뽑기 잡카드를 모아 보세요</p>'}` : '<p class="hintp">강화할 선수를 고르세요</p>'}
@@ -48,9 +47,9 @@ document.addEventListener('click', e => {
 function doUpgrade() {
   const c = club(), t = PDB[CL.upT]; if (!t) return; const lv = lvOf(t.id); if (lv >= 10) return; const mats = (CL.upM || []).filter(canMat); if (!mats.length) { toast('재료를 넣어 주세요'); return; }
   const fee = upFee(lv); if ((c.coins || 0) < fee) { toast('🪙 코인이 부족해요'); return; }
-  const rate = (ENH.rate[lv - 1] || 0) * upGauge(); coins(-fee);
+  const rate = 1; coins(-fee); // 강화는 무조건 성공 (재료 1명 이상 + 코인)
   for (const i of mats) delete c.own[i]; CL.upM = []; refillXI();
-  let nl, ok = Math.random() < rate, crit = false;
+  let nl, ok = true, crit = false;
   if (ok) { nl = lv + 1; if (lv <= 3 && Math.random() < .08) { nl = Math.min(10, lv + 2); crit = true; } }
   else { const w = ENH.drop[lv - 1]; let x = Math.random(); nl = 1; for (let i = 0; i < w.length; i++) { x -= w[i]; if (x <= 0) { nl = i + 1; break; } } }
   c.own[t.id] = nl; saveClub(); clubHeader();
@@ -66,3 +65,17 @@ function doUpgrade() {
 // 구단 화면 탭에 '강화' 끼워 넣기
 const _clubTab0 = clubTab0;
 clubTab0 = function (t) { if (t === 'up') { CL.tab = 'up'; CL.sel = null; CL.sell = false; $$('#clTabs [data-ctab]').forEach(b => b.classList.toggle('on', b.dataset.ctab === 'up')); return renderUp(); } return _clubTab0(t); };
+
+/* ===== 플레이스타일 (특기) — 경기에서 진짜로 효과가 있어요 =====
+   🚀 치고 달리기: 스프린트 더 빠름 · 🎯 피니셔: 슛 정확·세게 · 🧠 킬 패스: 패스 정확 · 🪄 테크니션: 드리블 중 안 뺏기고 빠름
+   🛡️ 인터셉트: 태클 잘 뺏음 · 💪 몸싸움: 안 뺏김 · 🧤 거미손: 선방 ↑
+   플러스(+)는 효과 2배: GOAT · 명예의 전당 · 시즌 스페셜 · 레전드 · 8강 이상 */
+const PSD = { P: ['🚀', '치고 달리기'], S: ['🎯', '피니셔'], A: ['🧠', '킬 패스'], D: ['🪄', '테크니션'], F: ['🛡️', '인터셉트'], H: ['💪', '몸싸움'], G: ['🧤', '거미손'] };
+function psOf(p) {
+  if (!p) return null; let k = p.pos === 'GK' ? ['G'] : [...new Set((p.tg || '').split(''))].filter(x => PSD[x] && x !== 'G');
+  if (p.pos !== 'GK' && !k.length) k = [{ FW: 'S', MF: 'A', DF: 'F' }[p.pos]];
+  if (p.r === 'X' && p.pos !== 'GK') k = [...new Set(k.concat({ FW: ['S', 'D', 'P'], MF: ['A', 'D', 'S'], DF: ['F', 'H', 'P'] }[p.pos]))];
+  let lv = p.lv || 1; try { if (!p.lv && typeof lvOf === 'function' && club()) lv = lvOf(p.id) || 1; } catch (e) { }
+  return { k, plus: ['X', 'I', 'T', 'L'].includes(p.r) || p.leg || lv >= 8 };
+}
+const psHTML = p => { const s = psOf(p); return s ? `<div class="pss">${s.k.map(x => `<span class="ps${s.plus ? ' plus' : ''}" title="${PSD[x][1]}${s.plus ? '+' : ''}">${PSD[x][0]}${s.plus ? '<sup>+</sup>' : ''}</span>`).join('')}</div>` : ''; };

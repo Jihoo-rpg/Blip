@@ -56,7 +56,7 @@ function roster(t, form) {
     const used = new Set(); const pool = PDB.filter(p => p.nat === t.id && !p.leg && !p.prospect && !p.tag).sort((a, b) => b.o - a.o);
     xi = F.map(f => { const p = pool.find(q => !used.has(q.id) && q.pos === f[0]); if (p) used.add(p.id); return p || null; });
   }
-  if (xi) { const fake = virtualRoster(t, form); return F.map((f, i) => { const p = xi[i]; if (!p) return fake[i]; const st = {}; for (const k in p.st) st[k] = softSt(p.st[k]); if (f[0] === 'GK' && p.pos !== 'GK') st.gk = 35; if (f[0] !== 'GK' && p.pos === 'GK') { st.spd = Math.min(st.spd, 50); st.drb = Math.min(st.drb, 45); } return { i, role: f[0], fx: f[1], fz: f[2], num: NU[i], name: p.n, st, look: lookOf(p), pid: p.id, ovr: p.o }; }); }
+  if (xi) { const fake = virtualRoster(t, form); return F.map((f, i) => { const p = xi[i]; if (!p) return fake[i]; const st = {}; for (const k in p.st) st[k] = softSt(p.st[k]); if (f[0] === 'GK' && p.pos !== 'GK') st.gk = 35; if (f[0] !== 'GK' && p.pos === 'GK') { st.spd = Math.min(st.spd, 50); st.drb = Math.min(st.drb, 45); } return { i, role: f[0], fx: f[1], fz: f[2], num: NU[i], name: p.n, st, look: lookOf(p), pid: p.id, ovr: p.o, ps: typeof psOf === 'function' ? psOf(p) : null }; }); }
   return virtualRoster(t, form);
 }
 function virtualRoster(t, form) {
