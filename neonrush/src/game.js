@@ -21,6 +21,9 @@
   const P = name => prog[name] || (prog[name] = { n: 0, p: 0, att: 0, done: false });
   const saveProg = () => store.set('prog', prog);
   let icon = store.get('icon', { d: 0, c1: 0, c2: 1 });
+  // 내 캐릭터 4칸 (그린 그림은 이 기기에 저장돼요)
+  const NSLOT = 4; let customs = store.get('customs', []); while (customs.length < NSLOT) customs.push(null); Art.setCustom(customs);
+  if (icon.d >= 100 && !customs[icon.d - 100]) icon.d = 0;
   const col1 = () => Art.COLORS[icon.c1], col2 = () => Art.COLORS[icon.c2];
 
   // ---------- levels ----------
@@ -94,17 +97,56 @@
       const b = document.createElement('div'); b.className = 'cell' + (d === icon.d ? ' on' : '');
       b.appendChild(Art.iconCanvas(d, col1(), col2(), 54)); b.onclick = () => { icon.d = d; store.set('icon', icon); renderIcons(); }; g.appendChild(b);
     }
+    const cg = $('customGrid'); cg.innerHTML = '';
+    for (let k = 0; k < NSLOT; k++) {
+      const b = document.createElement('div'); b.className = 'cell my' + (icon.d === 100 + k ? ' on' : '');
+      if (customs[k]) { b.appendChild(Art.iconCanvas(100 + k, col1(), col2(), 54)); b.onclick = () => { if (icon.d === 100 + k) openPaint(k); else { icon.d = 100 + k; store.set('icon', icon); renderIcons(); } }; }
+      else { b.innerHTML = '<span class="plus">＋</span>'; b.onclick = () => openPaint(k); }
+      const e = document.createElement('button'); e.className = 'edit'; e.textContent = '✏️'; e.onclick = ev => { ev.stopPropagation(); openPaint(k); }; b.appendChild(e); cg.appendChild(b);
+    }
     for (const [id, key] of [['col1', 'c1'], ['col2', 'c2']]) {
       const row = $(id); row.innerHTML = '';
       Art.COLORS.forEach((c, i) => { const b = document.createElement('div'); b.className = 'sw' + (icon[key] === i ? ' on' : ''); b.style.background = c; b.onclick = () => { icon[key] = i; store.set('icon', icon); renderIcons(); }; row.appendChild(b); });
     }
   }
-  function vehicleCanvas(m, size) {
+  // ---------- 🎨 캐릭터 그리기 ----------
+  const PN = Art.PX; let pslot = 0, pgrid = null, pcol = -2, ptool = 'pen', pmirror = false, pdown = false, pundo = [];
+  function openPaint(k) {
+    pslot = k; pgrid = customs[k] ? customs[k].slice() : Array(PN * PN).fill(-1); pundo = []; $('paint').style.display = 'flex'; mode = 'paint';
+    const pal = $('pPal'); pal.innerHTML = '';
+    [[-1, '메인'], [-2, '보조'], [-3, '검정']].concat(Art.COLORS.map((c, i) => [i, ''])).forEach(([v, n]) => { const b = document.createElement('div'); b.className = 'sw' + (v === pcol ? ' on' : ''); b.style.background = Art.pxColor(v, col1(), col2()); if (n) { b.textContent = n; b.classList.add('nm'); if (v === -3) b.style.color = '#fff'; } b.onclick = () => { pcol = v; if (ptool === 'erase') setTool('pen'); [...pal.children].forEach(x => x.classList.remove('on')); b.classList.add('on'); }; pal.appendChild(b); });
+    const gr = $('pGrid'); gr.innerHTML = ''; for (let i = 0; i < PN * PN; i++) { const c = document.createElement('div'); c.dataset.i = i; gr.appendChild(c); }
+    setTool(ptool); drawPaint();
+  }
+  function setTool(t) { ptool = t; for (const id of ['pPen', 'pErase', 'pFill']) $(id).classList.toggle('on', id === { pen: 'pPen', erase: 'pErase', fill: 'pFill' }[t]); }
+  function drawPaint() {
+    const cells = $('pGrid').children; for (let i = 0; i < PN * PN; i++) cells[i].style.background = Art.pxColor(pgrid[i], col1(), col2());
+    $('pMirror').classList.toggle('on', pmirror);
+    customs[pslot] = pgrid; Art.setCustom(customs); const pv = $('pPrev'); pv.innerHTML = ''; pv.appendChild(Art.iconCanvas(100 + pslot, col1(), col2(), 76)); ['ship', 'ball', 'robot'].forEach(m => pv.appendChild(vehicleCanvas(m, 60, 100 + pslot)));
+  }
+  function paintAt(i, first) {
+    if (i == null || i < 0) return; if (first) { pundo.push(pgrid.slice()); if (pundo.length > 40) pundo.shift(); }
+    const v = ptool === 'erase' ? -1 : pcol;
+    if (ptool === 'fill') { if (!first) return; const from = pgrid[i]; if (from === v) return; const st = [i]; while (st.length) { const j = st.pop(); if (pgrid[j] !== from) continue; pgrid[j] = v; const x = j % PN, y = Math.floor(j / PN); if (x > 0) st.push(j - 1); if (x < PN - 1) st.push(j + 1); if (y > 0) st.push(j - PN); if (y < PN - 1) st.push(j + PN); } }
+    else { pgrid[i] = v; if (pmirror) pgrid[Math.floor(i / PN) * PN + (PN - 1 - i % PN)] = v; }
+    drawPaint();
+  }
+  const cellAt = e => { const el = document.elementFromPoint(e.clientX, e.clientY); return el && el.parentNode === $('pGrid') ? +el.dataset.i : null; };
+  $('pGrid').addEventListener('pointerdown', e => { e.preventDefault(); pdown = true; paintAt(cellAt(e), true); });
+  window.addEventListener('pointermove', e => { if (pdown && mode === 'paint') paintAt(cellAt(e), false); });
+  window.addEventListener('pointerup', () => { pdown = false; });
+  function closePaint(save) {
+    $('paint').style.display = 'none'; mode = 'icons';
+    if (save) { if (pgrid.every(v => v === -1)) { customs[pslot] = null; if (icon.d === 100 + pslot) icon.d = 0; } else { customs[pslot] = pgrid; icon.d = 100 + pslot; } store.set('customs', customs); store.set('icon', icon); }
+    else customs = store.get('customs', customs.map(x => x)).concat([null, null, null, null]).slice(0, NSLOT);
+    Art.setCustom(customs); renderIcons(); drawMenuIcon();
+  }
+  function vehicleCanvas(m, size, dOverride) {
     const c = document.createElement('canvas'), d = Math.min(2, window.devicePixelRatio || 1);
     c.width = c.height = size * d; c.style.width = c.style.height = size + 'px';
-    const x = c.getContext('2d'); x.scale(d, d); x.translate(size / 2, size / 2); const u = size * 0.62;
-    const fn = { cube: () => Art.cube(x, u, icon.d, col1(), col2(), false), ship: () => Art.ship(x, u, icon.d, col1(), col2()), ball: () => Art.ball(x, u, icon.d, col1(), col2()),
-      ufo: () => Art.ufo(x, u, icon.d, col1(), col2()), wave: () => Art.wave(x, u * 1.3, icon.d, col1(), col2()), robot: () => Art.robot(x, u, icon.d, col1(), col2(), 0.6), spider: () => Art.spider(x, u, icon.d, col1(), col2(), 0.6) };
+    const x = c.getContext('2d'); x.scale(d, d); x.translate(size / 2, size / 2); const u = size * 0.62, D = dOverride != null ? dOverride : icon.d;
+    const fn = { cube: () => Art.cube(x, u, D, col1(), col2(), false), ship: () => Art.ship(x, u, D, col1(), col2()), ball: () => Art.ball(x, u, D, col1(), col2()),
+      ufo: () => Art.ufo(x, u, D, col1(), col2()), wave: () => Art.wave(x, u * 1.3, D, col1(), col2()), robot: () => Art.robot(x, u, D, col1(), col2(), 0.6), spider: () => Art.spider(x, u, D, col1(), col2(), 0.6) };
     fn[m](); return c;
   }
   function drawMenuIcon() { const m = $('menuIcon'); m.innerHTML = ''; m.appendChild(Art.iconCanvas(icon.d, col1(), col2(), 64)); }
@@ -145,6 +187,7 @@
       return;
     }
     if (mode === 'menu' && e.code === 'Enter') { goSelect(); return; }
+    if (mode === 'paint' && e.code === 'Escape') { closePaint(false); return; }
     if (mode === 'icons' && e.code === 'Escape') { goMenu(); return; }
     if (e.code === 'Escape' || e.code === 'KeyP') { if (mode === 'play') pause(); else if (mode === 'paused') resume(); }
     else if (e.code === 'KeyR' && (mode === 'play' || mode === 'paused')) restart();
@@ -170,6 +213,9 @@
 
   const click = (id, fn) => { const el = $(id); el.onclick = e => { e.stopPropagation(); fn(); }; el.addEventListener('mousedown', e => e.stopPropagation()); el.addEventListener('touchstart', e => e.stopPropagation(), { passive: true }); };
   click('playBtn', goSelect); click('iconBtn', goIcons); click('iconBack', goMenu); click('selBack', goMenu);
+  click('pPen', () => setTool('pen')); click('pErase', () => setTool('erase')); click('pFill', () => setTool('fill'));
+  click('pMirror', () => { pmirror = !pmirror; drawPaint(); }); click('pUndo', () => { if (pundo.length) { pgrid = pundo.pop(); drawPaint(); } });
+  click('pClear', () => { pundo.push(pgrid.slice()); pgrid = Array(PN * PN).fill(-1); drawPaint(); }); click('pSave', () => closePaint(true)); click('pCancel', () => closePaint(false));
   click('lvPrev', () => selMove(-1)); click('lvNext', () => selMove(1));
   click('lvCard', () => startLevel(false)); click('lvPrac', () => startLevel(true));
   click('resumeBtn', resume); click('restartBtn', restart); click('menuBtn', goSelect);

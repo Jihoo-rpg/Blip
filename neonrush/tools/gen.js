@@ -6,17 +6,17 @@ const E = require(process.env.ENGINE || '../src/engine.js');
 const fs = require('fs');
 
 const TIERS = [
-  { name: 'Easy', N: 24, k: 4, rest: 0.22, shipGap: 4.6, shipMove: 1, speeds: [1, 1, 0], cube: [26, 32], ship: [14, 16], half: 0,
+  { name: 'Easy', N: 30, k: 4, rest: 0.22, shipGap: 4.6, shipMove: 1, speeds: [1, 1, 0], cube: [26, 32], ship: [14, 16], half: 0,
     ev: { spike1: 4, spike2: 4, spike3: 2, small: 2, up: 4, down: 3, pad: 3, hang: 2, pit: 3, orbPit: 2 } },
-  { name: 'Normal', N: 20, k: 4, rest: 0.14, shipGap: 4.1, shipMove: 2, speeds: [1, 1, 2, 0], cube: [28, 34], ship: [16, 18], half: 0,
+  { name: 'Normal', N: 26, k: 4, rest: 0.14, shipGap: 4.1, shipMove: 2, speeds: [1, 1, 2, 0], cube: [28, 34], ship: [16, 18], half: 0,
     ev: { spike1: 2, spike2: 4, spike3: 3, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 3, saw: 3, downSpike: 2 } },
-  { name: 'Hard', N: 14, k: 4, rest: 0.08, shipGap: 3.6, shipMove: 2, speeds: [1, 2, 2, 0], cube: [30, 36], ship: [18, 20], half: 0.1,
+  { name: 'Hard', N: 22, k: 4, rest: 0.08, shipGap: 3.6, shipMove: 2, speeds: [1, 2, 2, 0], cube: [30, 36], ship: [18, 20], half: 0.1,
     ev: { spike2: 3, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 4, saw: 3, downSpike: 3 } },
-  { name: 'Harder', N: 10, k: 4, rest: 0.05, shipGap: 3.2, shipMove: 3, speeds: [1, 2, 3], cube: [32, 38], ship: [18, 22], half: 0.2,
+  { name: 'Harder', N: 19, k: 4, rest: 0.05, shipGap: 3.2, shipMove: 3, speeds: [1, 2, 3], cube: [32, 38], ship: [18, 22], half: 0.2,
     ev: { spike2: 3, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 4, saw: 4, downSpike: 4 } },
-  { name: 'Insane', N: 7, k: 4, rest: 0.03, shipGap: 2.8, shipMove: 3, speeds: [2, 3, 3, 4], cube: [34, 40], ship: [20, 24], half: 0.3,
+  { name: 'Insane', N: 16, k: 4, rest: 0.03, shipGap: 2.8, shipMove: 3, speeds: [2, 3, 3, 4], cube: [34, 40], ship: [20, 24], half: 0.3,
     ev: { spike2: 2, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 4, pit: 4, orbPit: 4, saw: 4, downSpike: 4 } },
-  { name: 'Demon', N: 5, k: 3, rest: 0, shipGap: 2.4, shipMove: 3, speeds: [3, 3, 4], cube: [36, 44], ship: [22, 26], half: 0.45,
+  { name: 'Demon', N: 13, k: 4, rest: 0, shipGap: 2.4, shipMove: 3, speeds: [3, 3, 4], cube: [36, 44], ship: [22, 26], half: 0.45,
     ev: { spike2: 2, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 4, pit: 4, orbPit: 4, saw: 4, downSpike: 4 } },
 ];
 // modes per level: hardest modes appear later; 'feat' is the newly introduced mode
@@ -140,16 +140,19 @@ function generate(def) {
     if (open) { // ease corridor toward fully open (for exits)
       st.f = Math.max(0, st.f - 2); st.c = Math.min(10, st.c + 2);
     } else {
-      const G = gapBase + (rnd() < 0.3 ? 0.6 : 0);
-      const mid = (st.f + st.c) / 2, mv = (rint(-P[1], P[1])) * (rnd() < 0.35 ? 0 : 1);
-      let nm = Math.max(G / 2 + 0.5, Math.min(10 - G / 2 - 0.5, mid + mv));
+      // 통로 모양: 무작위로 칸마다 들쭉날쭉하지 않게, '평평한 구간'과 '계단(한 방향으로 쭉)'을 번갈아 써서 구불구불한 터널처럼
+      if (!(st.run > 0)) { st.pat = rnd() < 0.45 ? 'flat' : 'stair'; st.run = rint(2, 4); st.step = rint(1, Math.max(1, P[1])); st.G = gapBase + (rnd() < 0.3 ? 0.6 : 0);
+        const m0 = (st.f + st.c) / 2; st.dir = m0 > 6 ? -1 : m0 < 4 ? 1 : (rnd() < 0.5 ? -1 : 1); }
+      st.run--; const G = st.G || gapBase;
+      const mid = (st.f + st.c) / 2, mv = st.pat === 'stair' ? st.dir * st.step : 0;
+      let nm = Math.max(G / 2 + 0.5, Math.min(10 - G / 2 - 0.5, mid + mv)); if (st.pat === 'stair' && nm === mid) { st.dir = -st.dir; st.run = 0; }
       // narrow gradually
       const curG = st.c - st.f, g = Math.max(G, curG - 1.5);
       st.f = Math.max(0, Math.round((nm - g / 2) * 2) / 2); st.c = Math.min(10, st.f + g);
     }
     if (st.f > 0) a.push(['b', r2(x), 0, r2(w), st.f]);
     if (st.c < 10) a.push(['b', r2(x), st.c, r2(w), r2(10 - st.c)]);
-    if (!open && st.c - st.f >= gapBase + 0.5 && rnd() < P[2]) {
+    if (!open && st.pat === 'flat' && st.c - st.f >= gapBase + 0.5 && rnd() < P[2] * 1.4) {
       if (rnd() < 0.5) a.push(['s', r2(x + w / 2 - 0.5), st.f, 0, 0]); else a.push(['s', r2(x + w / 2 - 0.5), r2(st.c - 1), 1, 0]);
     }
     return a;

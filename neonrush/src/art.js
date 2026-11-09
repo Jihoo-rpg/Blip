@@ -3,6 +3,11 @@ const Art = (() => {
   const COLORS = ['#29e3ff', '#ff3fa4', '#7dff3a', '#ffe23c', '#ff7a1a', '#ff3030', '#b04dff', '#3a6bff',
     '#ffffff', '#9a9a9a', '#1b1b1b', '#00c9a7', '#ffb3e6', '#8b5a2b', '#c8ff8a', '#ffd9a0'];
   const DESIGNS = 16;
+  // 내가 그린 캐릭터 (12×12 픽셀) — d가 100 이상이면 CUSTOM[d - 100]을 그려요. 칸 값: -1 메인 색 · -2 보조 색 · -3 검정 · 0~15 색상표
+  const PX = 12; let CUSTOM = [];
+  function setCustom(arr) { CUSTOM = arr || []; }
+  function pxColor(v, c1, c2) { return v === -1 ? c1 : v === -2 ? c2 : v === -3 ? '#05080f' : COLORS[v] || c1; }
+  function drawPx(c, s, px, c1, c2) { const h = s / 2, k = s / PX; for (let i = 0; i < PX * PX; i++) { const v = px[i]; if (v == null || v === -1) continue; c.fillStyle = pxColor(v, c1, c2); c.fillRect(-h + (i % PX) * k - 0.3, -h + Math.floor(i / PX) * k - 0.3, k + 0.6, k + 0.6); } }
   const sq = (c, x, y, w, h) => { c.fillRect(x, y, w, h); c.strokeRect(x, y, w, h); };
   function poly(c, pts) { c.beginPath(); c.moveTo(pts[0][0], pts[0][1]); for (const p of pts.slice(1)) c.lineTo(p[0], p[1]); c.closePath(); c.fill(); c.stroke(); }
 
@@ -12,6 +17,7 @@ const Art = (() => {
     c.lineJoin = 'round'; c.lineWidth = Math.max(1.5, s * 0.07); c.strokeStyle = '#05080f';
     if (glow) { c.shadowColor = c1; c.shadowBlur = s * 0.25; }
     c.fillStyle = c1; c.fillRect(-h, -h, s, s); c.shadowBlur = 0; c.strokeRect(-h, -h, s, s);
+    if (d >= 100) { const px = CUSTOM[d - 100]; if (px) { drawPx(c, s, px, c1, c2); c.strokeRect(-h, -h, s, s); } return; }
     c.fillStyle = c2;
     switch (d % DESIGNS) {
       case 0: sq(c, -30 * k, -30 * k, 60 * k, 60 * k); c.fillStyle = c1; poly(c, [[0, -20 * k], [20 * k, 0], [0, 20 * k], [-20 * k, 0]]); break;
@@ -54,6 +60,7 @@ const Art = (() => {
     const r = U * 0.48;
     c.lineWidth = U * 0.07; c.strokeStyle = OUT;
     c.fillStyle = c1; c.shadowColor = c1; c.shadowBlur = U * 0.25; c.beginPath(); c.arc(0, 0, r, 0, 7); c.fill(); c.shadowBlur = 0; c.stroke();
+    if (d >= 100 && CUSTOM[d - 100]) { c.save(); c.beginPath(); c.arc(0, 0, r, 0, 7); c.clip(); drawPx(c, r * 2, CUSTOM[d - 100], c1, c2); c.restore(); c.beginPath(); c.arc(0, 0, r, 0, 7); c.stroke(); return; }
     c.fillStyle = c2;
     for (let i = 0; i < 4; i += 2) { c.beginPath(); c.moveTo(0, 0); c.arc(0, 0, r * 0.82, i * Math.PI / 2, (i + 1) * Math.PI / 2); c.closePath(); c.fill(); c.stroke(); }
     c.fillStyle = c1; c.beginPath(); c.arc(0, 0, r * 0.32, 0, 7); c.fill(); c.stroke();
@@ -153,5 +160,5 @@ const Art = (() => {
     cv.width = cv.height = size * d; cv.style.width = cv.style.height = size + 'px';
     const c = cv.getContext('2d'); c.scale(d, d); c.translate(size / 2, size / 2); cube(c, size * 0.78, design, c1, c2, false); return cv;
   }
-  return { COLORS, DESIGNS, cube, ship, ball, ufo, wave, robot, spider, face, faceCanvas, iconCanvas };
+  return { COLORS, DESIGNS, PX, setCustom, pxColor, cube, ship, ball, ufo, wave, robot, spider, face, faceCanvas, iconCanvas };
 })();

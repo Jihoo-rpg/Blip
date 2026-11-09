@@ -68,6 +68,18 @@
   .swrow{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px}
   .sw{width:30px;height:30px;border-radius:8px;cursor:pointer;border:3px solid rgba(0,0,0,.6)}
   .sw.on{border-color:#fff;transform:scale(1.15)}
+  #customGrid{display:grid;grid-template-columns:repeat(4,62px);gap:8px;margin-bottom:6px}.cell.my{position:relative}.cell .plus{font-size:30px;color:rgba(255,255,255,.6)}.cell .edit{position:absolute;right:-6px;bottom:-6px;width:26px;height:26px;border-radius:50%;border:0;background:#222c;font-size:13px;cursor:pointer;padding:0}
+  #paint{position:fixed;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(0,0,0,.72);padding:10px}
+  .pbox{background:#141a2b;border:3px solid rgba(255,255,255,.18);border-radius:18px;padding:12px;max-width:98vw;max-height:98vh;overflow:auto;color:#fff}
+  .ptop{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px;font-size:18px}.ptop .tiny{font-size:12px;opacity:.7}
+  .pmain{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+  #pGrid{display:grid;grid-template-columns:repeat(12,1fr);width:min(64vh,86vw,420px);aspect-ratio:1;border:3px solid #05080f;touch-action:none;background:#05080f;gap:1px;user-select:none}
+  #pGrid div{cursor:crosshair}
+  .pside{display:flex;flex-direction:column;gap:8px;max-width:330px}
+  #pPrev{display:flex;gap:8px;align-items:center;justify-content:center;background:rgba(255,255,255,.07);border-radius:12px;padding:6px}
+  .ptools{display:flex;flex-wrap:wrap;gap:6px}.btn.pt{font-size:13px;padding:7px 10px}.btn.pt.on{outline:3px solid #7cff7a}
+  #pPal{display:flex;flex-wrap:wrap;gap:6px}#pPal .sw.nm{width:auto;padding:0 6px;font-size:11px;font-weight:800;display:flex;align-items:center;color:#000;text-shadow:0 0 3px #fff}
+  .pact{display:flex;gap:8px;justify-content:flex-end}
   .lbl{font-size:12px;opacity:.75;margin-top:10px;text-align:center}
   @media (max-width:640px){#lvCard .bars{width:100%}.bar{min-width:90px}#lvCard>div:last-child{width:100%}#iconGrid{grid-template-columns:repeat(4,1fr)}#lvCard{flex-direction:column;gap:8px;padding:14px}.arrow{width:36px;font-size:40px}}
   /* hud */
@@ -147,8 +159,24 @@
   <div id="modePrev" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;background:rgba(0,0,0,.35);border-radius:14px;padding:6px 10px"></div>
   <div class="kit">
     <div id="iconGrid"></div>
+    <div class="lbl">🎨 내 캐릭터 (직접 그리기 · 칸을 누르면 그려요)</div><div id="customGrid"></div>
     <div class="lbl">메인 색</div><div class="swrow" id="col1"></div>
     <div class="lbl">보조 색</div><div class="swrow" id="col2"></div>
+  </div>
+</div>
+
+<div id="paint">
+  <div class="pbox">
+    <div class="ptop"><b>🎨 캐릭터 그리기</b><span class="tiny">메인·보조 색은 아이콘 키트에서 고른 색이 들어가요</span></div>
+    <div class="pmain">
+      <div id="pGrid"></div>
+      <div class="pside">
+        <div id="pPrev"></div>
+        <div class="ptools"><button class="btn pt on" id="pPen">✏️ 펜</button><button class="btn pt" id="pErase">🧽 지우개</button><button class="btn pt" id="pFill">🪣 채우기</button><button class="btn pt" id="pMirror">🪞 좌우 대칭</button><button class="btn pt" id="pUndo">↩️ 되돌리기</button><button class="btn pt" id="pClear">🗑 전부 지우기</button></div>
+        <div id="pPal"></div>
+        <div class="pact"><button class="btn" id="pCancel">취소</button><button class="btn go" id="pSave">✅ 저장하고 쓰기</button></div>
+      </div>
+    </div>
   </div>
 </div>
 
