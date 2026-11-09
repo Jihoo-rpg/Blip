@@ -141,8 +141,12 @@ function generate(def) {
       st.f = Math.max(0, st.f - 2); st.c = Math.min(10, st.c + 2);
     } else {
       // 통로 모양: 무작위로 칸마다 들쭉날쭉하지 않게, '평평한 구간'과 '계단(한 방향으로 쭉)'을 번갈아 써서 구불구불한 터널처럼
-      if (!(st.run > 0)) { st.pat = rnd() < 0.45 ? 'flat' : 'stair'; st.run = rint(2, 4); st.step = rint(1, Math.max(1, P[1])); st.G = gapBase + (rnd() < 0.3 ? 0.6 : 0);
-        const m0 = (st.f + st.c) / 2; st.dir = m0 > 6 ? -1 : m0 < 4 ? 1 : (rnd() < 0.5 ? -1 : 1); }
+      if (!(st.run > 0)) {
+        // 모드마다 맞는 지형: 웨이브 = 오르락내리락 지그재그 · 볼/스파이더 = 평평한 통로(바닥·천장 가시) · UFO = 평평한 곳에 기둥 · 쉽 = 터널(평평+계단)
+        const fl = M === 'wave' ? 0 : (M === 'ball' || M === 'spider') ? 0.85 : M === 'ufo' ? 0.7 : 0.45;
+        st.pat = rnd() < fl ? 'flat' : 'stair'; st.run = M === 'wave' ? rint(2, 3) : rint(2, 4); st.step = M === 'wave' ? rint(1, 2) : (M === 'ball' || M === 'spider' || M === 'ufo') ? 1 : rint(1, Math.max(1, P[1]));
+        st.G = gapBase + (M === 'ufo' ? 1.2 : 0) + (rnd() < 0.3 ? 0.6 : 0);
+        const m0 = (st.f + st.c) / 2; st.dir = m0 > 6 ? -1 : m0 < 4 ? 1 : M === 'wave' && st.dir ? -st.dir : (rnd() < 0.5 ? -1 : 1); }
       st.run--; const G = st.G || gapBase;
       const mid = (st.f + st.c) / 2, mv = st.pat === 'stair' ? st.dir * st.step : 0;
       let nm = Math.max(G / 2 + 0.5, Math.min(10 - G / 2 - 0.5, mid + mv)); if (st.pat === 'stair' && nm === mid) { st.dir = -st.dir; st.run = 0; }
@@ -152,8 +156,16 @@ function generate(def) {
     }
     if (st.f > 0) a.push(['b', r2(x), 0, r2(w), st.f]);
     if (st.c < 10) a.push(['b', r2(x), st.c, r2(w), r2(10 - st.c)]);
-    if (!open && st.pat === 'flat' && st.c - st.f >= gapBase + 0.5 && rnd() < P[2] * 1.4) {
-      if (rnd() < 0.5) a.push(['s', r2(x + w / 2 - 0.5), st.f, 0, 0]); else a.push(['s', r2(x + w / 2 - 0.5), r2(st.c - 1), 1, 0]);
+    if (!open && st.pat === 'flat') {
+      if (M === 'ball' || M === 'spider') { // 바닥이나 천장 한쪽에 가시 줄 → 중력을 뒤집어 반대쪽으로 (번갈아 나와요)
+        if (rnd() < 0.55) { st.side = st.side === 'f' ? 'c' : st.side === 'c' ? 'f' : (rnd() < 0.5 ? 'f' : 'c'); const n = Math.max(1, Math.floor(w)), x0 = x + (w - n) / 2;
+          for (let i = 0; i < n; i++) a.push(st.side === 'f' ? ['s', r2(x0 + i), st.f, 0, 0] : ['s', r2(x0 + i), r2(st.c - 1), 1, 0]); }
+      } else if (M === 'ufo') { // 바닥에서 솟은 기둥 / 천장에 매달린 기둥 (위에 가시가 있을 때도)
+        if (rnd() < 0.5 && st.c - st.f >= 3.5) { const ph = rint(1, Math.max(1, Math.floor(st.c - st.f - 2.6))), px = r2(x + w / 2 - 0.5), up = rnd() < 0.6;
+          if (up) { a.push(['b', px, st.f, 1, ph]); if (rnd() < 0.4) a.push(['s', px, st.f + ph, 0, 0]); } else { a.push(['b', px, r2(st.c - ph), 1, ph]); if (rnd() < 0.4) a.push(['s', px, r2(st.c - ph - 1), 1, 0]); } }
+      } else if (st.c - st.f >= gapBase + 0.5 && rnd() < P[2] * 1.4) {
+        if (rnd() < 0.5) a.push(['s', r2(x + w / 2 - 0.5), st.f, 0, 0]); else a.push(['s', r2(x + w / 2 - 0.5), r2(st.c - 1), 1, 0]);
+      }
     }
     return a;
   }
