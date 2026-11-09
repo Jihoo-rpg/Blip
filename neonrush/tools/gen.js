@@ -6,9 +6,9 @@ const E = require(process.env.ENGINE || '../src/engine.js');
 const fs = require('fs');
 
 const TIERS = [
-  { name: 'Easy', N: 30, k: 4, rest: 0.22, shipGap: 4.6, shipMove: 1, speeds: [1, 1, 0], cube: [26, 32], ship: [14, 16], half: 0,
+  { name: 'Easy', N: 30, k: 4, rest: 0.22, shipGap: 4.6, shipMove: 1, speeds: [1, 1, 2], cube: [26, 32], ship: [14, 16], half: 0,
     ev: { spike1: 4, spike2: 4, spike3: 2, small: 2, up: 4, down: 3, pad: 3, hang: 2, pit: 3, orbPit: 2 } },
-  { name: 'Normal', N: 26, k: 4, rest: 0.14, shipGap: 4.1, shipMove: 2, speeds: [1, 1, 2, 0], cube: [28, 34], ship: [16, 18], half: 0,
+  { name: 'Normal', N: 26, k: 4, rest: 0.14, shipGap: 4.1, shipMove: 2, speeds: [1, 2, 2, 1], cube: [28, 34], ship: [16, 18], half: 0,
     ev: { spike1: 2, spike2: 4, spike3: 3, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 3, saw: 3, downSpike: 2 } },
   { name: 'Hard', N: 22, k: 4, rest: 0.08, shipGap: 3.6, shipMove: 2, speeds: [1, 2, 2, 0], cube: [30, 36], ship: [18, 20], half: 0.1,
     ev: { spike2: 3, spike3: 4, small: 2, up: 4, down: 3, pad: 3, hang: 3, pit: 4, orbPit: 4, saw: 3, downSpike: 3 } },
