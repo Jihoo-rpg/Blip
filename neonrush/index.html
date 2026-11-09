@@ -251,10 +251,10 @@ const Engine = (() => {
       else if (o.t === 'spike') {
         o.w = 1; o.h = 1;
         const sm = o.small;
-        // triangle hitbox matching the drawn spike (slightly inset)
-        const th = sm ? 0.4 : 0.88;
-        if (o.dir === 'down') o.tri = [[o.x + 0.12, o.y + 1], [o.x + 0.88, o.y + 1], [o.x + 0.5, o.y + 1 - th]];
-        else o.tri = [[o.x + 0.12, o.y], [o.x + 0.88, o.y], [o.x + 0.5, o.y + th]];
+        // 가시 판정: 진짜 지오메트리 대쉬처럼 그림보다 안쪽(가운데) 삼각형 — 모서리를 스치는 건 봐주고, 확실히 박으면 죽어요
+        const th = sm ? 0.32 : 0.66;
+        if (o.dir === 'down') o.tri = [[o.x + 0.26, o.y + 1], [o.x + 0.74, o.y + 1], [o.x + 0.5, o.y + 1 - th]];
+        else o.tri = [[o.x + 0.26, o.y], [o.x + 0.74, o.y], [o.x + 0.5, o.y + th]];
         L.hazards.push(o);
       }
       else if (o.t === 'saw') { o.w = o.r * 2; o.h = o.r * 2; L.hazards.push(o); }
@@ -384,7 +384,7 @@ const Engine = (() => {
     for (const b of near) if (b.t === 'block' && ov(ix, iy, iw, ih, b.x, b.y, b.w, b.h)) { die(s); return; }
     s.onGround = grounded;
 
-    const sh = m === 'wave' ? 0.03 : 0.05;
+    const sh = m === 'wave' ? 0.06 : 0.1; // 위험물에 닿는 판정은 몸보다 살짝 안쪽 (블록 착지 판정은 그대로)
     const hx = px + sh, hy = s.y + sh, hw = W - sh * 2, hh = H - sh * 2;
     for (const o of near) {
       if (o.t === 'spike') {
