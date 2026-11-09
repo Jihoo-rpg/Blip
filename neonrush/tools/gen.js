@@ -119,8 +119,8 @@ function generate(def) {
       a.push(['o', r2(p0 + 2.4 * sfac()), r2(h + 2.4), 0]); floor(a, p1, x + w * 2, h); return { a, h, beats: 2 };
     },
     hang(x, h, w) {
-      if (h > 3) return null; const r = EV.spikes(x, h, w, 1); const sx = r.a.find(o => o[0] === 's')[1];
-      r.a.push(['s', sx, h + 3, 1, 0]); r.a.push(['b', sx, h + 4, 1, 1, 1]); return r;
+      if (h > 2) return null; const r = EV.spikes(x, h, w, 1); const sx = r.a.find(o => o[0] === 's')[1];
+      r.a.push(['s', sx, h + 4, 1, 0]); r.a.push(['b', sx, h + 5, 1, 1, 1]); return r; // 위 가시와 아래 가시 사이 3칸 (예전 2칸은 너무 빡빡했어요)
     },
     saw(x, h, w) { const a = []; floor(a, x, x + w, h); a.push(['w', r2(x + 1 + 2.1 * sfac()), r2(h - 0.15), 0.95]); return { a, h }; },
   };
