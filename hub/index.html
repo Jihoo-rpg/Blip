@@ -339,11 +339,11 @@ const GAMES = [
     tags: ['3D 오픈월드', '은행 · 보석상 털기', '진짜 목소리 NPC', '총 · 주먹 · 밟기', '경찰 · 헬기 추격'],
   },
   {
-    id: 'neonrush', name: '네온 러시', url: '../neonrush/',
-    sq: 'sq_neonrush.jpg', bn: 'bn_neonrush.jpg', genre: '리듬', icon: '🔷',
-    desc: '음악에 맞춰 달리며 가시·톱날·벽을 뛰어넘는 원버튼 리듬 플랫포머예요. Easy부터 Demon까지 16개 레벨, 큐브·쉽·볼·UFO·웨이브·로봇·스파이더 7가지 모드와 0.5배~4배 속도 포털이 있어요. 아이콘 키트에서 큐브 모양과 색을 고르고, 연습 모드로 체크포인트를 찍으며 연습할 수 있어요.',
-    info: [['장르', '리듬 플랫포머'], ['기기', '모바일 · PC'], ['레벨', '16개 · 난이도 6단계'], ['조작', '스페이스 · 클릭 · 터치']],
-    tags: ['16개 레벨', '7가지 모드', '속도 포털', '아이콘 키트', '연습 모드'],
+    id: 'wavedash', name: '웨이브 대시', url: '../wavedash/',
+    sq: 'sq_wavedash.jpg', bn: 'bn_wavedash.jpg', genre: '리듬', icon: '〰️',
+    desc: '누르고 있으면 위로, 떼면 아래로! 지그재그 네온 통로를 웨이브 하나로 빠져나가는 원버튼 리듬 게임이에요. Easy부터 Demon까지 12개 레벨, 미니 웨이브·속도 포털·톱날이 나오고, 끝없이 빨라지는 무한 모드와 체크포인트 연습 모드도 있어요. 모든 통로는 정답 길을 먼저 만들고 벽을 세워서 불가능한 곳이 없어요.',
+    info: [['장르', '원버튼 리듬'], ['기기', '모바일 · PC'], ['레벨', '12개 + 무한 모드'], ['조작', '누르기(터치 · 클릭 · 스페이스)']],
+    tags: ['웨이브만!', '12개 레벨', '무한 모드', '연습 모드', '미니 · 속도 포털'],
   },
 ];
 const GENRES = ['전체', ...new Set(GAMES.map(g => g.genre))];
@@ -380,7 +380,7 @@ function localInfo(id) {
   try {
     if (id === 'virus') { const d = JSON.parse(localStorage.getItem('virussim_save_v1') || 'null'); if (d && d.day != null) return `💾 이어하기 · DAY ${d.day}`; }
     if (id === 'ball') { const d = JSON.parse(localStorage.getItem('twin-orbit-v1') || 'null'); const n = d && d.best ? Object.keys(d.best).length : 0; if (n) return `🏁 ${n}/12 월드 클리어`; }
-    if (id === 'neonrush') { const d = JSON.parse(localStorage.getItem('nr2_prog') || 'null'); const n = d ? Object.values(d).filter(v => v && v.done).length : 0; if (n) return `🏁 ${n}/16 레벨 클리어`; }
+    if (id === 'wavedash') { const d = JSON.parse(localStorage.getItem('wd_prog') || 'null'); const n = d ? Object.values(d).filter(v => v && v.done).length : 0; const b = +localStorage.getItem('wd_best') || 0; if (n || b) return `🏁 ${n}/12 레벨${b ? ` · 무한 ${b}m` : ''}`; }
     if (id === 'catjump') { const d = JSON.parse(localStorage.getItem('nyangjump_save_v2') || 'null'); if (d && d.best) return `🏔️ 내 최고 ${Number(d.best).toLocaleString('ko-KR')}m`; }
   } catch (e) {}
   return '';
