@@ -262,6 +262,13 @@
    새 게임을 추가하려면 이 배열에 항목 하나만 더 넣으면 돼요. */
 const GAMES = [
   {
+    id: 'wavedash', name: '웨이브 대시', url: '../wavedash/',
+    sq: 'sq_wavedash.jpg', bn: 'bn_wavedash.jpg', genre: '리듬', icon: '〰️',
+    desc: '누르고 있으면 위로, 떼면 아래로! 지그재그 네온 통로를 웨이브 하나로 빠져나가는 원버튼 리듬 게임이에요. Easy부터 Demon까지 12개 레벨, 미니 웨이브·속도 포털·톱날이 나오고, 끝없이 빨라지는 무한 모드와 체크포인트 연습 모드도 있어요. 모든 통로는 정답 길을 먼저 만들고 벽을 세워서 불가능한 곳이 없어요.',
+    info: [['장르', '원버튼 리듬'], ['기기', '모바일 · PC'], ['레벨', '12개 + 무한 모드'], ['조작', '누르기(터치 · 클릭 · 스페이스)']],
+    tags: ['웨이브만!', '12개 레벨', '무한 모드', '연습 모드', '미니 · 속도 포털'],
+  },
+  {
     id: 'catjump', name: '냥냥 점프', url: '../catjump/',
     sq: 'sq_catjump.jpg', bn: 'bn_catjump.jpg', genre: '캐주얼', icon: '🐾',
     desc: '고양이가 양쪽 벽을 번갈아 타고 끝없이 올라가는 점프 게임이에요. 장애물을 피하며 최고 기록에 도전하고, 고양이와 스킨을 모으고, 친구와 1:1 대결·거래를 해 보세요. 시즌마다 1~3등은 칭호를 받아요.',
@@ -338,13 +345,6 @@ const GAMES = [
     info: [['장르', '오픈월드 액션'], ['기기', 'PC · 모바일'], ['배경', '서울'], ['조작', 'WASD · 마우스 / 조이스틱']],
     tags: ['3D 오픈월드', '은행 · 보석상 털기', '진짜 목소리 NPC', '총 · 주먹 · 밟기', '경찰 · 헬기 추격'],
   },
-  {
-    id: 'wavedash', name: '웨이브 대시', url: '../wavedash/',
-    sq: 'sq_wavedash.jpg', bn: 'bn_wavedash.jpg', genre: '리듬', icon: '〰️',
-    desc: '누르고 있으면 위로, 떼면 아래로! 지그재그 네온 통로를 웨이브 하나로 빠져나가는 원버튼 리듬 게임이에요. Easy부터 Demon까지 12개 레벨, 미니 웨이브·속도 포털·톱날이 나오고, 끝없이 빨라지는 무한 모드와 체크포인트 연습 모드도 있어요. 모든 통로는 정답 길을 먼저 만들고 벽을 세워서 불가능한 곳이 없어요.',
-    info: [['장르', '원버튼 리듬'], ['기기', '모바일 · PC'], ['레벨', '12개 + 무한 모드'], ['조작', '누르기(터치 · 클릭 · 스페이스)']],
-    tags: ['웨이브만!', '12개 레벨', '무한 모드', '연습 모드', '미니 · 속도 포털'],
-  },
 ];
 const GENRES = ['전체', ...new Set(GAMES.map(g => g.genre))];
 
@@ -387,7 +387,7 @@ function localInfo(id) {
 }
 
 /* ===================== 화면 그리기 ===================== */
-let view = 'home', genre = '전체', query = '', openId = null, curTab = 'about', heroI = Math.floor(Math.random() * 99);
+let view = 'home', genre = '전체', query = '', openId = null, curTab = 'about', heroI = 0; // 처음엔 새 게임(맨 앞)부터
 function heroHTML() { const hg = GAMES[heroI % GAMES.length];
   return `<div class="hin"><span class="tag">✨ 오늘의 추천 · ${esc(hg.genre)}</span><h1>${hg.icon} ${esc(hg.name)}</h1><p>${esc(hg.desc)}</p>
     <div class="hb"><button class="hplay" data-play="${hg.id}">▶ 바로 플레이</button><button class="hmore" data-open="${hg.id}">자세히 보기</button></div></div>
