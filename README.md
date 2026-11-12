@@ -24,3 +24,8 @@ This is blip company.
 - 예전 냥냥 점프 주소(`/CatJump/CatJump.html`)는 새 주소로 자동 이동해요.
 - 새 게임은 폴더를 하나 만들고 `hub/index.html`의 `GAMES` 목록에 한 줄 추가하면 돼요.
 - 바이러스 시뮬레이터 지도: Natural Earth 1:110m(퍼블릭 도메인). 바이러스 특성은 모두 게임용 가상 능력이에요.
+
+## 단독 사이트 (허브에는 없음)
+| 게임 | 주소 | 파일 |
+|---|---|---|
+| ⚔️ Try RPG | https://jihoo-rpg.github.io/Blip/tryrpg/ | `tryrpg/index.html` (「잃어버린 왕국 : 천년의 봉인」 체험판 · 1장(마을 → 초원 → 고블린 숲 → 협곡 → 지역 보스 고르곤 → Lv.10 사당)까지 · 세이브 키 `tryrpg-save-v1`) |
