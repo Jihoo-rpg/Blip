@@ -117,7 +117,11 @@ input.name:focus{border-color:var(--gold)}
 #fade.off{opacity:0}
 /* touch */
 #touch{display:none}
-@media (pointer:coarse){#touch{display:block}}
+@media (pointer:coarse){body:not(.tc-off) #touch{display:block}}
+body.tc-on #touch{display:block}
+#tcShow{display:none;position:fixed;right:2vmin;bottom:2vmin;z-index:21;width:10vmin;height:10vmin;border-radius:50%;background:rgba(20,16,30,.6);border:1px solid rgba(242,193,78,.6);font-size:5vmin;align-items:center;justify-content:center;touch-action:none}
+@media (pointer:coarse){body.tc-off #tcShow{display:flex}}
+#tcHide{left:2.5vmin;bottom:40vmin;width:9vmin;height:9vmin;font:700 4vmin sans-serif;background:rgba(20,16,30,.5);border-color:rgba(255,255,255,.4)}
 #dpad{position:fixed;left:2.5vmin;bottom:2.5vmin;width:36vmin;height:36vmin;z-index:20;touch-action:none}
 #dpad div{position:absolute;width:33.3%;height:33.3%;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.3);border-radius:22%;display:flex;align-items:center;justify-content:center;font-size:5vmin;color:#fffa}
 #dpad .u{left:33.3%;top:0}#dpad .d{left:33.3%;bottom:0}#dpad .l{left:0;top:33.3%}#dpad .r{right:0;top:33.3%}
@@ -165,8 +169,8 @@ kbd{display:inline-block;min-width:1.4em;padding:.05em .4em;margin:0 .1em;border
 </div>
 <div id="touch">
   <div id="dpad"><div class="u" data-d="up">▲</div><div class="d" data-d="down">▼</div><div class="l" data-d="left">◀</div><div class="r" data-d="right">▶</div></div>
-  <div class="tb" id="tbb" data-a="roll">B</div><div class="tb" id="ta" data-a="ok">A</div><div class="tb" id="tpot" data-a="potion">🧪</div><div class="tb" id="tmenu2" data-a="menu">☰</div><div class="tb" id="thelp" data-a="help">?</div>
-</div>
+  <div class="tb" id="tbb" data-a="roll">B</div><div class="tb" id="ta" data-a="auto">A</div><div class="tb" id="tpot" data-a="potion">🧪</div><div class="tb" id="tmenu2" data-a="menu">☰</div><div class="tb" id="thelp" data-a="help">?</div><div class="tb" id="tcHide" title="조작키 숨기기">✕</div>
+</div><div id="tcShow" title="조작키 보이기">🎮</div>
 <script>
 'use strict';
 /* ===================== CORE ===================== */
@@ -390,7 +394,7 @@ async function talkHunter(n){
   await say(n.name,qs('q5')==='a'?`(${qProg('q5').txt}) 가렌은 내려찍기 전에 바닥에 붉은 원이 생긴다. 그때 구르기(X)로 빠져나와!`:'자네라면 어떤 짐승도 두렵지 않겠군.')}
 const CHILD=['형아/누나 검 멋지다! 나도 커서 대장장이 될래!','덤불을 베면 가끔 하트가 나온대!','고블린 숲 북쪽에 이상한 돌문이 있대… 무서워!','구르는 동안엔 아무것도 안 아프대! 진짜야!'];
 async function talkChild(n){n.ix=(n.ix||0)+1;await say(n.name,CHILD[n.ix%CHILD.length])}
-const OLD=['Z를 누르면 베고, 연속으로 누르면 3연타가 된다네. 세 번째가 가장 강하지.','Z를 꾹 누르고 있다가 떼면 회전베기! 주위의 적을 한꺼번에 벨 수 있다네.','X나 Shift로 구르면 잠깐 무적이 된다네. 기력(초록 막대)을 쓰니 아껴 쓰게.',
+const OLD=['마우스 왼쪽을 누르면 베고, 연속으로 누르면 3연타가 된다네. 세 번째가 가장 강하지.','왼쪽 버튼을 꾹 누르고 있다가 떼면 회전베기! 주위의 적을 한꺼번에 벨 수 있다네.','Space나 Shift(마우스 오른쪽도 된다네)로 구르면 잠깐 무적이 된다네. 기력(초록 막대)을 쓰니 아껴 쓰게.',
   'Q를 누르면 회복약을 마신다네. 위험할 땐 망설이지 말게.','레벨업할 때 하트를 늘릴지, 힘을 키울지, 기력을 늘릴지 고를 수 있지. 젊을 땐 하트가 최고라네.','Esc를 누르면 가방과 검, 퀘스트를 볼 수 있다네.'];
 async function talkOld(n){n.ix=(n.ix||0);await say(n.name,OLD[n.ix%OLD.length]);n.ix++}
 function npcMark(n){const id=n.id,f=G.p.flags;
@@ -706,9 +710,15 @@ function playStep(T,st,t,spb){const n=T.prog.length,bar=Math.floor(st/16)%n,s=st
   if(T.drum){if(s%8===0)osc('sine',150,t,.16,.45,d,40);if(s%8===4)noise(t,.12,.18,d,1500);if(T.drum===2?s%2===1:s%4===2)noise(t,.03,.07,d,7000)}}
 
 /* ===================== DATA ===================== */
-const VERSION='2.4';
+const VERSION='2.5';
 const GAME_TITLE='Try RPG — 잃어버린 왕국 체험판';
-const UPDATES=[{v:'2.4',date:'2026.11.12',title:'도움말 · 튜토리얼 추가',notes:[
+const UPDATES=[{v:'2.5',date:'2026.11.12',title:'조작키 개편 · 모바일 조작키 끄기',notes:[
+  '🖱️ 공격: 마우스 왼쪽 클릭 (꾹 눌렀다 떼면 회전베기) · 키보드 J',
+  '🌀 구르기: Space · Shift · 마우스 오른쪽',
+  '💬 대화·조사: E — 대상 위에 「E 대화」 표시가 뜬다 (공격과 분리)',
+  '⏎ 대화 넘기기 · 메뉴 선택: Enter · Space · 클릭 — Z / X 키는 더 이상 쓰지 않는다',
+  '📱 모바일 조작키 숨기기: 화면의 ✕ 버튼 · 다시 켜기는 🎮 버튼 · 설정 → 모바일 조작키(자동/켜기/끄기)',
+  '🐛 보스 체력바와 🎯 목표 안내가 보이지 않던 문제 수정']},{v:'2.4',date:'2026.11.12',title:'도움말 · 튜토리얼 추가',notes:[
   '❓ H 키(모바일 ? 버튼) 또는 메뉴 → 「도움말 · 가이드」 — 11개 주제',
   '🎮 조작법 · 전투 기초 · 하트와 죽음 · 검 제련/강화 · 레벨 · 길 찾기',
   '💀 지역 보스 · 사당 · 사막 퍼즐 · 제3장 장치 · 아스텔 왕성 공략 힌트',
@@ -838,7 +848,7 @@ async function qFinish(id){const Q=QS[id];G.p.quests[id].s='d';if(Q.col)for(cons
   if(parts.length)await say('',`퀘스트 「${Q.n}」 완료!\n보상: ${parts.join(', ')}`);saveGame()}
 
 /* ===================== SAVE ===================== */
-const SAVEKEY='tryrpg-save-v1';
+const SAVEKEY='tryrpg-save-v1';const SETKEY='tryrpg-set-v1';
 function serialize(){return JSON.stringify({v:2,p:G.p,set:G.set})}
 function saveGame(){if(!G.p)return false;G.p.x=Math.round(G.pl.x);G.p.y=Math.round(G.pl.y);G.p.dir=G.pl.dir;G.memSave=serialize();try{localStorage.setItem(SAVEKEY,G.memSave);return true}catch(e){return false}}
 function loadSave(){try{const s=localStorage.getItem(SAVEKEY);if(!s)return null;const o=JSON.parse(s);if(!o||!o.p||o.p.v!==2)return null;return o}catch(e){return null}}
@@ -1107,7 +1117,7 @@ async function shrineClear(){const s=G.shr;G.cut=true;sfx('fanfare');await fadeO
   G.p.flags.shrineClear=1;const time=G.p.time-s.t0;
   const el=$('#clear');el.innerHTML=`<div class="cl1 ttl">잊혀진 수호자의 사당</div><div class="cl2 ttl">CLEAR</div><div class="clst">
    <div class="kv"><span>⏱ 소요 시간</span><span>${Math.floor(time/60)}분 ${Math.floor(time%60)}초</span></div><div class="kv"><span>💔 받은 피해</span><span>하트 ${(s.dmg/4).toFixed(2).replace(/\.?0+$/,'')}개</span></div>
-   <div class="kv"><span>⚔️ 처치한 적</span><span>${s.kills}</span></div><div class="kv"><span>🏆 획득</span><span style="color:#ff9a2e">수호검 아르카디아 (품질 ${G.p.flags.guardPc}%)</span></div></div><div class="dim cl3">Z 키를 눌러 계속</div>`;
+   <div class="kv"><span>⚔️ 처치한 적</span><span>${s.kills}</span></div><div class="kv"><span>🏆 획득</span><span style="color:#ff9a2e">수호검 아르카디아 (품질 ${G.p.flags.guardPc}%)</span></div></div><div class="dim cl3">Enter 또는 클릭으로 계속</div>`;
   el.classList.remove('hide');music('clear');await fadeIn();
   await new Promise(r=>{G.skipper=()=>r()});sfx('ok');await fadeOut();el.classList.add('hide');G.cut=false;s.clearing=0;
   await playCine(1);await enterMap('wood',25*TS+16,4*TS+20,'down',true);if(qs('q6')==='a')toast('📜 촌장 하르덴에게 보고하자!','gold');await wait(600);toast('🏜️ 사막 지역 해금! 거인의 협곡 동쪽 길이 열렸다','gold')}
@@ -1258,7 +1268,7 @@ function drawHUD(t){const p=G.p,pl=G.pl;if(!p)return;ctx.save();
   // minimap
   drawMini(ctx);
   // boss bar
-  drawObjective(ox,oy,t);
+  drawObjective(G.cam.x|0,G.cam.y|0,t);
   const b=G.boss||G.worm||G.fb;if(b&&G.bossBar&&b.st!=='dying'&&b.st!=='dead'){G.bossShown=Math.min(1,G.bossShown+1/60);const w=520,x=(W-w)/2,y=22,r=b.hp/b.mhp*G.bossShown;
     ctx.font='700 16px "Black Han Sans",sans-serif';ctx.textAlign='center';const bn=b.bname||'고대의 수호자 — 아르카논';ctx.strokeText(bn,W/2,y);ctx.fillStyle=b.phase===2?'#ff8080':'#f3e6c8';ctx.fillText(bn,W/2,y);
     ctx.fillStyle='rgba(0,0,0,.7)';ctx.fillRect(x-3,y+6,w+6,16);ctx.fillStyle='#3a0a10';ctx.fillRect(x,y+9,w,10);b.lag=b.lag===undefined?r:Math.max(r,b.lag-1/120);ctx.fillStyle='#fff';ctx.fillRect(x,y+9,w*b.lag,10);
@@ -1284,11 +1294,11 @@ function openPause(){if(G.lock||G.cut||G.dead||focus.length)return;G.lock++;sfx(
     {h:'<span class="ic">🎒</span>가방',prev:()=>pgBag(body,0),f:()=>pgBag(body,1,back)},
     {h:'<span class="ic">🗡️</span>검',prev:()=>pgSwords(body,0),f:()=>pgSwords(body,1,back)},
     {h:'<span class="ic">📜</span>퀘스트',prev:()=>pgQuests(body)},
-    {h:'<span class="ic">🗺️</span>세계 지도',prev:()=>{body.innerHTML='<div class="h2 ttl">🗺️ 세계 지도</div><div class="dim">Z: 지도 열기 (필드에서는 M 키)</div>'},f:()=>{pop(nav);closePanel();unlock();openWorldMap()}},
+    {h:'<span class="ic">🗺️</span>세계 지도',prev:()=>{body.innerHTML='<div class="h2 ttl">🗺️ 세계 지도</div><div class="dim">Enter: 지도 열기 (필드에서는 M 키)</div>'},f:()=>{pop(nav);closePanel();unlock();openWorldMap()}},
     {h:'<span class="ic">❓</span>도움말 · 가이드',prev:()=>{body.innerHTML='<div class="h2 ttl">❓ 도움말</div><div class="dim">조작법 · 전투 · 하트 · 검 강화 · 보스와 퍼즐 공략을 볼 수 있습니다. (필드에서 H 키)</div>'},f:()=>{pop(nav);closePanel();unlock();openHelp()}},
     {h:'<span class="ic">⚙️</span>설정',prev:()=>pgSet(body,0),f:()=>pgSet(body,1,back)},
     {h:'<span class="ic">📼</span>업데이트 영상',prev:()=>{body.innerHTML='<div class="h2 ttl">📼 업데이트 영상</div><div class="dim">이번 업데이트에서 바뀐 내용을 영상으로 다시 봅니다.</div>'},f:()=>{pop(nav);closePanel();unlock();showReel(true)}},
-    {h:'<span class="ic">▶</span>계속하기',prev:()=>{body.innerHTML='<div class="h2 ttl">⏸ 일시정지</div><div class="dim">Esc 또는 X로 닫기</div>'},f:close}],{onFocus:it=>it.prev&&it.prev(),onCancel:close}))}
+    {h:'<span class="ic">▶</span>계속하기',prev:()=>{body.innerHTML='<div class="h2 ttl">⏸ 일시정지</div><div class="dim">Esc로 닫기</div>'},f:close}],{onFocus:it=>it.prev&&it.prev(),onCancel:close}))}
 function pgStatus(b){const p=G.p;const kills=Object.values(p.kills).reduce((a,c)=>a+c,0);
   b.innerHTML=`<div class="h2 ttl">🧭 ${p.name} <span class="dim" style="font-size:.7em">Lv.${p.lv}</span></div>
   <div class="box grid2"><div class="kv"><span>❤️ 하트</span><span>${(p.hp/4).toFixed(2).replace(/\.?0+$/,'')} / ${p.hearts} (최대 10)</span></div><div class="kv"><span>⚔️ 공격력</span><span>${pAtk()}</span></div>
@@ -1296,13 +1306,13 @@ function pgStatus(b){const p=G.p;const kills=Object.values(p.kills).reduce((a,c)
   <div class="kv"><span>✨ 경험치</span><span>${p.xp} / ${xpNeed(p.lv)}</span></div><div class="kv"><span>💰 골드</span><span>${p.gold}</span></div>
   <div class="kv"><span>⏱ 플레이</span><span>${Math.floor(p.time/60)}분</span></div><div class="kv"><span>⚔️ 처치</span><span>${kills}</span></div></div>
   <div class="box"><div class="kv"><span>장착 검</span><span style="color:${qInfo(curSw()).c}">${swName(curSw())}</span></div><div class="dim" style="font-size:.85em;margin-top:.3em">${SW[curSw().b].d}</div></div>
-  <div class="box dim" style="font-size:.85em;line-height:1.6">Z 베기(연타 3단) · Z 길게 눌렀다 떼기 회전베기 · X/Shift 구르기 · Q 회복약 · Esc 일시정지</div>`}
+  <div class="box dim" style="font-size:.85em;line-height:1.6">클릭 베기(연타 3단) · 클릭 길게 눌렀다 떼기 회전베기 · Space/Shift 구르기 · E 대화 · Q 회복약 · Esc 메뉴</div>`}
 function pgBag(b,active,back){const ids=invList(()=>1).sort((a,c)=>(IT[a].t==='use'?0:1)-(IT[c].t==='use'?0:1));
   b.innerHTML=`<div class="h2 ttl">🎒 가방</div><div class="split"><div class="list" id="bl"></div><div class="box" id="bi" style="margin-top:0"></div></div>`;const info=$('#bi');
   const items=ids.map(k=>({h:`<span class="ic">${IT[k].ic}</span>${IT[k].n}<span class="r">x${has(k)}</span>`,k,dis:IT[k].t!=='use',whyNot:'제련 재료입니다',f:()=>{drinkPotion();const i=m.i;pop(m);pgBag(b,1,back)}}));
   const show=it=>{info.innerHTML=it?`<div class="ttl gold" style="font-size:1.2em">${IT[it.k].ic} ${IT[it.k].n}</div><div style="margin-top:.4em">${IT[it.k].d}</div>`:'<span class="dim">비어 있다.</span>'};
   const m=new Menu($('#bl'),items,{empty:'가방이 비어 있다.',onFocus:show,onCancel:()=>{pop(m);back&&back()}});show(items[0]);if(active)push(m)}
-function pgSwords(b,active,back){const p=G.p;b.innerHTML=`<div class="h2 ttl">🗡️ 검 <span class="dim" style="font-size:.6em">Z: 장착</span></div><div class="split"><div class="list" id="sl"></div><div class="box" id="si" style="margin-top:0"></div></div>`;const info=$('#si');
+function pgSwords(b,active,back){const p=G.p;b.innerHTML=`<div class="h2 ttl">🗡️ 검 <span class="dim" style="font-size:.6em">Enter: 장착</span></div><div class="split"><div class="list" id="sl"></div><div class="box" id="si" style="margin-top:0"></div></div>`;const info=$('#si');
   const items=p.swords.map((s,i)=>({h:`<span class="ic">${i===p.eq?'✅':'🗡️'}</span><span style="color:${qInfo(s).c}">${swName(s)}</span><span class="r">공격 ${swAtk(s)}</span>`,i,f:()=>{p.eq=i;sfx('equip');toast(`🗡️ ${swName(s)} 장착!`);const k=m.i;pop(m);pgSwords(b,1,back);topM().set(k,true)}}));
   const m=new Menu($('#sl'),items,{onFocus:it=>{const s=p.swords[it.i];info.innerHTML=`<div class="ttl" style="font-size:1.2em;color:${qInfo(s).c}">${swName(s)}</div><div>공격력 ${swAtk(s)} (기본 ${SW[s.b].atk} · 품질 ${qInfo(s).pc}%)</div><div class="dim" style="margin-top:.4em">${SW[s.b].d}</div>`},onCancel:()=>{pop(m);back&&back()}});
   m.o.onFocus(items[m.i]);if(active)push(m)}
@@ -1311,15 +1321,16 @@ function pgQuests(b){let h='<div class="h2 ttl">📜 퀘스트</div>';const ks=O
   const dn=ks.filter(k=>qs(k)==='d');if(dn.length)h+='<div class="dim" style="margin-top:.7em">완료</div>'+dn.map(k=>`<div class="kv"><span>✅ ${QS[k].n}</span></div>`).join('');b.innerHTML=h}
 function pgSet(b,active,back){const S=G.set;b.innerHTML=`<div class="h2 ttl">⚙️ 설정</div><div id="stl" class="box"></div><div id="stx"></div>`;
   const items=[{h:`<span class="ic">🎵</span>배경음악<span class="r">${S.music?'ON':'OFF'}</span>`,f:()=>{S.music=!S.music;auVol();re()}},{h:`<span class="ic">🔊</span>효과음<span class="r">${S.sfx?'ON':'OFF'}</span>`,f:()=>{S.sfx=!S.sfx;auVol();re()}},
+    {h:`<span class="ic">📱</span>모바일 조작키<span class="r">${{auto:'자동',on:'켜기',off:'끄기'}[S.touch||'auto']}</span>`,f:()=>{setTouch({auto:'on',on:'off',off:'auto'}[S.touch||'auto']);re()}},
     {h:'<span class="ic">📋</span>세이브 코드 복사 (백업)',f:()=>{const c=encodeSave();$('#stx').innerHTML=`<div class="box"><textarea readonly id="sc">${c}</textarea></div>`;$('#sc').select();try{navigator.clipboard.writeText(c).then(()=>toast('📋 복사했습니다'),()=>{})}catch(e){}}},
     {h:'<span class="ic">📥</span>세이브 코드로 불러오기',f:()=>{$('#stx').innerHTML=`<div class="box"><textarea id="sci" placeholder="코드를 붙여넣고 아래 버튼"></textarea><span class="btn" id="scb">불러오기</span></div>`;$('#sci').focus();$('#scb').onclick=()=>{try{const o=decodeSave($('#sci').value.trim());if(!o.p||o.p.v!==2)throw 0;G.p=o.p;pop(m);closePanel();G.lock=0;enterMap(G.p.map,G.p.x,G.p.y,G.p.dir);toast('📖 불러왔습니다')}catch(e){toast('올바르지 않은 코드');sfx('err')}}}},
     {h:'<span class="ic">♻️</span>처음부터 다시 시작',f:async()=>{pop(m);closePanel();const c=await ask('','정말 처음부터 다시 시작할까요?\n지금까지의 진행이 모두 사라집니다.',['처음부터','취소']);if(c===0){try{localStorage.removeItem(SAVEKEY)}catch(e){}G.lock=0;await newGame()}else{G.lock=0;openPause()}}}];
-  const m=new Menu($('#stl'),items,{onCancel:()=>{pop(m);try{localStorage.setItem('tryrpg-set-v1',JSON.stringify(G.set))}catch(e){}back&&back()}});
+  const m=new Menu($('#stl'),items,{onCancel:()=>{pop(m);try{localStorage.setItem(SETKEY,JSON.stringify(G.set))}catch(e){}back&&back()}});
   function re(){const i=m.i;pop(m);pgSet(b,1,back);topM().set(i,true)}if(active)push(m)}
 
 /* ---------- shop ---------- */
 function openShop(who){return new Promise(res=>{G.lock++;openPanel('full');let mode='buy',m=null;
-  PNL.innerHTML=`<div class="row"><div class="h2 ttl">🏪 ${who}의 도구점</div><div id="sg" class="gold ttl" style="font-size:1.2em"></div></div><div class="tabs"><div class="tab" data-m="buy">구매</div><div class="tab" data-m="sell">판매</div><span class="dim" style="font-size:.8em;margin-left:auto;align-self:center">◀ ▶ 탭 전환 · X 나가기</span></div>
+  PNL.innerHTML=`<div class="row"><div class="h2 ttl">🏪 ${who}의 도구점</div><div id="sg" class="gold ttl" style="font-size:1.2em"></div></div><div class="tabs"><div class="tab" data-m="buy">구매</div><div class="tab" data-m="sell">판매</div><span class="dim" style="font-size:.8em;margin-left:auto;align-self:center">◀ ▶ 탭 전환 · Esc 나가기</span></div>
    <div class="split" style="height:calc(100% - 5.2em)"><div class="list" id="shl"></div><div class="box" id="shi" style="margin-top:0"></div></div>`;
   PNL.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{mode=t.dataset.m;render(0)});const info=$('#shi');const close=()=>{pop(m);closePanel();unlock();res()};
   const sellable=()=>{const l=invList(it=>it.t==='mat'||it.t==='use').map(k=>({k}));G.p.swords.forEach((s,i)=>{if(i!==G.p.eq&&s.b!=='wood')l.push({sw:i})});return l};
@@ -1357,7 +1368,7 @@ function openForge(){return new Promise(res=>{G.lock++;openPanel('full');let m;
     const done=()=>{const sw={b:k,pc};G.p.swords.push(sw);G.p.flags.forged=1;const better=swAtk(sw)>swAtk(curSw());if(better)G.p.eq=G.p.swords.length-1;saveGame();reveal(sw,better)}};
   const reveal=(sw,better)=>{const Q=qInfo(sw);sfx(Q.pc>=90?'legend':'forged');PNL.innerHTML=`<canvas id="rc" width="760" height="300" style="width:100%;display:block;border-radius:.5em"></canvas>
       <div style="text-align:center"><div class="ttl" style="font-size:2em;color:${Q.c};text-shadow:0 0 14px ${Q.c}">★ ${Q.n} · 품질 ${Q.pc}% ★</div><div class="ttl" style="font-size:1.3em">${SW[sw.b].n} — 공격력 ${swAtk(sw)}</div>
-      <div class="dim" style="margin-top:.3em">${better?'🗡️ 더 강한 검이라 바로 장착했다!':'가방(검)에 보관했다. Esc > 검에서 장착할 수 있다.'}</div><div style="margin-top:.6em"><span class="btn" id="fok">확인 (Z)</span></div></div>`;
+      <div class="dim" style="margin-top:.3em">${better?'🗡️ 더 강한 검이라 바로 장착했다!':'가방(검)에 보관했다. Esc > 검에서 장착할 수 있다.'}</div><div style="margin-top:.6em"><span class="btn" id="fok">확인 (Enter)</span></div></div>`;
       const rc=$('#rc').getContext('2d'),t0=performance.now();const loop2=now=>{if(!$('#rc'))return;const t=Math.max(0,(now-t0)/1000);rc.fillStyle='#0c0a14';rc.fillRect(0,0,760,300);rc.save();rc.translate(380,160);rc.globalCompositeOperation='lighter';
         for(let i=0;i<14;i++){const a=i/14*Math.PI*2+t*.4;rc.fillStyle=rgba(Q.c,.12);rc.beginPath();rc.moveTo(0,0);rc.lineTo(Math.cos(a)*400,Math.sin(a)*400);rc.lineTo(Math.cos(a+.12)*400,Math.sin(a+.12)*400);rc.fill()}rc.restore();
         const y=lerp(320,250,easeOut(Math.min(1,t/.8)));drawSword(rc,380,y,190,Math.sin(t*2)*.08,sw.b,Q.c,24);requestAnimationFrame(loop2)};requestAnimationFrame(loop2);
@@ -1377,7 +1388,7 @@ function reelKey(){const d=new Date();return VERSION+'@'+d.getFullYear()+'-'+(d.
 function needReel(){try{return localStorage.getItem('aether-reel')!==reelKey()}catch(e){return true}}
 function showReel(force){return new Promise(res=>{const U=UPDATES[0];G.lock++;G.reel=true;const el=$('#reel');el.classList.remove('hide');
   el.innerHTML=`<div class="rv"><div class="rh"><span class="ttl gold">📼 ${GAME_TITLE} · 업데이트 영상</span><span class="dim">v${U.v} · ${U.date}</span></div><canvas id="rvc" width="640" height="360"></canvas><div class="rbar"><i id="rvb"></i></div><div id="rvt" class="ttl rvt"></div></div>
-   <div class="rn"><div class="ttl" style="color:#fff;font-size:1.15em;margin-bottom:.5em">${U.title}</div>${U.notes.map(n=>`<div class="rni">${n}</div>`).join('')}<div style="margin-top:1em"><span class="btn" id="rvgo">▶ 바로 플레이 (Z)</span></div></div>`;
+   <div class="rn"><div class="ttl" style="color:#fff;font-size:1.15em;margin-bottom:.5em">${U.title}</div>${U.notes.map(n=>`<div class="rni">${n}</div>`).join('')}<div style="margin-top:1em"><span class="btn" id="rvgo">▶ 바로 플레이 (Enter)</span></div></div>`;
   const c=$('#rvc').getContext('2d');const SCN=REEL_SCENES();
   const D=4.2,T0=performance.now();let alive=true;
   const loop=now=>{if(!alive)return;const t=Math.max(0,(now-T0)/1000),i=Math.floor(t/D)%SCN.length,lt=t%D;c.save();SCN[i].d(c,lt/D,lt);c.restore();if(lt<.35||lt>D-.35){c.fillStyle=`rgba(0,0,0,${lt<.35?1-lt/.35:(lt-(D-.35))/.35})`;c.fillRect(0,0,640,360)}
@@ -1398,7 +1409,7 @@ function openEnhance(){return new Promise(res=>{G.lock++;openPanel('full');let m
       info.innerHTML=`<div class="ttl gold" style="font-size:1.2em">${swName(s)}</div><div style="margin:.3em 0">+${n} → <b class="gold">+${n+1}</b> · 공격력 ${swAtk(s)} → <b class="up">${swAtk(nx)}</b></div>
        <div class="box"><div class="kv"><span>성공 확률</span><span class="${EN_RATE[n]>=.5?'up':'dn'}">${Math.round(EN_RATE[n]*100)}%</span></div><div class="kv"><span>실패 시</span><span class="dn">${n>=7?'단계 -1 · 10% 확률로 파괴!':n>=4?'단계 -1':'재료만 소모'}</span></div>
        ${Object.keys(c.it).map(k=>`<div class="kv"><span>${IT[k].ic} ${IT[k].n}</span><span class="${has(k)>=c.it[k]?'up':'dn'}">${has(k)} / ${c.it[k]}</span></div>`).join('')}<div class="kv"><span>💰 골드</span><span class="${G.p.gold>=c.g?'up':'dn'}">${c.g}G</span></div></div>
-       <div class="dim" style="font-size:.82em;margin-top:.4em">${ok?'Z: 강화 시도':'재료나 골드가 부족하다'} · 단계마다 공격력 +8%</div>`}}));m.o.onFocus(m.items[m.i])};
+       <div class="dim" style="font-size:.82em;margin-top:.4em">${ok?'Enter: 강화 시도':'재료나 골드가 부족하다'} · 단계마다 공격력 +8%</div>`}}));m.o.onFocus(m.items[m.i])};
   const tryEn=i=>{const s=G.p.swords[i],n=s.en||0,c=enCost(s);if(G.p.gold<c.g||!Object.keys(c.it).every(k=>has(k)>=c.it[k])){sfx('err');toast('재료나 골드가 부족하다');return}
     if(n>=7){pop(m);m=null;ask('그란트',`+${n+1} 강화는 실패하면 검이 부서질 수도 있다네. 정말 하겠나?`,['한다!','그만둔다']).then(c2=>{if(c2===0)doEn(i);else list(i)});return}pop(m);m=null;doEn(i)};
   const doEn=i=>{const s=G.p.swords[i],n=s.en||0,c=enCost(s);G.p.gold-=c.g;for(const k in c.it)addItem(k,-c.it[k]);
@@ -1417,7 +1428,7 @@ function openEnhance(){return new Promise(res=>{G.lock++;openPanel('full');let m
       else if(result==='break'){sfx('die');const eqS=G.p.swords[G.p.eq];G.p.swords.splice(i,1);G.p.eq=Math.max(0,G.p.swords.indexOf(eqS));if(eqS===s)G.p.eq=0;R.innerHTML='<span style="color:#ff3030">💥 검이 부서졌다…</span>';Hh.textContent='「…미안하네. 쇠도 운명을 타고나는 법이지.」'}
       else if(result==='down'){s.en=n-1;sfx('miss');R.innerHTML=`<span style="color:#ff8080">강화 실패… +${n} → +${s.en}</span>`;Hh.textContent='단계가 하락했다'}
       else{sfx('miss');R.innerHTML='<span style="color:#ff8080">강화 실패…</span>';Hh.textContent='재료만 사라졌다'}
-      saveGame();pop(lock);const o2={handle:a=>{if(a==='ok'||a==='cancel'){pop(o2);list(Math.min(i,G.p.swords.length-1))}}};push(o2);Hh.textContent+=' · Z 계속'}};
+      saveGame();pop(lock);const o2={handle:a=>{if(a==='ok'||a==='cancel'){pop(o2);list(Math.min(i,G.p.swords.length-1))}}};push(o2);Hh.textContent+=' · Enter 계속'}};
   list(G.p.eq)})}
 /* ===================== DESERT SPRITES ===================== */
 SPR.scarab=(c,s,t,C)=>{const b=Math.sin(t*10)*s*.02;shadowE(c,s*.32,s*.06);c.strokeStyle='#3a2a08';c.lineWidth=s*.04;
@@ -1602,7 +1613,7 @@ function drawObj2(o,x,y,t){const eye=G.p.flags.desertEye;switch(o.type){
 
 /* ===================== WORLD MAP ===================== */
 function openWorldMap(){if(G.lock||G.cut||G.dead||focus.length)return;G.lock++;sfx('ok');openPanel('full');
-  PNL.innerHTML=`<div class="row"><div class="h2 ttl">🗺️ 세계 지도</div><div class="dim">X / Esc / M 닫기</div></div><canvas id="wm" width="900" height="470" style="width:100%;display:block;border-radius:.5em;background:#0c0a14"></canvas>`;
+  PNL.innerHTML=`<div class="row"><div class="h2 ttl">🗺️ 세계 지도</div><div class="dim">Esc / M 닫기</div></div><canvas id="wm" width="900" height="470" style="width:100%;display:block;border-radius:.5em;background:#0c0a14"></canvas>`;
   const c=$('#wm').getContext('2d'),f=G.p.flags;const L={village:[20,40,150,112],field:[185,30,190,129],wood:[390,30,190,137],canyon:[595,30,190,137],desert:[300,200,560,262],ruins:[20,232,250,170]};
   const img=m=>{if(!m.mini){const s=Math.min(170/m.w,120/m.h),im=mk(170,120),x=im.getContext('2d');x.fillStyle='#000';x.fillRect(0,0,170,120);const ox=(170-m.w*s)/2,oy=(120-m.h*s)/2;for(let y=0;y<m.h;y++)for(let i=0;i<m.w;i++){x.fillStyle=MINI[m.g[y][i]]||'#000';x.fillRect(ox+i*s,oy+y*s,Math.ceil(s),Math.ceil(s))}m.mini={img:im,s,ox,oy}}return m.mini};
   const big=m=>{if(!m.big){const s=Math.min(560/m.w,262/m.h),im=mk(560,262),x=im.getContext('2d');for(let y=0;y<m.h;y++)for(let i=0;i<m.w;i++){x.fillStyle=MINI[m.g[y][i]]||'#000';x.fillRect(i*s,y*s,Math.ceil(s),Math.ceil(s))}m.big={img:im,s}}return m.big};
@@ -1622,7 +1633,7 @@ function openWorldMap(){if(G.lock||G.cut||G.dead||focus.length)return;G.lock++;s
   const m={handle:a=>{if(a==='cancel'||a==='ok'){alive=false;pop(m);closePanel();unlock()}}};push(m)}
 
 /* ===================== CORE CINEMATIC (12 cores) ===================== */
-function playCine(n,custom){return new Promise(res=>{const el=$('#cine');el.classList.remove('hide');$('#fade').classList.add('off');el.innerHTML='<canvas id="cc" width="960" height="640"></canvas><div class="cskip dim">Z 건너뛰기</div>';G.lock++;music('cine');
+function playCine(n,custom){return new Promise(res=>{const el=$('#cine');el.classList.remove('hide');$('#fade').classList.add('off');el.innerHTML='<canvas id="cc" width="960" height="640"></canvas><div class="cskip dim">Enter 건너뛰기</div>';G.lock++;music('cine');
   const c=$('#cc').getContext('2d'),T0=performance.now(),R=mulberry32(12);const stars=Array.from({length:120},()=>[R()*960,R()*330,R()*1.5+.3]);
   const lines=[`그 순간— 사당 깊은 곳에서 한 줄기 빛이 하늘로 솟구쳤다.`,`세상의 끝, 열두 개의 코어가 떠받치는 붉은 보호막에 감싸인 악의 왕국.`,`빛은 보호막을 향해 날아가… 코어 하나를 꿰뚫었다.`,`남은 코어: ${12-n} / 12${n===1?' — 다음 빛은 사막의 피라미드 깊은 곳에 잠들어 있다.':' — 남은 사당을 찾아 모든 코어를 무너뜨려라.'}`];
   if(custom)lines.splice(0,lines.length,...custom);
@@ -1669,7 +1680,7 @@ function tombObjs(o,f){const door=(id,x,y,open)=>o.push({type:'door',style:'sand
   const tab=(x,y,title,text)=>o.push({type:'ttab',tx:x,ty:y,solid:1,inter:1,onInter:async()=>say('📜 '+title,text)});
   for(const[x,y]of[[16,98],[27,98],[16,103],[27,103]])o.push({type:'bstatue',tx:x,ty:y,solid:1,inter:1,onInter:async()=>say('','부서진 왕의 석상이다. 천장에서 모래가 사락사락 떨어진다…')});
   tab(18,97,'입구의 비문','「모래의 왕은 잠들지 않았다. 바닥을 믿지 말고, 벽을 의심하라.」\n(함정에 주의하자 — 가시는 솟기 전에 끝이 살짝 드러난다)');
-  tab(31,82,'태양의 비문','「태양은 동쪽으로 걷다 땅으로 몸을 굽히고, 다시 동쪽으로 걸어 하늘로 오른다.」\n(거울을 검으로 치거나 Z로 돌릴 수 있다)');
+  tab(31,82,'태양의 비문','「태양은 동쪽으로 걷다 땅으로 몸을 굽히고, 다시 동쪽으로 걸어 하늘로 오른다.」\n(거울을 검으로 치거나 E로 돌릴 수 있다)');
   tab(20,60,'모래의 비문','「모래가 방을 삼키기 전에 세 개의 모래시계를 깨워라.\n셋째는 금 간 서쪽 벽 너머에 잠들어 있다.」');
   tab(13,27,'수호실의 비문','「왕의 독침을 지닌 세 수호자가 마지막 문을 지킨다.」');
   for(const[i,row]of[87,89,91,93].entries())for(let x=20;x<=23;x++)o.push({type:'spike',tx:x,ty:row,ph:i*.65});
@@ -1799,7 +1810,7 @@ async function openTombChest(c){c.opened=1;c.inter=0;G.cut=true;sfx('chest');awa
 async function tombClear(){const tb=G.tb;G.cut=true;sfx('fanfare');await fadeOut();G.p.flags.tombClear=1;const time=G.p.time-tb.t0;
   const el=$('#clear');el.innerHTML=`<div class="cl1 ttl">모래에 잠긴 왕의 무덤</div><div class="cl2 ttl" style="color:#ffcf6a">CLEAR</div><div class="clst">
    <div class="kv"><span>⏱ 소요 시간</span><span>${Math.floor(time/60)}분 ${Math.floor(time%60)}초</span></div><div class="kv"><span>💔 받은 피해</span><span>하트 ${(((G.shr&&G.shr.dmg)||0)+tb.dmg)/4}개</span></div>
-   <div class="kv"><span>⚔️ 처치한 적</span><span>${(G.shr&&G.shr.kills)||0}</span></div><div class="kv"><span>🏆 획득</span><span style="color:#ffcf6a">👁️ 사막의 눈</span></div></div><div class="dim cl3">Z 키를 눌러 계속</div>`;
+   <div class="kv"><span>⚔️ 처치한 적</span><span>${(G.shr&&G.shr.kills)||0}</span></div><div class="kv"><span>🏆 획득</span><span style="color:#ffcf6a">👁️ 사막의 눈</span></div></div><div class="dim cl3">Enter 또는 클릭으로 계속</div>`;
   el.classList.remove('hide');music('clear');await fadeIn();await new Promise(r=>{G.skipper=()=>r()});sfx('ok');await fadeOut();el.classList.add('hide');tb.clearing=0;
   await playCine(2);G.cut=false;await enterMap('desert',72*TS+16,15*TS+20,'down',true);toast('🏜️ 「모래에 잠긴 왕의 무덤」 클리어! 남은 코어 10개','gold')}
 function showName(a,b){const el=$('#bossname');el.innerHTML=`<div class="bn1">${a}</div><div class="bn2 ttl" style="text-shadow:0 0 30px #ff9a2e,0 0 60px #c06010,0 4px 0 #300">${b}</div><div class="bn3"></div>`;el.classList.remove('hide');el.classList.remove('go');void el.offsetWidth;el.classList.add('go');setTimeout(()=>el.classList.add('hide'),3200)}
@@ -2135,7 +2146,7 @@ function bCastle3(){const w=40,h=50,g=grid(w,h,'W');
 /* ===================== OBJECTS ===================== */
 const REC={
   1:['📜 병사의 일지',['검은 해가 뜬 지 사흘째. 하늘이 갈라지고, 성벽 너머로 흑요석 탑들이 자라났다.','폐하께서 세 개의 장치로 왕성의 문을 봉인하라 명하셨다. 별의 시계탑, 바람의 수로, 수호의 제단.','우리는… 집으로 돌아가지 못할 것이다.']],
-  2:['📜 학자의 노트',['세 장치가 왕성의 문을 지탱한다. 하나라도 꺼지면 문은 열리지 않는다.','서쪽 시계탑의 다이얼은 기계공의 고집 탓에, 하나를 돌리면 「다음 번호」의 다이얼도 함께 돈다. 마지막 Ⅳ번만 홀로 돈다.','올바른 하늘의 순서는 금지된 서고의 벽화에 남겨 두었다. 금 간 벽은… 회전베기(Z를 길게 눌렀다 떼기) 정도는 되어야 무너질 것이다.']],
+  2:['📜 학자의 노트',['세 장치가 왕성의 문을 지탱한다. 하나라도 꺼지면 문은 열리지 않는다.','서쪽 시계탑의 다이얼은 기계공의 고집 탓에, 하나를 돌리면 「다음 번호」의 다이얼도 함께 돈다. 마지막 Ⅳ번만 홀로 돈다.','올바른 하늘의 순서는 금지된 서고의 벽화에 남겨 두었다. 금 간 벽은… 회전베기(공격 버튼을 길게 눌렀다 떼기) 정도는 되어야 무너질 것이다.']],
   3:['🖼️ 서고의 벽화',['벽 가득 하늘이 그려져 있다.','「Ⅰ 달이 먼저 떠오르고, Ⅱ 별이 뒤따르며, Ⅲ 해가 깨어나고, Ⅳ 바다가 모든 것을 잠재운다.」','(Ⅰ은 북서, Ⅱ는 북동, Ⅲ은 남서, Ⅳ는 남동의 다이얼이다)']],
   4:['📜 기술자의 메모',['수로 장치의 동력 핵이 셋으로 쪼개졌다!','하나는 북동쪽 섬에. 다리가 무너졌으니 서쪽 둔덕의 크랭크에 톱니바퀴를 끼워야 한다. 톱니는 서고 안쪽에 넣어 두었다.','또 하나는 정원사 녀석이 왕비님의 정원에 숨겼고, 마지막 하나는 남동쪽 덤불 미로 깊숙이 떨어졌다.','정원에는 문이 없다. 정원사는 「서쪽 벽의 덩굴 아래」로 드나들었다던데…']],
   5:['📜 정원사의 비밀',['왕비님만의 정원. 서쪽 벽의 덩굴 드리운 돌은 환영일 뿐이다.','왕비님께서 마지막으로 남기신 말씀이 있다.','「재상 바르칸을 믿지 마세요. 그는 검은 해와 거래했어요.」']],
@@ -2316,7 +2327,12 @@ function objTarget(){const f=G.p.flags,p=G.p,id=G.map&&G.map.id;
   if(qs('qF1')==='a')return['lair1',16,12,'협곡의 폭군 고르곤'];
   if(qs('q6')==='a'&&p.lv>=10&&f.fb1)return['wood',25,3,'잊혀진 수호자의 사당'];
   return null}
-function drawObjective(ox,oy,t){if(!G.p||G.cut||G.map.lair&&G.fb&&G.fb.fight)return;const T=objTarget();if(!T)return;const[mid,tx,ty,label]=T,id=G.map.id;let px,py,via=false;
+function drawUsePrompt(ox,oy,t){if(!G.p||G.cut||G.lock||G.dlg||focus.length||G.mode!=='play'||G.dead)return;const e=interactTarget();if(!e)return;
+  const tc=G.set.touch==='on'||(G.set.touch!=='off'&&matchMedia('(pointer:coarse)').matches);const key=tc?'A':'E';const lb=e.type==='npc'?'대화':/chest/.test(e.type)?'열기':e.type==='sign'||e.type==='record'||e.type==='tablet'||e.type==='ttab'?'읽기':'조사';
+  const x=e.x-ox,y=e.y-oy-(e.type==='npc'?58:Math.max(46,(e.h||1)*TS+20))+Math.sin(t*4)*2;ctx.save();ctx.font='700 13px "Gowun Dodum",sans-serif';const w=ctx.measureText(lb).width+34;
+  ctx.fillStyle='rgba(14,10,24,.82)';ctx.strokeStyle='#c9a14a';ctx.lineWidth=1.5;ctx.beginPath();ctx.roundRect?ctx.roundRect(x-w/2,y-12,w,22,8):ctx.rect(x-w/2,y-12,w,22);ctx.fill();ctx.stroke();
+  ctx.fillStyle='#ffd27a';ctx.fillRect(x-w/2+4,y-9,18,16);ctx.fillStyle='#1a1420';ctx.textAlign='center';ctx.fillText(key,x-w/2+13,y+4);ctx.fillStyle='#fff';ctx.textAlign='left';ctx.fillText(lb,x-w/2+26,y+4);ctx.restore()}
+function drawObjective(ox,oy,t){drawUsePrompt(ox,oy,t);if(!G.p||G.cut||G.map.lair&&G.fb&&G.fb.fight)return;const T=objTarget();if(!T)return;const[mid,tx,ty,label]=T,id=G.map.id;let px,py,via=false;
   if(mid===id){px=tx*TS+16;py=ty*TS+16}else{const h=nextHop(id,mid);if(!h)return;px=h[0]*TS+16;py=h[1]*TS+16;via=true}
   const sx=px-ox,sy=py-oy,pl=G.pl,dx=px-pl.x,dy=py-pl.y,dist=Math.hypot(dx,dy);ctx.save();
   if(sx>20&&sx<W-20&&sy>60&&sy<H-20){const b=Math.sin(t*5)*4;ctx.fillStyle='#ffd43b';ctx.strokeStyle='#000';ctx.lineWidth=2;ctx.beginPath();ctx.moveTo(sx,sy-34+b);ctx.lineTo(sx-9,sy-50+b);ctx.lineTo(sx+9,sy-50+b);ctx.closePath();ctx.fill();ctx.stroke()}
@@ -2444,13 +2460,15 @@ function REEL_SCENES_23(){return[
 const K=s=>`<kbd>${s}</kbd>`;
 const GUIDE=[
  {ic:'🎮',n:'조작법',b:`<div class="gd"><div>${K('←↑↓→')} / ${K('WASD')}</div><div>이동</div>
-  <div>${K('Z')} ${K('Space')}</div><div>공격 · 대화 · 조사 · 결정 (상자·석판·표지판 앞에서 누르기)</div>
-  <div>${K('Z')} 연타</div><div>3연타 — 세 번째 공격이 1.5배 피해</div>
-  <div>${K('Z')} 길게 → 떼기</div><div>회전베기 — 2배 피해, 금 간 벽을 부술 수 있다</div>
-  <div>${K('X')} ${K('Shift')}</div><div>구르기 — 기력 25 소모, 구르는 순간은 무적 (공격 회피)</div>
+  <div>${K('🖱 왼쪽 클릭')} ${K('J')}</div><div>공격</div>
+  <div>${K('클릭')} 연타</div><div>3연타 — 세 번째 공격이 1.5배 피해</div>
+  <div>${K('클릭')} 길게 → 떼기</div><div>회전베기 — 2배 피해, 금 간 벽을 부술 수 있다</div>
+  <div>${K('Space')} ${K('Shift')} ${K('🖱 오른쪽')}</div><div>구르기 — 기력 25 소모, 구르는 순간은 무적 (공격 회피)</div>
+  <div>${K('E')}</div><div>대화 · 조사 · 상자 열기 (대상 위에 <b>E</b> 표시가 뜬다)</div>
+  <div>${K('Enter')} ${K('Space')} ${K('클릭')}</div><div>대화 넘기기 · 메뉴 선택</div>
   <div>${K('Q')}</div><div>회복약 마시기</div><div>${K('M')}</div><div>세계 지도 · 현재 목표 ⭐</div>
   <div>${K('Esc')} ${K('Tab')}</div><div>메뉴 (가방 · 검 장착 · 퀘스트 · 설정)</div><div>${K('H')}</div><div>이 도움말</div></div>
-  <div class="dim" style="margin-top:.6em">📱 터치: 왼쪽 패드 이동 · A 공격/대화 · B 구르기 · 🧪 회복약 · ☰ 메뉴 · ? 도움말</div>`},
+  <div class="dim" style="margin-top:.6em">📱 터치: 왼쪽 패드 이동 · A 공격/대화 · B 구르기 · 🧪 회복약 · ☰ 메뉴 · ? 도움말 · ✕ 조작키 숨기기 (설정 → 모바일 조작키: 자동/켜기/끄기)</div>`},
  {ic:'⚔️',n:'전투 기초',b:`<ul><li><b class="dn">빨간 범위</b>가 바닥에 깔리면 곧 그 자리에 공격이 온다. 범위 밖으로 걷거나 <b>구르기</b>로 피하자.</li>
   <li>구르기는 시작 직후 잠깐 <b>무적</b>이다. 공격이 닿기 직전에 구르면 「회피!」가 뜬다.</li>
   <li>기력(초록 막대)은 가만히 있으면 빠르게 찬다. 기력이 없으면 구를 수 없으니 아껴 쓰자.</li>
@@ -2489,7 +2507,7 @@ const GUIDE=[
  {ic:'⚙️',n:'제3장 · 고대 장치',b:`<ul><li><b>⭐ 별의 시계탑</b> (서쪽): 다이얼을 치면 그 다이얼 <b>+ 다음 번호 다이얼</b>이 함께 돈다 (Ⅳ만 혼자). 정답은 서고 안쪽 숨은 방의 벽화에. Ⅳ번부터 거꾸로 맞추면 쉽다.</li>
   <li><b>💠 바람의 수로</b> (동쪽): 동력 핵 파편 3개.<br>① 섬 — 서고 숨은 방의 톱니바퀴를 북동쪽 크랭크에 끼워 다리를 놓는다.<br>② 정원 — 입구가 없다. 서쪽 벽 덩굴 칸이 <b>환영 벽</b> (사막의 눈이 있으면 금빛 점선으로 보인다). 그냥 걸어 들어가면 된다.<br>③ 미로 — 남동쪽 덤불 미로 깊은 곳. 덤불은 베면 사라진다.</li>
   <li><b>⚔️ 수호의 제단</b> (북서쪽): 3번의 물결. 궁수부터 처리하고, 기사단장은 내려찍기 뒤에 공격.</li>
-  <li>💥 <b>금 간 벽</b>은 일반 공격으로 안 부서진다 — ${K('Z')}를 길게 눌렀다 떼는 <b>회전베기</b>로!</li>
+  <li>💥 <b>금 간 벽</b>은 일반 공격으로 안 부서진다 — 공격 버튼을 길게 눌렀다 떼는 <b>회전베기</b>로!</li>
   <li>📚 오래된 기록 8개를 모두 읽으면 보상. 「!」 표시가 떠 있는 석판·두루마리를 조사하자.</li></ul>`},
  {ic:'🏰',n:'아스텔 왕성',b:`<ul><li><b>1층</b>: 태피스트리를 읽고 네 화로의 문장(♔⚔⛨★)을 순서대로 친다. 서쪽 벽에 금 간 곳 = 비밀 금고.</li>
   <li><b>2층 · 벨로스</b>: 정면은 방패(「막힘!」). 3번 막히면 방패로 밀쳐 낸다. <b>구르기로 등 뒤로 돌아가</b> 치거나, <b>돌진(빨간 선) 직후</b> 방패를 내린 틈을 노리자 — 이때 피해 1.25배.</li>
@@ -2498,17 +2516,17 @@ const GUIDE=[
   <li>반대편 레버를 치면 유리 다리가 영구히 나타난다 (두 번째 지름길).</li><li>2층 아레나 동쪽 벽에도 환영 벽이 있다…</li></ul>`},
 ];
 function openHelp(start){if(G.lock||G.cut||G.dead||focus.length)return;G.lock++;sfx('ok');openPanel('full');
-  PNL.innerHTML=`<div class="row"><div class="h2 ttl">❓ 도움말 · 게임 가이드</div><div class="dim">↑↓ 항목 · X/Esc 닫기</div></div><div class="split" style="height:calc(100% - 3em)"><div class="list" id="hl"></div><div class="box helpb" id="hb" style="margin-top:0;overflow:auto"></div></div>`;
+  PNL.innerHTML=`<div class="row"><div class="h2 ttl">❓ 도움말 · 게임 가이드</div><div class="dim">↑↓ 항목 · Esc 닫기</div></div><div class="split" style="height:calc(100% - 3em)"><div class="list" id="hl"></div><div class="box helpb" id="hb" style="margin-top:0;overflow:auto"></div></div>`;
   const hb=$('#hb');const items=GUIDE.map((g,i)=>({h:`<span class="ic">${g.ic}</span>${g.n}`,i}));items.push({h:`<span class="ic">💡</span>상황별 튜토리얼: ${G.set.notips?'끔':'켬'}`,tg:1,f:()=>{G.set.notips=!G.set.notips;try{localStorage.setItem('tryrpg-set-v1',JSON.stringify(G.set))}catch(e){}m.btns[m.i].innerHTML=`<span class="ic">💡</span>상황별 튜토리얼: ${G.set.notips?'끔':'켬'}`;sfx('ok')}});
   items.push({h:'<span class="ic">↺</span>튜토리얼 다시 보기',f:()=>{for(const k in G.p.flags)if(k.startsWith('tut_'))delete G.p.flags[k];toast('💡 튜토리얼 카드가 다시 나타납니다');sfx('ok')}});
   const close=()=>{pop(m);closePanel();unlock()};
-  const m=push(new Menu($('#hl'),items,{start:start||0,onCancel:close,onFocus:it=>{if(it.tg){hb.innerHTML='<div class="h2 ttl">💡 상황별 튜토리얼</div><div class="dim">새로운 곳·적·장치를 처음 만났을 때 설명 카드를 띄웁니다. Z로 켜고 끕니다.</div>';return}if(it.i===undefined){hb.innerHTML='<div class="h2 ttl">↺ 다시 보기</div><div class="dim">이미 본 튜토리얼 카드를 다시 볼 수 있게 초기화합니다.</div>';return}const g=GUIDE[it.i];hb.innerHTML=`<div class="h2 ttl">${g.ic} ${g.n}</div>${g.b}`;hb.scrollTop=0}}));
+  const m=push(new Menu($('#hl'),items,{start:start||0,onCancel:close,onFocus:it=>{if(it.tg){hb.innerHTML='<div class="h2 ttl">💡 상황별 튜토리얼</div><div class="dim">새로운 곳·적·장치를 처음 만났을 때 설명 카드를 띄웁니다. Enter로 켜고 끕니다.</div>';return}if(it.i===undefined){hb.innerHTML='<div class="h2 ttl">↺ 다시 보기</div><div class="dim">이미 본 튜토리얼 카드를 다시 볼 수 있게 초기화합니다.</div>';return}const g=GUIDE[it.i];hb.innerHTML=`<div class="h2 ttl">${g.ic} ${g.n}</div>${g.b}`;hb.scrollTop=0}}));
   m.o.onFocus(m.items[m.i])}
 
 /* ---------- context tutorial cards ---------- */
 const TIPS={
-  start:['🎮','조작법',[`${K('방향키')} 이동 · ${K('Z')} 공격/대화 · ${K('X')} 구르기`,`${K('Z')} 연타 = 3연타 · ${K('Z')} 길게 눌렀다 떼기 = 회전베기`,`${K('Q')} 회복약 · ${K('M')} 지도 · ${K('Esc')} 메뉴 · ${K('H')} 도움말`,'화면 아래 🎯 표시가 지금 가야 할 곳을 알려 준다']],
-  enemy:['⚔️','첫 전투',['적이 공격하기 전 바닥에 <b class="dn">빨간 범위</b>가 나타난다','범위 밖으로 피하거나 '+K('X')+' 구르기 — 구르는 순간은 무적!','큰 공격 직후가 반격 타이밍. 계속 때리면 맞는다']],
+  start:['🎮','조작법',[`${K('WASD')} ${K('방향키')} 이동 · ${K('🖱 클릭')} 공격 · ${K('Space')} 구르기 · ${K('E')} 대화/조사`,`${K('클릭')} 연타 = 3연타 · ${K('클릭')} 길게 눌렀다 떼기 = 회전베기`,`${K('Q')} 회복약 · ${K('M')} 지도 · ${K('Esc')} 메뉴 · ${K('H')} 도움말`,'화면 아래 🎯 표시가 지금 가야 할 곳을 알려 준다']],
+  enemy:['⚔️','첫 전투',['적이 공격하기 전 바닥에 <b class="dn">빨간 범위</b>가 나타난다','범위 밖으로 피하거나 '+K('Space')+' 구르기 — 구르는 순간은 무적!','큰 공격 직후가 반격 타이밍. 계속 때리면 맞는다']],
   hurt:['❤️','하트가 줄었다',[K('Q')+'로 회복약을 마실 수 있다 (상점에서 구매)','<b class="dn">쓰러지면 최대 하트 1개가 영구히 사라진다</b>','위험하면 물러나서 회복하자. 여관(20G)은 하트를 모두 채워 준다']],
   levelup:['✨','레벨 업',['레벨마다 하트가 0.25개씩 자동으로 늘어난다 (최대 10)','힘(공격력 +2)과 기력(구르기 횟수) 중 하나를 고르자','레벨업하면 하트가 모두 회복된다']],
   smith:['⚒️','대장간',['재료 + 골드로 검을 만든다. 품질은 0~100% 완전 랜덤!','「검 강화」로 +1~+10. 높을수록 성공률↓, +8부터는 부서질 수도','새 검은 '+K('Esc')+' 메뉴 → 검 탭에서 장착']],
@@ -2518,9 +2536,9 @@ const TIPS={
   shrine:['🏛️','사당',['석판 · 표지판을 꼭 읽자 — 퍼즐 힌트가 있다','보스는 큰 공격 뒤에 빈틈이 생긴다','쓰러지면 사당 안에서 다시 시작한다']],
   desert:['🏜️','끝없는 사막',['곳곳의 고대 퍼즐 5개를 풀면 열쇠 5개 → 피라미드','⛺ 몬스터 캠프를 정리하면 보물상자',K('M')+' 지도로 🔑/❓ 위치를 확인하자']],
   tomb:['🔺','왕의 무덤',['가시 함정은 박자를 보고, 금 간 바닥은 밟으면 무너진다','거울을 쳐서 돌리면 햇빛의 방향이 바뀐다','샤르둠 2페이즈: 맞지 않고 피하면 약점 노출이 길어진다']],
-  ruins:['⚙️','아스텔 왕국 유적',['세 장치를 복구하면 왕성의 문이 열린다 — 🎯가 가까운 장치를 안내','기록(「!」 석판)에 퍼즐 힌트가 숨어 있다','금 간 벽 = <b>회전베기</b>('+K('Z')+' 길게) · 덩굴 벽 = 환영 벽일지도?']],
+  ruins:['⚙️','아스텔 왕국 유적',['세 장치를 복구하면 왕성의 문이 열린다 — 🎯가 가까운 장치를 안내','기록(「!」 석판)에 퍼즐 힌트가 숨어 있다','금 간 벽 = <b>회전베기</b>('+K('클릭')+' 길게) · 덩굴 벽 = 환영 벽일지도?']],
   dial:['⭐','별의 시계탑',['다이얼을 치면 그 다이얼과 <b>다음 번호</b> 다이얼이 함께 돈다 (Ⅳ만 혼자)','정답 순서는 서고 숨은 방의 벽화에','Ⅳ부터 거꾸로 맞추면 쉽다']],
-  crack:['💥','금 간 벽',['일반 공격으로는 부서지지 않는다',K('Z')+'를 길게 눌러 기를 모았다가 떼면 <b>회전베기</b>','회전베기 3번이면 무너진다']],
+  crack:['💥','금 간 벽',['일반 공격으로는 부서지지 않는다','공격 버튼('+K('클릭')+')을 길게 눌러 기를 모았다가 떼면 <b>회전베기</b>','회전베기 3번이면 무너진다']],
   crank:['🌉','무너진 다리',['크랭크에 톱니바퀴가 빠져 있다','톱니바퀴는 서고 안쪽(숨은 방)에 있다고 한다','허공에 떨어지면 하트 ½ 손해 후 안전한 곳으로']],
   altar:['⚔️','수호의 제단',['시련을 시작하면 끝날 때까지 나갈 수 없다','3번의 물결 — 궁수(보라 망토)부터 처리하자','마지막엔 망령 기사단장. 체력을 채우고 도전!']],
   castle1:['🔥','왕성 1층',['태피스트리를 읽고 화로를 순서대로 쳐라','틀리면 모두 꺼진다','어딘가에 금 간 벽이 있다…']],
@@ -2528,7 +2546,7 @@ const TIPS={
   castle3:['✨','보이지 않는 길',['수정을 치면 7초간 허공 위에 길이 보인다','중간 발판에서 쉬고 발판의 수정으로 다시 비추자','떨어지면 하트 ½ — 서두르지 말 것']],
 };
 function showTip(id){const T=TIPS[id];if(!T)return;G.p.flags['tut_'+id]=1;G.lock++;sfx('quest');openPanel('lv');atkHeld=false;held.length=0;
-  PNL.innerHTML=`<div class="tipc"><div class="tipi">${T[0]}</div><div class="h2 ttl gold">튜토리얼 · ${T[1]}</div><ul class="tipl">${T[2].map(s=>`<li>${s}</li>`).join('')}</ul><div class="dim" style="text-align:center;margin-top:.8em">Z 확인 · ${K('H')} 도움말에서 언제든 다시 볼 수 있다</div></div>`;
+  PNL.innerHTML=`<div class="tipc"><div class="tipi">${T[0]}</div><div class="h2 ttl gold">튜토리얼 · ${T[1]}</div><ul class="tipl">${T[2].map(s=>`<li>${s}</li>`).join('')}</ul><div class="dim" style="text-align:center;margin-top:.8em">Enter · 클릭으로 닫기 · ${K('H')} 도움말에서 언제든 다시 볼 수 있다</div></div>`;
   const m={handle:a=>{if(a==='ok'||a==='cancel'){pop(m);closePanel();unlock();sfx('ok')}}};push(m)}
 let tipCd=0;
 function updTips(dt){if(!G.p||G.set.notips)return;tipCd-=dt;if(tipCd>0)return;if(G.cut||G.lock||G.dlg||focus.length||G.dead||G.reel||G.mode!=='play'||G.lvq>0)return;if(G.fb&&G.fb.fight)return;
@@ -2550,7 +2568,7 @@ function updTips(dt){if(!G.p||G.set.notips)return;tipCd-=dt;if(tipCd>0)return;if
 
 function REEL_SCENES(){return[{t:'❓ 도움말(H) · 상황별 튜토리얼 카드 · 목표 안내',d:(c,q,t)=>{reelGround(c,'k');c.fillStyle='rgba(20,16,30,.9)';c.fillRect(120,50,400,260);c.strokeStyle='#a8802a';c.lineWidth=3;c.strokeRect(120,50,400,260);
   c.font='40px sans-serif';c.textAlign='center';c.fillText('🎮',320,105);c.font='700 20px "Gowun Dodum"';c.fillStyle='#ffe08a';c.fillText('튜토리얼 · 조작법',320,140);
-  const L=['방향키 이동 · Z 공격 · X 구르기','Z 길게 → 회전베기','Q 회복약 · M 지도 · H 도움말','🎯 화면 아래 = 가야 할 곳'];c.font='16px "Gowun Dodum"';c.fillStyle='#fff';L.forEach((s,i)=>{if(t>i*.5)c.fillText(s,320,180+i*30)})}},...REEL_SCENES_23()]}
+  const L=['WASD 이동 · 클릭 공격 · Space 구르기','E 대화 · 클릭 길게 → 회전베기','Q 회복약 · M 지도 · H 도움말','🎯 화면 아래 = 가야 할 곳'];c.font='16px "Gowun Dodum"';c.fillStyle='#fff';L.forEach((s,i)=>{if(t>i*.5)c.fillText(s,320,180+i*30)})}},...REEL_SCENES_23()]}
 /* =====================================================================
    TRY RPG — 체험판 (잃어버린 왕국 : 천년의 봉인)
    범위: 1장 — 마을 → 초원 → 고블린 숲 → 협곡 → 지역 보스 고르곤 → 잊혀진 수호자의 사당
@@ -2558,7 +2576,7 @@ function REEL_SCENES(){return[{t:'❓ 도움말(H) · 상황별 튜토리얼 카
 const TRIAL=true;
 function needReel(){return false}
 (function(){const b=document.createElement('div');b.id='trialBadge';b.textContent='TRY RPG · 체험판';
-  b.style.cssText="position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:30;padding:.15em .8em;border-radius:1em;background:rgba(20,14,30,.75);border:1px solid #c9a14a;color:#ffd27a;font:700 12px 'Gowun Dodum',sans-serif;letter-spacing:.08em;pointer-events:none";
+  b.style.cssText="position:fixed;top:6px;left:50%;transform:translateX(-50%);z-index:30;padding:.15em .8em;border-radius:1em;background:rgba(20,14,30,.75);border:1px solid #c9a14a;color:#ffd27a;font:700 12px 'Gowun Dodum',sans-serif;letter-spacing:.08em;pointer-events:none;transition:opacity .3s";
   document.body.appendChild(b)})();
 async function trialEnd(){const f=G.p.flags;if(f.trialEnd)return;f.trialEnd=1;G.cut=true;G.lock++;atkHeld=false;saveGame();await wait(600);sfx('fanfare');music('clear');
   const p=G.p,t=p.time;const el=$('#clear');
@@ -2566,10 +2584,10 @@ async function trialEnd(){const f=G.p.flags;if(f.trialEnd)return;f.trialEnd=1;G.
    <div class="clst"><div class="kv"><span>⏱ 플레이 시간</span><span>${Math.floor(t/60)}분 ${Math.floor(t%60)}초</span></div><div class="kv"><span>✨ 레벨</span><span>Lv.${p.lv}</span></div>
    <div class="kv"><span>💀 쓰러진 횟수</span><span>${p.deaths}</span></div><div class="kv"><span>🗡️ 장착한 검</span><span>${swName(curSw())}</span></div></div>
    <div style="max-width:30em;text-align:center;line-height:1.7;color:#e8dcc0">「잃어버린 왕국 : 천년의 봉인」 정식판에서는<br>끝없는 사막 · 다섯 개의 고대 퍼즐 · 지역 보스 아즈라크 · 피라미드 사당 「모래에 잠긴 왕의 무덤」<br>그리고 제3장 「사라진 왕국의 흔적」 — 아스텔 왕국 유적과 왕성이 이어집니다.</div>
-   <div class="dim cl3" style="margin-top:1.2em">Z: 계속 탐험하기 (1장 지역 자유 이동)</div>`;
+   <div class="dim cl3" style="margin-top:1.2em">Enter: 계속 탐험하기 (1장 지역 자유 이동)</div>`;
   el.classList.remove('hide');await new Promise(r=>{G.skipper=()=>r()});sfx('ok');el.classList.add('hide');el.innerHTML='';unlock();G.cut=false;music(G.map.bgm);
   toast('🎉 체험판을 플레이해 주셔서 감사합니다! 1장 지역은 계속 자유롭게 돌아다닐 수 있어요','gold')}
-setInterval(()=>{try{if(!G.p||!G.map||G.mode!=='play')return;const f=G.p.flags;if(f.shrineClear&&!f.trialEnd&&!G.cut&&!G.lock&&!G.dlg&&!focus.length&&!G.dead&&G.map.id!=='shrine')trialEnd()}catch(e){}},500);
+setInterval(()=>{try{const bd=document.getElementById('trialBadge');if(bd)bd.style.opacity=G.bossBar||G.reel?0:1;if(!G.p||!G.map||G.mode!=='play')return;const f=G.p.flags;if(f.shrineClear&&!f.trialEnd&&!G.cut&&!G.lock&&!G.dlg&&!focus.length&&!G.dead&&G.map.id!=='shrine')trialEnd()}catch(e){}},500);
 /* ===================== AUDIO EXTENSIONS ===================== */
 Object.assign(TR,{
   field:{bpm:120,prog:[[60,'M'],[65,'M'],[57,'m'],[55,'M']],lead:'square',dens:.62,drum:1,seed:44,lv:.05},
@@ -2601,24 +2619,36 @@ sfx=function(n){if(!AU.c||!G.set.sfx)return;const t=AU.c.currentTime,d=AU.sg;
 
 /* ===================== INPUT ===================== */
 const KEYMAP={ArrowUp:'up',KeyW:'up',ArrowDown:'down',KeyS:'down',ArrowLeft:'left',KeyA:'left',ArrowRight:'right',KeyD:'right',
-  KeyZ:'ok',Space:'ok',KeyJ:'ok',Enter:'ok',NumpadEnter:'ok',KeyE:'ok',KeyX:'roll',KeyK:'roll',ShiftLeft:'roll',ShiftRight:'roll',Escape:'menu',Tab:'menu',KeyI:'menu',KeyM:'map',KeyQ:'potion',KeyH:'help',F1:'help'};
+  Enter:'ok',NumpadEnter:'ok',Space:'sp',KeyE:'use',KeyF:'use',KeyJ:'atk',KeyK:'roll',ShiftLeft:'roll',ShiftRight:'roll',Escape:'menu',Tab:'menu',KeyI:'menu',KeyM:'map',KeyQ:'potion',KeyH:'help',F1:'help'};
+const CONF={ok:1,use:1,atk:1,sp:1,auto:1};
 function act(a){
-  if(G.skipper&&(a==='ok'||a==='roll'||a==='menu'||a==='map')){const f=G.skipper;G.skipper=null;f();return}
+  if(G.skipper&&(CONF[a]||a==='roll'||a==='menu'||a==='map')){const f=G.skipper;G.skipper=null;f();return}
   if(G.dlg&&!focus.length)return;
-  const m=topM();if(m){m.handle(a==='roll'||a==='menu'||a==='map'?'cancel':a);return}
+  const m=topM();if(m){m.handle(CONF[a]?'ok':a==='roll'||a==='menu'||a==='map'?'cancel':a);return}
   if(G.mode!=='play'||G.lock||G.cut||G.dead)return;
-  if(a==='ok'){const e=interactTarget();if(e){interact(e);return}startSwing()}
-  else if(a==='help')openHelp();else if(a==='roll')doRoll();else if(a==='potion')drinkPotion();else if(a==='menu')openPause();else if(a==='map')openWorldMap()}
+  if(a==='atk')startSwing();
+  else if(a==='use'||a==='ok'){const e=interactTarget();if(e)interact(e)}
+  else if(a==='auto'){const e=interactTarget();if(e){interact(e);return}startSwing()}
+  else if(a==='help')openHelp();else if(a==='roll'||a==='sp')doRoll();else if(a==='potion')drinkPotion();else if(a==='menu')openPause();else if(a==='map')openWorldMap()}
 function release(){const pl=G.pl;atkHeld=false;if(pl.charge>=.7&&!pl.sw&&!G.cut&&!G.lock&&G.mode==='play')startSpin();pl.charge=0}
 addEventListener('keydown',e=>{const tg=e.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA'){if(e.key==='Escape')e.target.blur();return}auInit();const a=KEYMAP[e.code];if(!a)return;e.preventDefault();
-  if(DIRS[a]){if(!held.includes(a))held.push(a)}if(a==='ok'&&!e.repeat)atkHeld=true;if(e.repeat&&!DIRS[a])return;if(DIRS[a]&&!focus.length)return;act(a)});
-addEventListener('keyup',e=>{const a=KEYMAP[e.code];if(!a)return;if(DIRS[a]){const i=held.indexOf(a);if(i>=0)held.splice(i,1)}if(a==='ok')release()});
+  if(DIRS[a]){if(!held.includes(a))held.push(a)}if(a==='atk'&&!e.repeat)atkHeld=true;if(e.repeat&&!DIRS[a])return;if(DIRS[a]&&!focus.length)return;act(a)});
+addEventListener('keyup',e=>{const a=KEYMAP[e.code];if(!a)return;if(DIRS[a]){const i=held.indexOf(a);if(i>=0)held.splice(i,1)}if(a==='atk')release()});
+/* mouse: left = attack (hold = spin), right = roll */
+cv.addEventListener('contextmenu',e=>e.preventDefault());
+cv.addEventListener('pointerdown',e=>{auInit();const busy=G.skipper||G.dlg||focus.length;if(e.pointerType!=='mouse'){if(busy)act('ok');return}e.preventDefault();
+  if(e.button===2){act('roll');return}if(e.button!==0)return;if(busy){act('ok');return}atkHeld=true;act('atk')});
+addEventListener('pointerup',e=>{if(e.pointerType==='mouse'&&e.button===0&&atkHeld)release()});
+function applyTouch(){const t=G.set.touch||'auto';document.body.classList.toggle('tc-off',t==='off');document.body.classList.toggle('tc-on',t==='on')}
+function setTouch(v){G.set.touch=v;applyTouch();try{localStorage.setItem(SETKEY,JSON.stringify(G.set))}catch(e){}}
+$('#tcHide').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();setTouch('off');toast('🎮 조작키를 숨겼습니다 (오른쪽 아래 🎮 버튼이나 설정에서 다시 켤 수 있어요)')});
+$('#tcShow').addEventListener('pointerdown',e=>{e.preventDefault();e.stopPropagation();setTouch('on')});
 addEventListener('blur',()=>{held.length=0;atkHeld=false});
 addEventListener('pointerdown',()=>auInit(),{capture:true});
 document.querySelectorAll('#dpad div').forEach(el=>{const d=el.dataset.d;let rep=null;
   const on=e=>{e.preventDefault();if(!held.includes(d))held.push(d);if(focus.length){act(d);clearInterval(rep);rep=setInterval(()=>act(d),200)}};const off=()=>{const i=held.indexOf(d);if(i>=0)held.splice(i,1);clearInterval(rep)};
   el.addEventListener('pointerdown',on);el.addEventListener('pointerup',off);el.addEventListener('pointerleave',off);el.addEventListener('pointercancel',off)});
-document.querySelectorAll('.tb').forEach(el=>{el.addEventListener('pointerdown',e=>{e.preventDefault();const a=el.dataset.a;if(a==='ok')atkHeld=true;act(a)});if(el.dataset.a==='ok'){el.addEventListener('pointerup',release);el.addEventListener('pointercancel',release)}});
+document.querySelectorAll('.tb[data-a]').forEach(el=>{el.addEventListener('pointerdown',e=>{e.preventDefault();const a=el.dataset.a;if(a==='auto'||a==='atk')atkHeld=true;act(a)});if(el.dataset.a==='auto'){el.addEventListener('pointerup',release);el.addEventListener('pointercancel',release)}});
 
 /* ===================== MAP FLOW ===================== */
 async function enterMap(id,x,y,dir,skipFade){G.lock++;if(!skipFade)await fadeOut();const m=MAPS[id],first=G.map!==m;G.map=m;G.p.map=id;
@@ -2629,7 +2659,7 @@ async function enterMap(id,x,y,dir,skipFade){G.lock++;if(!skipFade)await fadeOut
 async function newGame(){G.p=newPlayer();recalcHearts();G.p.hp=maxHp();G.lock++;await fadeOut();G.mode='intro';music('title');await fadeIn();
   await say('',['아득한 옛날, 이 땅은 고대 수호자들이 지키는 빛의 왕국이었다.','세월이 흘러 수호자들은 잠들었고, 그들의 사당은 숲속 깊이 잊혀졌다.','그리고 지금— 마물이 깨어나는 시대에, 한 젊은이가 눈을 뜬다.']);
   await fadeOut();G.lock=0;await enterMap('village',20*TS+16,11*TS+20,'up',true);await wait(300);G.lock++;
-  await say('','💡 방향키(WASD)로 이동 · Z로 대화/베기 · X로 구르기 · Q로 회복약 · Esc 일시정지\n먼저 앞에 있는 촌장(머리 위 「!」)과 이야기해 보자.');unlock()}
+  await say('','💡 WASD/방향키 이동 · 마우스 클릭 공격 (꾹 누르면 회전베기) · Space 구르기 · E 대화/조사 · Q 회복약 · Esc 메뉴 · H 도움말\n먼저 앞에 있는 촌장(머리 위 「!」)과 이야기해 보자.');unlock()}
 
 /* ===================== LOOP ===================== */
 let last=performance.now();
@@ -2653,8 +2683,8 @@ function ambSpawn2(dt){const m=G.map,A=G.amb;if(A.length>60)return;const cx=G.ca
 function frame(now){const dt=Math.min(.05,(now-last)/1000);last=now;try{update(dt);
     if(G.mode==='play'&&G.map)drawWorld(dt);else{ctx.fillStyle='#05040f';ctx.fillRect(0,0,W,H);const g=ctx.createRadialGradient(W/2,H/2,20,W/2,H/2,500);g.addColorStop(0,'rgba(74,216,255,.12)');g.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}}catch(err){console.error(err)}
   requestAnimationFrame(frame)}
-async function init(){ctx.imageSmoothingEnabled=false;try{const s=JSON.parse(localStorage.getItem('tryrpg-set-v1')||'null');if(s)Object.assign(G.set,s)}catch(e){}
-  genTex();buildMaps();try{await Promise.race([document.fonts.ready,wait(1200)])}catch(e){}requestAnimationFrame(frame);
+async function init(){ctx.imageSmoothingEnabled=false;try{const s=JSON.parse(localStorage.getItem(SETKEY)||'null');if(s)Object.assign(G.set,s)}catch(e){}
+  applyTouch();genTex();buildMaps();try{await Promise.race([document.fonts.ready,wait(1200)])}catch(e){}requestAnimationFrame(frame);
   const sv=loadSave();if(sv){G.p=sv.p;for(const k of['flags','quests','kills','inv'])G.p[k]=G.p[k]||{};recalcHearts();if(G.p.flags.shrineClear)G.p.flags.fb1=1;if(G.p.flags.tombOpen||G.p.flags.tombClear)G.p.flags.fb2=1;if(G.p.hp<=0)G.p.hp=maxHp();G.pl.stam=G.p.mstam;
     const m=MAPS[G.p.map]&&G.p.map!=='shrine'?G.p.map:'wood';const x=G.p.map==='shrine'?25*TS+16:G.p.x,y=G.p.map==='shrine'?4*TS+20:G.p.y;await enterMap(m,x,y,G.p.dir,true);toast(`📖 Lv.${G.p.lv} ${G.p.name}의 모험을 이어갑니다`)}
   else{if(needReel()){G.mode='intro';await fadeIn();await showReel()}await newGame();return}
