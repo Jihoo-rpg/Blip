@@ -798,9 +798,9 @@ function playStep(T,st,t,spb){const n=T.prog.length,bar=Math.floor(st/16)%n,s=st
   if(T.drum){if(s%8===0)osc('sine',150,t,.16,.45,d,40);if(s%8===4)noise(t,.12,.18,d,1500);if(T.drum===2?s%2===1:s%4===2)noise(t,.03,.07,d,7000)}}
 
 /* ===================== DATA ===================== */
-const VERSION='5.3';
+const VERSION='6.0';
 const GAME_TITLE='잃어버린 왕국 : 천년의 봉인';
-const UPDATES=[{v:'5.3',date:'2026.11.19',title:'정식 출시 패치',notes:['공격하면서 움직일 수 있다 (휘두르는 동안 약간 느려짐 · 방향은 유지)','모든 창(메뉴·가방·지도·상점·도움말)에 ✕ 닫기 버튼 추가','전 지역 45곳 점검 — 오류 없음 확인']},{v:'5.2',date:'2026.11.19',title:'게임 전체 퀄리티 — 1장부터 최종장까지',notes:['모든 보스(아르카논·샤르둠·고르곤·아즈라크·벨로스·카르덴·세라프·레비아·이그나르·바르카인·아스테론·모르칸 등): 각성 충격파, 페이즈 변신 연출(에너지 수렴 → 폭발 → 오라), 사망 시네마틱(빛 균열·광선 → 붕괴 폭발·파편)','검 휘두르기 궤적 재작화: 그라디언트 초승달 + 칼끝 불꽃 (검 특성별 색)','타격 임팩트: 교차 섬광 · 스파크 · 처치 시 강화','몬스터 처치 시 노이즈 디졸브로 사라지고 빛 입자가 피어오른다']},{v:'5.1',date:'2026.11.18',title:'퀄리티 대개편 — 화질 · 동료 AI · 비행 · 변신',notes:['고해상도 렌더링: 2배 해상도 백버퍼로 캐릭터·글자·이펙트가 선명해졌다 (성능이 부족하면 자동으로 낮춤 · 도움말 메뉴에서 화질 고정 가능)','블룸 후처리: 빛나는 마법·용암·수정이 은은하게 번진다','동료 AI 재작성: 벽에 대고 쏘지 않는다 — 시야가 확보된 사격 위치를 찾아 이동한 뒤 공격, 막히면 길찾기로 우회, 끼이면 스스로 빠져나온다','적 궁수도 시야가 없으면 쏘지 않는다','투사체 전면 재작화: 깃털·화살촉·궤적이 있는 화살, 결정형 얼음 창, 화염구, 초승달 검기, 어둠 구체','점프·상승기류 비행: 바람 궤적, 잔상, 속도선, 착지 충격파','모르칸 변신 시네마틱: 봉인 균열 폭발 → 기사가 흩어져 천년의 재앙으로 재구성 → 재앙이 깨지며 빛기둥 속 수호자 강림','천년의 재앙 형태 전면 재작화: 뼈 날개, 촉수, 융합된 갑옷, 룬 고리 심장, 궤도 잔해, 원소 구체 궤적','보스 페이즈 전환 버스트 (바르카인·아스테론 등): 충격파·빛기둥·파편','파티클 렌더러: 발광 헤일로, 속도 스트릭, 회전 파편, 연기']},{v:'5.0',date:'2026.11.18',title:'최종장 「천년의 봉인: 최후의 여명」',notes:['Lv.90 최후의 소집 — 마을의 종, 검은 폭풍, 지금까지 도운 일곱 지역의 대표가 모인다 (도운 내용에 따라 대사가 달라진다)','아르테시아 왕성 — 정문·무너진 대교·병영·정원·도서관·연회장·궁전·지하 봉인 시설·왕좌의 방, 지름길·숨겨진 방·보물·과거의 기록','천 년 전의 기억 — 봉인되기 전의 왕성을 직접 돌아다니며 단서 찾기','다섯 봉인의 시련 — 수호자 전투 · 빛과 거울 · 얼음과 허공 · 상승기류 · 냉각 장치','왕의 거짓말 · 최후의 방어선(연합군 · 여명의 등대 3개) · 봉인의 심장(무너지는 다리 · 움직이는 발판)','보스 「왕성의 마지막 기사 — 아스테론」, 최종 보스 「타락한 최초의 수호자 — 모르칸」 4페이즈 · 페이즈별 체크포인트','멀티 엔딩 — 영원한 봉인 / 새로운 여명(진엔딩) · 엔딩 지역 순회 · 타이틀 & 크레딧 · 시작 마을의 마지막 장면','엔딩 후: 자유 탐험 · 사이드 퀘스트 3개 · 숨겨진 전설 장비 · 보스 재도전 · 숨겨진 보스 · 진엔딩 조건 확인','건너뛸 수 있는 컷신(ESC) · 대화 기록(L) · 최대 레벨 100']},{v:'4.5',date:'2026.11.17',title:'제9장 「타락한 왕국: 검은 재앙」 · 전 지역 그래픽 개편',notes:['Lv.80 메인 스토리 — 긴급 전령 리아, 연합군 전초기지','타락한 영토: 적 거점 5곳 탈환 (거점마다 다른 몬스터·지휘관·임무, 검은 수정 정화)','탈환한 거점에 연합군 병사·상인·귀환석 등장, 검은 안개가 걷히고 풀이 자란다','동료 시스템 — 기사 브론 · 궁수 사이라 · 얼음 마법사 엘리안 · 바람술사 세린 · 파수꾼 레아 중 3명','Lv.85 검은 성벽 공성전 — 연합군 진격, 성벽 궁수, 방어 장치 3개, 성문 붕괴','타락한 수도 4구역 — 수정 정화 · 고문서 · 숨겨진 보물 · 중간 보스 타락한 대사제','보스 「어둠의 군단장 — 바르케인」 3페이즈 (방패·반격·그림자 병사·연계 공격·수정 정화)','전설 무기 「여명의 대검 오로라」 · 전설 갑옷 「여명의 성갑」 · 최대 레벨 90','초원·숲·협곡·사막·유적·설산·하늘섬·성·무덤·사당 텍스처와 지형 전면 개편, 지역별 소품 추가']},{v:'4.4',date:'2026.11.17',title:'점프 & 볼카리아 그래픽 개편',notes:['점프 추가 — Space (모바일 ⤒ 버튼). 구르기는 Shift · K · 마우스 오른쪽','공중에서는 충격파 · 바닥 파동 · 좁은 용암을 넘는다','충격파 판정이 화면에 보이는 고리 모양과 정확히 일치하도록 수정','볼카리아 4개 지역 텍스처 전면 교체 — 현무암 판, 주상절리 절벽, 흐르는 2겹 용암, 굳은 용암 가장자리, 다리 난간','잿빛 도시에 실제 석조 건물(지붕·창문·문·굴뚝·불타는 지붕), 깃발·화로·석상','광산 침목 선로 · 갱도 지지대 · 랜턴 · 광석 · 광맥','현무암 기둥 · 고사목 · 흑요석 · 분기공 연기 · 유적 기둥 · 거신의 의식진']},{v:'4.3',date:'2026.11.17',title:'제8장 「불타는 왕국의 심장」',notes:['Lv.70 메인 스토리 — 화산 왕국 볼카리아의 사절 브란이 마을에 찾아온다','새 지역 4곳: 볼카리아 외곽 · 잿빛 도시 · 지하 용광로 광산 · 화산 심장부','용암 강·용암 폭포·밀려왔다 물러나는 용암 수로, 얼음 발판으로 식어가는 용암을 굳혀 길 만들기','광산 수레 타기 · 선로 전환기 · 용광로 배출구 레버 · 압력 밸브 퍼즐','주민 6명 구조 — 구한 만큼 대장간·치유의 샘·광산 성문이 다시 열린다','배신자 오르데스 추적 · 숨겨진 은신처','보스 「화염의 거신 — 이그나르」 3페이즈 (냉각 장치로 핵 노출) · 야영지 체크포인트','전설 무기 「화염왕의 대검 이그니스」 · 최대 레벨 80','제9장 「타락한 왕국」 예고']},{v:'4.2',date:'2026.11.15',title:'시작 화면',notes:['게임을 켜면 Blip 로고 → 로딩 화면 → 타이틀 화면 순서로 시작','오른쪽 아래에 전체이용가 표시','로딩 중 진행률과 팁 표시','타이틀에서 이어하기(레벨·위치 표시) 또는 새로 시작(저장이 있으면 확인 창)','아무 키나 누르면 Blip 로고·로딩을 건너뛸 수 있다']},{v:'4.1',date:'2026.11.13',title:'제7장 「가라앉은 왕국의 비밀」',notes:['Lv.60 + 하늘섬 클리어 후 에테르 마을에 해양 탐험가 카이렌 등장','초원 남쪽 끝 「푸른 물결 해안」 — 갑각게·난파선·조수석으로 고대 잠수 장치 수리','심해 왕국 탈라시아: 침몰한 항구·빛나는 산호숲·해저 동굴·고대 도시·중앙의 심해 왕궁','수영: 관성 있는 자유 이동, 수류, 잠수 에너지, 공기 방울(체크포인트·빠른 이동), R 키로 가까운 공기 방울','실종 탐험대 4명 구조, 에너지 장치 3개 퍼즐, 왕궁 수문 밸브 퍼즐','수중 몬스터 6종 · 해신의 삼지창 · 보스 「심연의 군주 레비아탄」 3페이즈','보상: 심해의 숨결(에너지 무한·빠른 수영), 최대 Lv.70, 제8장 예고']},{v:'4.0',date:'2026.11.13',title:'UI 전면 리디자인',notes:['요즘 게임 스타일의 깔끔한 UI로 완전히 새로 — 반투명 유리 패널, 얇은 선, 한 가지 포인트 색','글꼴을 Pretendard·Inter 계열 고딕으로 통일, 지역 이름·보스 이름만 명조','이모지 아이콘을 전부 선 아이콘으로 교체','대화창은 영화 자막처럼 화면 아래에, 선택지는 깔끔한 버튼으로','HUD 정리: 작은 하트, 얇은 경험치 바, 원형 미니맵(나를 중심으로 회전 없이 확대), 목표 안내 캡슐, 아래쪽 보스 체력바']},{v:'3.6',date:'2026.11.13',title:'초반 레벨업 더 빠르게',notes:['Lv.1~20 구간에서 필요한 경험치를 줄였다 — 처음엔 약 45% 적게, Lv.20에 가까워질수록 원래대로','Lv.10까지 걸리는 시간 약 30% 단축','Lv.20부터는 그대로라 이후 난이도는 바뀌지 않는다']},{v:'3.5',date:'2026.11.13',title:'입은 갑옷이 그대로 보인다',notes:['갑옷 7종마다 투구·가슴판·장식이 다르게 보인다 — 머리띠, 쇠 투구와 사슬 두건, 뿔 투구와 털 목도리, 풍뎅이 투구, 태양 왕관 투구, 깃털 근위 투구','방어구 메뉴에서 고른 갑옷을 입은 모습을 미리 볼 수 있다 (돌아가며 앞·옆·뒤)','게임 시작할 때 업데이트 영상이 자동으로 나오지 않는다 (메뉴 → 업데이트 영상에서 볼 수 있음)']},{v:'3.4',date:'2026.11.13',title:'사운드 전면 리뉴얼',notes:['오케스트라풍 배경음악 30곡 — 현악·하프·플루트·금관·종소리·합창·북, 공간 울림(리버브)','지역마다 다른 음악: 마을·초원·숲·협곡·사막·무덤·사당·유적·왕성·산맥·요새·얼음산맥·신전·하늘섬·대성전, 보스 7종, 경보·회상·컷신·클리어','효과음 60여 종을 새로 — 베기·회전베기·타격·금속 충돌·포효·지진·순간이동·보물상자·레벨업 팡파르 등','바닥에 따라 다른 발소리 (풀·모래·눈·얼음·돌·나무 다리)','지역별 환경음 — 바람, 새소리, 부엉이, 풀벌레, 물방울, 먼 천둥, 눈보라, 하늘 바람','음악이 바뀔 때 부드럽게 이어진다']},{v:'3.3',date:'2026.11.13',title:'더 무서운 몬스터 · 고급 UI',notes:['몬스터가 더 무섭고 사실적으로 — 작은 머리·긴 몸의 실제 비율, 어두운 조명과 때 묻은 질감','슬라임 속에 녹아가는 해골과 여러 개의 붉은 눈·이빨 달린 입, 정령은 해골 얼굴, 고블린은 흉터와 붉은 눈','글꼴을 명조(Noto Serif KR)·고딕(Noto Sans KR)으로 교체','메뉴·대화창·알림을 어두운 유리 패널과 금빛 이중 테두리·모서리 장식으로','하트·레벨 문장·경험치 바·골드·퀘스트·무기 슬롯·미니맵·보스 체력바를 새로 디자인']},{v:'3.2',date:'2026.11.13',title:'몬스터 리뉴얼',notes:['모든 몬스터를 새로 그렸다 — 외곽선·명암·빛나는 눈','고블린은 큰 귀와 송곳니·가죽 조끼·가시 몽둥이, 궁수는 두건과 활시위를 당기는 동작','해골·미라·망령 기사·요새 수호병·서리 기사는 투구·갑옷·망토·무기가 제대로 보인다','슬라임은 말랑한 젤리와 거품, 풍뎅이·전갈은 금속 껍질과 꼬리 독침, 가렌은 도끼 든 소 머리 거인','골렘은 이끼·얼음·황금 장식의 바위 몸, 설인은 털복숭이, 늑대·하피·정령도 새로','걷기·공격 준비(무기 치켜들기) 동작 추가']},{v:'3.1',date:'2026.11.13',title:'월드 그래픽 리뉴얼',notes:['풀·흙길·모래·눈·대리석 바닥을 새로 그렸다 — 길 가장자리에 자연스러운 풀 테두리','입체적인 큰 나무와 덤불, 기와 지붕과 굴뚝 연기, 건물·절벽 그림자','물결·반짝임·물가 거품이 있는 물, 바위와 절벽을 지역마다 새로 그림','지역별 빛과 분위기 — 햇살, 떠다니는 구름 그림자, 반딧불·낙엽, 모래바람, 보랏빛 안개, 눈보라','하늘섬: 깊이감 있는 하늘·구름 바다·새·먼 부유섬, 섬 아래로 늘어진 절벽과 덩굴·수정, 둥근 섬 가장자리']},{v:'3.0',date:'2026.11.13',title:'주인공 리뉴얼',notes:['주인공 그래픽을 완전히 새로 그렸다 — 망토·어깨 갑옷·등에 멘 검·빛나는 눈','입은 방어구에 따라 갑옷 색과 머리 장식(머리띠/날개 서클릿), 망토 색이 바뀐다','걷기·숨쉬기·망토 펄럭임 애니메이션, 더 화려한 베기 궤적','Lv.30부터 발밑 오라, 천공의 날개를 얻으면 등에 빛의 날개']},{v:'2.9',date:'2026.11.13',title:'제6장 「추락한 하늘의 왕국」',notes:[
+const UPDATES=[{v:'6.0',date:'2026.11.19',title:'멀티플레이 · 누더기에서 시작하는 성장 · 개성 있는 사람과 몬스터',notes:['멀티플레이: 모든 플레이어가 한 서버 — 같은 필드에 있으면 서로 보이고, 같은 몬스터를 함께 잡는다','함께 때린 몬스터를 잡으면 때린 사람 모두 경험치 · 근처 파티원도 경험치를 나눠 받는다','파티(최대 4명): 메뉴 → 파티 · 멀티플레이에서 초대 · 레벨 차이가 5 이상이면 파티 불가','사당·던전은 파티원끼리만 함께 들어가고, 파티가 없으면 혼자 · 스토리 지역은 언제나 혼자','파티 던전 보스는 파티원이 준 피해가 함께 들어간다','시작 옷이 낡고 찢어진 누더기로 바뀌었다 — 방어구를 만들수록 망토·장식·금속이 단계적으로 붙는다','마을 사람마다 키·체형·머리 모양·옷·모자·나이가 다르다','몬스터도 개체마다 크기·색·장신구가 다르고, 가끔 강한 「정예」 몬스터(경험치 3배)가 나타난다']},{v:'5.3',date:'2026.11.19',title:'정식 출시 패치',notes:['공격하면서 움직일 수 있다 (휘두르는 동안 약간 느려짐 · 방향은 유지)','모든 창(메뉴·가방·지도·상점·도움말)에 ✕ 닫기 버튼 추가','전 지역 45곳 점검 — 오류 없음 확인']},{v:'5.2',date:'2026.11.19',title:'게임 전체 퀄리티 — 1장부터 최종장까지',notes:['모든 보스(아르카논·샤르둠·고르곤·아즈라크·벨로스·카르덴·세라프·레비아·이그나르·바르카인·아스테론·모르칸 등): 각성 충격파, 페이즈 변신 연출(에너지 수렴 → 폭발 → 오라), 사망 시네마틱(빛 균열·광선 → 붕괴 폭발·파편)','검 휘두르기 궤적 재작화: 그라디언트 초승달 + 칼끝 불꽃 (검 특성별 색)','타격 임팩트: 교차 섬광 · 스파크 · 처치 시 강화','몬스터 처치 시 노이즈 디졸브로 사라지고 빛 입자가 피어오른다']},{v:'5.1',date:'2026.11.18',title:'퀄리티 대개편 — 화질 · 동료 AI · 비행 · 변신',notes:['고해상도 렌더링: 2배 해상도 백버퍼로 캐릭터·글자·이펙트가 선명해졌다 (성능이 부족하면 자동으로 낮춤 · 도움말 메뉴에서 화질 고정 가능)','블룸 후처리: 빛나는 마법·용암·수정이 은은하게 번진다','동료 AI 재작성: 벽에 대고 쏘지 않는다 — 시야가 확보된 사격 위치를 찾아 이동한 뒤 공격, 막히면 길찾기로 우회, 끼이면 스스로 빠져나온다','적 궁수도 시야가 없으면 쏘지 않는다','투사체 전면 재작화: 깃털·화살촉·궤적이 있는 화살, 결정형 얼음 창, 화염구, 초승달 검기, 어둠 구체','점프·상승기류 비행: 바람 궤적, 잔상, 속도선, 착지 충격파','모르칸 변신 시네마틱: 봉인 균열 폭발 → 기사가 흩어져 천년의 재앙으로 재구성 → 재앙이 깨지며 빛기둥 속 수호자 강림','천년의 재앙 형태 전면 재작화: 뼈 날개, 촉수, 융합된 갑옷, 룬 고리 심장, 궤도 잔해, 원소 구체 궤적','보스 페이즈 전환 버스트 (바르카인·아스테론 등): 충격파·빛기둥·파편','파티클 렌더러: 발광 헤일로, 속도 스트릭, 회전 파편, 연기']},{v:'5.0',date:'2026.11.18',title:'최종장 「천년의 봉인: 최후의 여명」',notes:['Lv.90 최후의 소집 — 마을의 종, 검은 폭풍, 지금까지 도운 일곱 지역의 대표가 모인다 (도운 내용에 따라 대사가 달라진다)','아르테시아 왕성 — 정문·무너진 대교·병영·정원·도서관·연회장·궁전·지하 봉인 시설·왕좌의 방, 지름길·숨겨진 방·보물·과거의 기록','천 년 전의 기억 — 봉인되기 전의 왕성을 직접 돌아다니며 단서 찾기','다섯 봉인의 시련 — 수호자 전투 · 빛과 거울 · 얼음과 허공 · 상승기류 · 냉각 장치','왕의 거짓말 · 최후의 방어선(연합군 · 여명의 등대 3개) · 봉인의 심장(무너지는 다리 · 움직이는 발판)','보스 「왕성의 마지막 기사 — 아스테론」, 최종 보스 「타락한 최초의 수호자 — 모르칸」 4페이즈 · 페이즈별 체크포인트','멀티 엔딩 — 영원한 봉인 / 새로운 여명(진엔딩) · 엔딩 지역 순회 · 타이틀 & 크레딧 · 시작 마을의 마지막 장면','엔딩 후: 자유 탐험 · 사이드 퀘스트 3개 · 숨겨진 전설 장비 · 보스 재도전 · 숨겨진 보스 · 진엔딩 조건 확인','건너뛸 수 있는 컷신(ESC) · 대화 기록(L) · 최대 레벨 100']},{v:'4.5',date:'2026.11.17',title:'제9장 「타락한 왕국: 검은 재앙」 · 전 지역 그래픽 개편',notes:['Lv.80 메인 스토리 — 긴급 전령 리아, 연합군 전초기지','타락한 영토: 적 거점 5곳 탈환 (거점마다 다른 몬스터·지휘관·임무, 검은 수정 정화)','탈환한 거점에 연합군 병사·상인·귀환석 등장, 검은 안개가 걷히고 풀이 자란다','동료 시스템 — 기사 브론 · 궁수 사이라 · 얼음 마법사 엘리안 · 바람술사 세린 · 파수꾼 레아 중 3명','Lv.85 검은 성벽 공성전 — 연합군 진격, 성벽 궁수, 방어 장치 3개, 성문 붕괴','타락한 수도 4구역 — 수정 정화 · 고문서 · 숨겨진 보물 · 중간 보스 타락한 대사제','보스 「어둠의 군단장 — 바르케인」 3페이즈 (방패·반격·그림자 병사·연계 공격·수정 정화)','전설 무기 「여명의 대검 오로라」 · 전설 갑옷 「여명의 성갑」 · 최대 레벨 90','초원·숲·협곡·사막·유적·설산·하늘섬·성·무덤·사당 텍스처와 지형 전면 개편, 지역별 소품 추가']},{v:'4.4',date:'2026.11.17',title:'점프 & 볼카리아 그래픽 개편',notes:['점프 추가 — Space (모바일 ⤒ 버튼). 구르기는 Shift · K · 마우스 오른쪽','공중에서는 충격파 · 바닥 파동 · 좁은 용암을 넘는다','충격파 판정이 화면에 보이는 고리 모양과 정확히 일치하도록 수정','볼카리아 4개 지역 텍스처 전면 교체 — 현무암 판, 주상절리 절벽, 흐르는 2겹 용암, 굳은 용암 가장자리, 다리 난간','잿빛 도시에 실제 석조 건물(지붕·창문·문·굴뚝·불타는 지붕), 깃발·화로·석상','광산 침목 선로 · 갱도 지지대 · 랜턴 · 광석 · 광맥','현무암 기둥 · 고사목 · 흑요석 · 분기공 연기 · 유적 기둥 · 거신의 의식진']},{v:'4.3',date:'2026.11.17',title:'제8장 「불타는 왕국의 심장」',notes:['Lv.70 메인 스토리 — 화산 왕국 볼카리아의 사절 브란이 마을에 찾아온다','새 지역 4곳: 볼카리아 외곽 · 잿빛 도시 · 지하 용광로 광산 · 화산 심장부','용암 강·용암 폭포·밀려왔다 물러나는 용암 수로, 얼음 발판으로 식어가는 용암을 굳혀 길 만들기','광산 수레 타기 · 선로 전환기 · 용광로 배출구 레버 · 압력 밸브 퍼즐','주민 6명 구조 — 구한 만큼 대장간·치유의 샘·광산 성문이 다시 열린다','배신자 오르데스 추적 · 숨겨진 은신처','보스 「화염의 거신 — 이그나르」 3페이즈 (냉각 장치로 핵 노출) · 야영지 체크포인트','전설 무기 「화염왕의 대검 이그니스」 · 최대 레벨 80','제9장 「타락한 왕국」 예고']},{v:'4.2',date:'2026.11.15',title:'시작 화면',notes:['게임을 켜면 Blip 로고 → 로딩 화면 → 타이틀 화면 순서로 시작','오른쪽 아래에 전체이용가 표시','로딩 중 진행률과 팁 표시','타이틀에서 이어하기(레벨·위치 표시) 또는 새로 시작(저장이 있으면 확인 창)','아무 키나 누르면 Blip 로고·로딩을 건너뛸 수 있다']},{v:'4.1',date:'2026.11.13',title:'제7장 「가라앉은 왕국의 비밀」',notes:['Lv.60 + 하늘섬 클리어 후 에테르 마을에 해양 탐험가 카이렌 등장','초원 남쪽 끝 「푸른 물결 해안」 — 갑각게·난파선·조수석으로 고대 잠수 장치 수리','심해 왕국 탈라시아: 침몰한 항구·빛나는 산호숲·해저 동굴·고대 도시·중앙의 심해 왕궁','수영: 관성 있는 자유 이동, 수류, 잠수 에너지, 공기 방울(체크포인트·빠른 이동), R 키로 가까운 공기 방울','실종 탐험대 4명 구조, 에너지 장치 3개 퍼즐, 왕궁 수문 밸브 퍼즐','수중 몬스터 6종 · 해신의 삼지창 · 보스 「심연의 군주 레비아탄」 3페이즈','보상: 심해의 숨결(에너지 무한·빠른 수영), 최대 Lv.70, 제8장 예고']},{v:'4.0',date:'2026.11.13',title:'UI 전면 리디자인',notes:['요즘 게임 스타일의 깔끔한 UI로 완전히 새로 — 반투명 유리 패널, 얇은 선, 한 가지 포인트 색','글꼴을 Pretendard·Inter 계열 고딕으로 통일, 지역 이름·보스 이름만 명조','이모지 아이콘을 전부 선 아이콘으로 교체','대화창은 영화 자막처럼 화면 아래에, 선택지는 깔끔한 버튼으로','HUD 정리: 작은 하트, 얇은 경험치 바, 원형 미니맵(나를 중심으로 회전 없이 확대), 목표 안내 캡슐, 아래쪽 보스 체력바']},{v:'3.6',date:'2026.11.13',title:'초반 레벨업 더 빠르게',notes:['Lv.1~20 구간에서 필요한 경험치를 줄였다 — 처음엔 약 45% 적게, Lv.20에 가까워질수록 원래대로','Lv.10까지 걸리는 시간 약 30% 단축','Lv.20부터는 그대로라 이후 난이도는 바뀌지 않는다']},{v:'3.5',date:'2026.11.13',title:'입은 갑옷이 그대로 보인다',notes:['갑옷 7종마다 투구·가슴판·장식이 다르게 보인다 — 머리띠, 쇠 투구와 사슬 두건, 뿔 투구와 털 목도리, 풍뎅이 투구, 태양 왕관 투구, 깃털 근위 투구','방어구 메뉴에서 고른 갑옷을 입은 모습을 미리 볼 수 있다 (돌아가며 앞·옆·뒤)','게임 시작할 때 업데이트 영상이 자동으로 나오지 않는다 (메뉴 → 업데이트 영상에서 볼 수 있음)']},{v:'3.4',date:'2026.11.13',title:'사운드 전면 리뉴얼',notes:['오케스트라풍 배경음악 30곡 — 현악·하프·플루트·금관·종소리·합창·북, 공간 울림(리버브)','지역마다 다른 음악: 마을·초원·숲·협곡·사막·무덤·사당·유적·왕성·산맥·요새·얼음산맥·신전·하늘섬·대성전, 보스 7종, 경보·회상·컷신·클리어','효과음 60여 종을 새로 — 베기·회전베기·타격·금속 충돌·포효·지진·순간이동·보물상자·레벨업 팡파르 등','바닥에 따라 다른 발소리 (풀·모래·눈·얼음·돌·나무 다리)','지역별 환경음 — 바람, 새소리, 부엉이, 풀벌레, 물방울, 먼 천둥, 눈보라, 하늘 바람','음악이 바뀔 때 부드럽게 이어진다']},{v:'3.3',date:'2026.11.13',title:'더 무서운 몬스터 · 고급 UI',notes:['몬스터가 더 무섭고 사실적으로 — 작은 머리·긴 몸의 실제 비율, 어두운 조명과 때 묻은 질감','슬라임 속에 녹아가는 해골과 여러 개의 붉은 눈·이빨 달린 입, 정령은 해골 얼굴, 고블린은 흉터와 붉은 눈','글꼴을 명조(Noto Serif KR)·고딕(Noto Sans KR)으로 교체','메뉴·대화창·알림을 어두운 유리 패널과 금빛 이중 테두리·모서리 장식으로','하트·레벨 문장·경험치 바·골드·퀘스트·무기 슬롯·미니맵·보스 체력바를 새로 디자인']},{v:'3.2',date:'2026.11.13',title:'몬스터 리뉴얼',notes:['모든 몬스터를 새로 그렸다 — 외곽선·명암·빛나는 눈','고블린은 큰 귀와 송곳니·가죽 조끼·가시 몽둥이, 궁수는 두건과 활시위를 당기는 동작','해골·미라·망령 기사·요새 수호병·서리 기사는 투구·갑옷·망토·무기가 제대로 보인다','슬라임은 말랑한 젤리와 거품, 풍뎅이·전갈은 금속 껍질과 꼬리 독침, 가렌은 도끼 든 소 머리 거인','골렘은 이끼·얼음·황금 장식의 바위 몸, 설인은 털복숭이, 늑대·하피·정령도 새로','걷기·공격 준비(무기 치켜들기) 동작 추가']},{v:'3.1',date:'2026.11.13',title:'월드 그래픽 리뉴얼',notes:['풀·흙길·모래·눈·대리석 바닥을 새로 그렸다 — 길 가장자리에 자연스러운 풀 테두리','입체적인 큰 나무와 덤불, 기와 지붕과 굴뚝 연기, 건물·절벽 그림자','물결·반짝임·물가 거품이 있는 물, 바위와 절벽을 지역마다 새로 그림','지역별 빛과 분위기 — 햇살, 떠다니는 구름 그림자, 반딧불·낙엽, 모래바람, 보랏빛 안개, 눈보라','하늘섬: 깊이감 있는 하늘·구름 바다·새·먼 부유섬, 섬 아래로 늘어진 절벽과 덩굴·수정, 둥근 섬 가장자리']},{v:'3.0',date:'2026.11.13',title:'주인공 리뉴얼',notes:['주인공 그래픽을 완전히 새로 그렸다 — 망토·어깨 갑옷·등에 멘 검·빛나는 눈','입은 방어구에 따라 갑옷 색과 머리 장식(머리띠/날개 서클릿), 망토 색이 바뀐다','걷기·숨쉬기·망토 펄럭임 애니메이션, 더 화려한 베기 궤적','Lv.30부터 발밑 오라, 천공의 날개를 얻으면 등에 빛의 날개']},{v:'2.9',date:'2026.11.13',title:'제6장 「추락한 하늘의 왕국」',notes:[
   '🌅 신전 클리어 후 마을로 돌아가면 — 지상의 불행이 풀리는 연출 (산맥의 안개도 옅어진다)',
   '🪽 Lv.50: 하늘섬 주민 「엘리안」이 마을 광장에 내려와 도움을 청한다 (도와주겠다 / 나중에)',
   '🛗 초원 북쪽의 고대 천공 승강기 수리 → 구름 위의 하늘섬 「아르세아」',
@@ -1287,7 +1287,7 @@ function drawArena(c,ox,oy){if(G.map.id==='tomb'){drawTombGround(c,ox,oy);return
   c.lineWidth=2;for(let i=0;i<12;i++){const ang=i/12*Math.PI*2+t*.05;const r1=140,r2=220;c.beginPath();c.moveTo(x+Math.cos(ang)*r1,y+Math.sin(ang)*r1*.62);c.lineTo(x+Math.cos(ang)*r2,y+Math.sin(ang)*r2*.62);c.stroke();
     c.fillStyle=`rgba(${col},${a*.9})`;c.font='16px serif';c.textAlign='center';c.fillText('ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃ'[i],x+Math.cos(ang)*180,y+Math.sin(ang)*180*.62+5)}c.restore()}
 function drawObj(o,x,y,t){switch(o.type){
-  case'npc':drawChar(ctx,x-16,y-28,o.dir,0,o.look);{const mk2=npcMark(o);if(mk2){const b=Math.sin(t*5)*2;ctx.font='900 18px "Noto Serif KR",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(mk2,x+1,y-39+b);ctx.fillStyle=mk2==='!'?'#ffd43b':'#7dff9a';ctx.fillText(mk2,x,y-40+b)}}break;
+  case'npc':if(o.look&&o._lkS!==o.look){o._lkS=o.look;o._lk=Object.assign({},o.look,{_nm:(o.id||o.name||'')+'@'+(o.tx|0)+','+(o.ty|0),_sd:undefined,_tr:undefined})}drawChar(ctx,x-16,y-28,o.dir,o.mv?1:0,o._lk||o.look);{const mk2=npcMark(o);if(mk2){const b=Math.sin(t*5)*2;ctx.font='900 18px "Noto Serif KR",sans-serif';ctx.textAlign='center';ctx.fillStyle='#000';ctx.fillText(mk2,x+1,y-39+b);ctx.fillStyle=mk2==='!'?'#ffd43b':'#7dff9a';ctx.fillText(mk2,x,y-40+b)}}break;
   case'sign':ctx.fillStyle='rgba(0,0,0,.25)';ctx.fillRect(x-6,y-1,12,3);ctx.fillStyle='#6b4423';ctx.fillRect(x-2,y-14,4,15);ctx.fillStyle='#9c6a35';ctx.fillRect(x-11,y-22,22,11);ctx.fillStyle='#3a2410';ctx.fillRect(x-8,y-19,16,1);ctx.fillRect(x-8,y-16,12,1);break;
   case'ore':{ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(x,y,14,4,0,0,7);ctx.fill();ctx.fillStyle='#6f6a66';ctx.beginPath();ctx.ellipse(x,y-10,14,12,0,0,7);ctx.fill();ctx.fillStyle='#8c8680';ctx.beginPath();ctx.ellipse(x-3,y-14,8,6,0,0,7);ctx.fill();
     for(const[a,b]of[[-6,-8],[4,-14],[6,-5],[-2,-18]]){ctx.fillStyle=Math.sin(t*3+a)>.3?'#ffd27a':'#c9884a';ctx.fillRect(x+a,y+b,3,3)}if(o.hp<(G.map.id==='canyon'?4:3)){ctx.strokeStyle='#3a3530';ctx.lineWidth=1.5;ctx.beginPath();ctx.moveTo(x-8,y-16);ctx.lineTo(x-2,y-10);ctx.lineTo(x-6,y-3);ctx.stroke()}break}
@@ -1343,8 +1343,8 @@ function drawWorld(dt){const m=G.map,t=G.t;camera(dt);let ox=G.cam.x|0,oy=G.cam.
   drawArena(ctx,ox,oy);drawTeleGround(ctx,ox,oy);
   for(const w of G.waves){ctx.save();ctx.globalCompositeOperation='lighter';ctx.strokeStyle=w.col;ctx.globalAlpha=Math.min(1,(w.max-w.R)/60)*.9;ctx.lineWidth=w.w;ctx.beginPath();ctx.ellipse(w.x-ox,w.y-oy,w.R,w.R*.62,0,0,7);ctx.stroke();ctx.lineWidth=3;ctx.strokeStyle='#fff';ctx.stroke();ctx.restore()}
   const list=[];for(const e of G.ents){if(e.gone)continue;const ey=e.y;if(e.x<ox-120||e.x>ox+W+120||ey<oy-60||ey>oy+H+160)continue;list.push(e)}
-  if(G.boss)list.push(G.boss);if(G.fb)list.push(G.fb);if(G.worm&&G.worm.st!=='sleep')list.push(G.worm);list.push(G.pl);list.sort((a,b)=>(a.type==='sdoor'?-1e9:a.y)-(b.type==='sdoor'?-1e9:b.y));
-  for(const e of list){const x=e.x-ox,y=e.y-oy;
+  if(G.boss)list.push(G.boss);if(G.fb)list.push(G.fb);if(G.worm&&G.worm.st!=='sleep')list.push(G.worm);list.push(G.pl);if(typeof netPeersVisible==='function')for(const r of netPeersVisible())list.push(r);list.sort((a,b)=>(a.type==='sdoor'?-1e9:a.y)-(b.type==='sdoor'?-1e9:b.y));
+  for(const e of list){const x=e.x-ox,y=e.y-oy;if(e.type==='rpl'){drawRemote(e,x,y,t);continue}
     if(e===G.pl)drawPlayer(x,y,t);
     else if(e.type==='mob')drawMob(e,x,y,t);
     else if(e.type==='boss'){const b=e;const o={k:b.k+(b.crouch||0)*.2,sa:b.sa,eye:b.eye,rage:b.rage,flip:b.flip,fade:b.fade};const ly=y-(b.lift||0)*10+(b.st==='stun'?Math.sin(t*30)*1:0);drawArcanon(ctx,x,ly,118,o,t);
@@ -1434,7 +1434,7 @@ function openPause(){if(G.lock||G.cut||G.dead||focus.length)return;G.lock++;sfx(
     {h:'<span class="ic">🏠</span>마을로 귀환',prev:()=>{const w=recallBlock();body.innerHTML=`<div class="h2 ttl">🏠 마을로 귀환</div><div>2.6초 동안 가만히 있으면 에테르 마을로 돌아간다. 움직이거나 공격받으면 취소.</div><div class="dim" style="margin-top:.5em">마을 광장에 「귀환의 문」이 열려, 한 번 원래 있던 곳(던전은 입구)으로 돌아갈 수 있다. 필드에서는 R 키.</div>${w?`<div class="dn" style="margin-top:.6em">지금은 불가: ${w}</div>`:''}`},f:()=>{pop(nav);closePanel();unlock();startRecall()}},
     {h:'<span class="ic">🗺️</span>세계 지도',prev:()=>{body.innerHTML='<div class="h2 ttl">🗺️ 세계 지도</div><div class="dim">Enter: 지도 열기 (필드에서는 M 키)</div>'},f:()=>{pop(nav);closePanel();unlock();openWorldMap()}},
     {h:'<span class="ic">❓</span>도움말 · 가이드',prev:()=>{body.innerHTML='<div class="h2 ttl">❓ 도움말</div><div class="dim">조작법 · 전투 · 하트 · 검 강화 · 보스와 퍼즐 공략을 볼 수 있습니다. (필드에서 H 키)</div>'},f:()=>{pop(nav);closePanel();unlock();openHelp()}},
-    {h:'<span class="ic">⚙️</span>설정',prev:()=>pgSet(body,0),f:()=>pgSet(body,1,back)},
+    {h:'<span class="ic">👥</span>파티 · 멀티플레이',prev:()=>pgParty(body,0),f:()=>pgParty(body,1,back)},{h:'<span class="ic">⚙️</span>설정',prev:()=>pgSet(body,0),f:()=>pgSet(body,1,back)},
     {h:'<span class="ic">📼</span>업데이트 영상',prev:()=>{body.innerHTML='<div class="h2 ttl">📼 업데이트 영상</div><div class="dim">이번 업데이트에서 바뀐 내용을 영상으로 다시 봅니다.</div>'},f:()=>{pop(nav);closePanel();unlock();showReel(true)}},
     {h:'<span class="ic">▶</span>계속하기',prev:()=>{body.innerHTML='<div class="h2 ttl">⏸ 일시정지</div><div class="dim">Esc로 닫기</div>'},f:close}],{onFocus:it=>it.prev&&it.prev(),onCancel:close}))}
 function pgStatus(b){const p=G.p;const kills=Object.values(p.kills).reduce((a,c)=>a+c,0);
@@ -3787,7 +3787,7 @@ function heroHead(c,P,dir,t,br,mv){
   // headband tails (behind)
   if(P.band){c.save();const tl=mv?5:2;c.strokeStyle=HOL;c.lineWidth=3.6;const bx=dir==='right'?-6:dir==='left'?6:dir==='up'?0:5.5,dirX=dir==='left'?1:-1;
     const ex=bx+dirX*(8+tl)+sway*2,ey=hy+4+Math.sin(t*7)*1.6;
-    for(const [w,col] of[[3.6,HOL],[2.2,'#d42a2a']]){c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(bx,hy-3);c.quadraticCurveTo(bx+dirX*5,hy-4+sway,ex,ey);c.stroke();c.beginPath();c.moveTo(bx,hy-3);c.quadraticCurveTo(bx+dirX*4,hy-1-sway,ex-dirX*2,ey+3.5);c.stroke()}c.restore()}
+    for(const [w,col] of[[3.6,HOL],[2.2,P.bandCol||'#d42a2a']]){c.strokeStyle=col;c.lineWidth=w;c.beginPath();c.moveTo(bx,hy-3);c.quadraticCurveTo(bx+dirX*5,hy-4+sway,ex,ey);c.stroke();c.beginPath();c.moveTo(bx,hy-3);c.quadraticCurveTo(bx+dirX*4,hy-1-sway,ex-dirX*2,ey+3.5);c.stroke()}c.restore()}
   // back hair (behind face, down view) — spikes at nape
   if(dir==='down'){hPoly(c,[[-8.6,hy+1],[-10.4,hy+7],[-7,hy+5],[-6,hy+9],[6,hy+9],[7,hy+5],[10.4,hy+7],[8.6,hy+1]]);hF(c,P.hair)}
   // face / skull
@@ -3879,7 +3879,7 @@ function drawHero(c,x,y,dir,ph,mv,t,o){o=o||{};const P=heroPal();const br=mv?-Ma
   const as=mv?Math.sin(ph)*2.6:0;
   if(d==='right'){heroArm(c,P,-1,-24.5+br,-3-as,-14.5+br)}
   heroLegs(c,P,d,ph,mv);
-  heroTorso(c,P,d,br);
+  heroTorso(c,P,d,br);if(P.tier===0&&typeof heroRags==='function')heroRags(c,P,d,br,t);
   if(d==='down'||d==='up'){const r=o.raise;
     heroArm(c,P,-8.4,-24.5+br,r?-3.2:-10.4+(d==='up'?0:0),r?-44:-14.5+as+br);heroArm(c,P,8.4,-24.5+br,r?3.2:10.4,r?-44:-14.5-as+br);
     heroPauldron(c,P,-8.6,-25.6+br,4.6);heroPauldron(c,P,8.6,-25.6+br,4.6)}
@@ -7683,6 +7683,297 @@ function deathCine(b,C,s){const set=crackSet(1234+(Math.random()*999|0),12,90*s)
   const closeAll=e=>{e&&(e.stopPropagation(),e.preventDefault());for(let i=0;i<8&&shown();i++){const m=typeof topM==='function'&&topM();if(m&&m.o&&m.o.onCancel){m.handle('cancel')}else{dispatchEvent(new KeyboardEvent('keydown',{code:'Escape',key:'Escape',bubbles:true}))}}
     if(shown()){closePanel();while(focus.length)focus.pop();G.lock=0}sync()};
   b.addEventListener('pointerdown',closeAll);b.addEventListener('click',e=>e.stopPropagation())})();
+/* =====================================================================
+   v6.0 — LOOKS
+   1) 시작 옷은 낡고 찢어진 누더기 → 방어구를 강화할수록 외형이 단계적으로 좋아짐
+   2) NPC: 이름 기반 개성 (키·체형·머리 모양·옷 종류·모자·노인/아이·피부/머리색 변주)
+   3) 몬스터: 개체마다 크기·색조·장신구가 다르고, 가끔 강한 「정예」 개체 등장
+   ===================================================================== */
+// ---------- 1) armor tiers ----------
+Object.assign(AR.cloth,{n:'낡은 누더기 옷',d:'여기저기 해지고 찢어진 낡은 옷. 아무것도 막아 주지 않는다. 대장장이 그란트에게 더 좋은 방어구를 만들어 달라고 하자.',top:'#7d6f5a',bot:'#544a3e',hc:'#7a6248'});
+const AR_TIER=(()=>{const ks=Object.keys(AR).sort((a,b)=>(AR[a].lv||0)-(AR[b].lv||0)||(AR[a].red||0)-(AR[b].red||0));const m={};ks.forEach((k,i)=>m[k]=Math.min(6,i));m.cloth=0;return m})();
+const _hpL=heroPal;heroPal=function(){const P=_hpL();const T=AR_TIER[P.b]??3;P.tier=T;
+  if(T===0){P.trim='#6e624c';P.met='#8a7d66';P.plate=false;P.bandCol='#8a6a48';P.cape='#5a4c3a';P.capeD='#2e261c'}
+  else if(T===1){P.trim='#8a6238';P.bandCol='#9a3a2a'}
+  else if(T===2){P.trim='#c8ccd6'}
+  return P};
+const _hcL=heroCape;heroCape=function(c,P,dir,t,mv,front){if(P.tier===0)return;if(P.tier===1){c.save();c.translate(0,-25);c.scale(1,.62);c.translate(0,25);_hcL(c,P,dir,t,mv,front);c.restore();return}return _hcL(c,P,dir,t,mv,front)};
+function heroRags(c,P,d,br,t){const side=d==='right',wb=side?5.6:6.6,top=-27.5+br;c.save();
+  // frayed, torn hem
+  c.fillStyle=shade(P.top,-.3);c.beginPath();c.moveTo(-wb-2.6,-10.2);const n=9;for(let i=0;i<=n;i++){const x=-wb-2.6+(wb*2+5.2)*i/n;c.lineTo(x,-8.3+(i%2?2.6:.2)+(i%3===0?1.2:0))}c.lineTo(wb+2.6,-10.2);c.closePath();c.fill();hOut(c,.8);
+  c.strokeStyle=shade(P.top,-.05);c.lineWidth=.55;for(let i=0;i<5;i++){const x=-wb+i*wb*.5,sw=Math.sin(t*3+i)*.8;c.beginPath();c.moveTo(x,-7.4);c.quadraticCurveTo(x+sw,-5.6,x+sw*1.6,-4.4-(i%2));c.stroke()}
+  // rope belt with knot
+  c.strokeStyle='#3a2c1a';c.lineWidth=2;c.beginPath();c.moveTo(-wb-.6,-16.6);c.quadraticCurveTo(0,-15.4,wb+.6,-16.6);c.stroke();c.strokeStyle='#a08458';c.lineWidth=1.1;c.stroke();
+  if(d!=='up'){const kx=side?-2:3;c.fillStyle='#a08458';c.beginPath();c.arc(kx,-16.1,1.2,0,7);c.fill();c.strokeStyle='#a08458';c.lineWidth=.9;c.beginPath();c.moveTo(kx,-15.5);c.lineTo(kx-.6,-12.2);c.moveTo(kx+.4,-15.5);c.lineTo(kx+1.2,-12.8);c.stroke()}
+  const patch=(x,y,w,h,col)=>{c.fillStyle=col;c.beginPath();c.rect(x,y,w,h);c.fill();hOut(c,.6);c.strokeStyle='rgba(230,220,190,.85)';c.lineWidth=.45;c.setLineDash([.8,.7]);c.beginPath();c.rect(x+.6,y+.6,w-1.2,h-1.2);c.stroke();c.setLineDash([])};
+  const tear=(x,y,s)=>{c.fillStyle=P.skinD;c.beginPath();c.moveTo(x,y);c.lineTo(x+s*1.4,y+s*.5);c.lineTo(x+s*.7,y+s*1.1);c.lineTo(x+s*1.9,y+s*1.9);c.lineTo(x+.2,y+s*1.2);c.closePath();c.fill();hOut(c,.5)};
+  if(d==='down'){patch(-6,-24.4+br,3.6,3.4,'#5f6b54');patch(2.6,-13.8,3.2,2.8,'#8a6a46');tear(3.2,-22.6+br,1.3);tear(-5.4,-14.8,1.1);
+    c.fillStyle='rgba(60,42,20,.28)';c.beginPath();c.ellipse(-1.5,-19.5+br,2,1.2,.4,0,7);c.ellipse(4.5,-11,1.6,1,0,0,7);c.fill()}
+  else if(side){patch(-3,-23.6+br,3.4,3.2,'#5f6b54');tear(1.2,-14.6,1.2);c.fillStyle='rgba(60,42,20,.28)';c.beginPath();c.ellipse(2,-20+br,1.8,1.1,0,0,7);c.fill()}
+  else{patch(-1.5,-22.5+br,4,3.6,'#6a5a7a');tear(-5,-15,1.2)}
+  c.restore()}
+
+// ---------- 2) NPC folk renderer ----------
+function folkSeed(L){if(L._sd===undefined){const s=JSON.stringify([L.skin,L.hair,L.top,L.bot,L.hat,L.hc,L.beard,L.wep])+(L._nm||'');let h=2166136261;for(let i=0;i<s.length;i++)h=Math.imul(h^s.charCodeAt(i),16777619);L._sd=h>>>0}return L._sd}
+function folkTraits(L){if(L._tr)return L._tr;const R=mulberry32(folkSeed(L));const tr={ht:.9+R()*.22,wd:.86+R()*.34,hair:Math.floor(R()*7),fit:Math.floor(R()*6),eye:Math.floor(R()*3),
+    skin:shade(L.skin||'#f1c08f',(R()-.5)*.24),hairC:L.hair?shade(L.hair,(R()-.5)*.25):'#5a3a1a',acc:Math.floor(R()*6),blush:R()<.5,brow:R()<.5};
+  tr.elder=!!L.beard&&R()<.55;if(tr.elder){tr.ht*=.94;tr.hairC=R()<.6?'#d8d4cc':'#9a948a'}tr.kid=!L.beard&&!L.wep&&L.hat!=='helm'&&R()<.14;if(tr.kid){tr.ht=.74;tr.wd=.85}
+  if(L.hat==='helm'||L.wep==='sword'||L.wep==='spear')tr.fit=6; // guards / soldiers: armored tunic
+  if(L.hat==='wizard')tr.fit=3;L._tr=tr;return tr}
+function drawFolk(c,cx,fy,dir,fr,L,t){const T=folkTraits(L),side=dir==='left'||dir==='right',back=dir==='up',mv=fr>0,ph=t*9+(L._sd%7);
+  const br=mv?-Math.abs(Math.sin(ph))*1:Math.sin(t*2.2+(L._sd%5))*.45;c.save();c.translate(cx,fy);
+  c.fillStyle='rgba(0,0,0,.3)';c.beginPath();c.ellipse(0,1,10*T.wd,3.4,0,0,7);c.fill();
+  c.scale(T.ht*(dir==='left'?-1:1),T.ht);if(T.elder){c.translate(0,0);c.rotate(side?.08:0)}
+  const top=L.top||'#4a6a8a',bot=L.bot||'#3a3a44',W=8*T.wd,robe=T.fit===3;
+  // legs
+  if(!robe){for(const sd of side?[0]:[-1,1]){const sw=mv?Math.sin(ph+(sd>0?Math.PI:0))*2.4:0;const x=side?sw*.8:sd*3.4;c.beginPath();c.roundRect(x-2.6,-14,5.2,11-(mv&&!side?Math.max(0,-sw):0),2);hF(c,bot,1.2);c.beginPath();c.roundRect(x-3,-4.2-(mv&&!side?Math.max(0,-sw):0),6+(side?1.6:0),4,1.6);hF(c,'#2e2014',1)}
+    if(side){const sw=mv?Math.sin(ph+Math.PI)*2.4:0;c.beginPath();c.roundRect(-sw*.8-2.6,-14,5.2,11,2);hF(c,shade(bot,-.15),1.2)}}
+  // body
+  const ty=-28+br,g=c.createLinearGradient(0,ty,0,-8);g.addColorStop(0,shade(top,.12));g.addColorStop(1,shade(top,-.18));
+  c.beginPath();if(robe){c.moveTo(-W*.9,ty+1);c.quadraticCurveTo(-W-1.5,-14,-W-3,-1);c.lineTo(W+3,-1);c.quadraticCurveTo(W+1.5,-14,W*.9,ty+1);c.closePath()}
+  else{c.moveTo(-W*.9,ty+1);c.quadraticCurveTo(-W-.6,-18,-W*.8-1.2,-10);c.lineTo(W*.8+1.2,-10);c.quadraticCurveTo(W+.6,-18,W*.9,ty+1);c.closePath()}hF(c,g,1.4);
+  // outfit details
+  if(!back){if(T.fit===1){c.fillStyle=shade(top,-.35);c.beginPath();c.moveTo(-W*.9,ty+1);c.lineTo(-2,ty+1);c.lineTo(-1.5,-10.5);c.lineTo(-W*.8-1,-10.5);c.closePath();c.fill();c.beginPath();c.moveTo(W*.9,ty+1);c.lineTo(2,ty+1);c.lineTo(1.5,-10.5);c.lineTo(W*.8+1,-10.5);c.closePath();c.fill()}
+    if(T.fit===2){c.fillStyle='#ece4d2';c.beginPath();c.roundRect(-W*.55,-22+br,W*1.1,12.5,1.5);c.fill();hOut(c,.8);c.strokeStyle='#ece4d2';c.lineWidth=.9;c.beginPath();c.moveTo(-W*.55,-22+br);c.lineTo(-W*.3,ty+1);c.moveTo(W*.55,-22+br);c.lineTo(W*.3,ty+1);c.stroke()}
+    if(T.fit===4){c.fillStyle=shade(top,.3);c.beginPath();c.moveTo(-3.5,ty+.5);c.lineTo(0,ty+5);c.lineTo(3.5,ty+.5);c.closePath();c.fill();c.fillStyle='#e8d48a';for(let i=0;i<3;i++){c.beginPath();c.arc(0,ty+7+i*3.6,.75,0,7);c.fill()}}
+    if(T.fit===5){c.strokeStyle=shade(L.hc||'#c0392b',0);c.lineWidth=2.4;c.beginPath();c.moveTo(-W*.85,ty+2);c.lineTo(W*.7,-12);c.stroke()}
+    if(T.fit===6){c.fillStyle=shade('#9aa4b0',.1);c.beginPath();c.moveTo(-W*.75,ty+1.5);c.quadraticCurveTo(0,ty-.5,W*.75,ty+1.5);c.lineTo(W*.6,-17);c.quadraticCurveTo(0,-15,-W*.6,-17);c.closePath();hF(c,hMetal(c,-W,ty,W,-16,'#9aa4b0'),1)}
+    if(robe){c.strokeStyle='#e8c860';c.lineWidth=.9;c.beginPath();c.moveTo(0,ty+2);c.lineTo(0,-2);c.stroke()}}
+  if(!robe){c.strokeStyle='#3a2a1a';c.lineWidth=1.6;c.beginPath();c.moveTo(-W*.85,-15.5);c.lineTo(W*.85,-15.5);c.stroke();if(!back){c.fillStyle='#d8b860';c.fillRect(-1,-16.6,2,2.2)}}
+  // arms
+  const as=mv?Math.sin(ph)*2.4:0,sk=T.skin,sl=shade(top,-.12);
+  if(side){hLimb(c,1,ty+3,2+as,-13,3.6,sl);c.fillStyle=sk;c.beginPath();c.arc(2+as,-12.4,1.9,0,7);c.fill();hOut(c,.9)}
+  else for(const sd of[-1,1]){const hx=sd*(W+1.4),hy=-13+(sd>0?-as:as)*.6;hLimb(c,sd*(W*.85),ty+3,hx,hy,3.6,sl);c.fillStyle=sk;c.beginPath();c.arc(hx,hy+.6,1.9,0,7);c.fill();hOut(c,.9)}
+  if(T.elder&&!back&&!L.wep){c.strokeStyle='#6a4a2a';c.lineWidth=1.6;c.beginPath();c.moveTo(side?3:W+1.6,-13);c.lineTo(side?5:W+2.6,0);c.stroke()}
+  // weapon
+  if(L.wep&&!back){const hx=side?2+as:W+1.4,hy=-12.6;c.save();c.translate(hx,hy);if(L.wep==='sword'){c.rotate(-.25);c.fillStyle='#dfe6ee';c.fillRect(-1,-15,2,14);hOut(c,.7);c.fillStyle='#a0782a';c.fillRect(-3,-1.5,6,2)}
+    else if(L.wep==='staff'){c.strokeStyle='#7a4a2a';c.lineWidth=2;c.beginPath();c.moveTo(0,8);c.lineTo(0,-22);c.stroke();c.save();c.globalCompositeOperation='lighter';gBlob(c,0,-24,8,'rgba(125,249,255,A)',.8);c.restore();c.fillStyle='#bff';c.beginPath();c.arc(0,-24,2.4,0,7);c.fill()}
+    else if(L.wep==='spear'){c.strokeStyle='#8b5a2b';c.lineWidth=1.8;c.beginPath();c.moveTo(0,10);c.lineTo(0,-24);c.stroke();c.fillStyle='#dfe6ee';c.beginPath();c.moveTo(0,-30);c.lineTo(2.2,-24);c.lineTo(-2.2,-24);c.closePath();c.fill();hOut(c,.6)}
+    else{c.fillStyle='#dfe6ee';c.fillRect(-.8,-7,1.6,7);c.fillStyle='#a0782a';c.fillRect(-2,-1,4,1.6)}c.restore()}
+  // head
+  const hy=-35+br,hc=T.hairC,hr=7.6;
+  if(T.hair===1||T.hair===4){c.fillStyle=hc;c.beginPath();c.roundRect(-hr-.6,hy-3,hr*2+1.2,T.hair===1?15:10,4);c.fill();hOut(c,1)} // long hair behind
+  c.beginPath();c.arc(0,hy,hr,0,7);const sg=c.createLinearGradient(0,hy-8,0,hy+8);sg.addColorStop(0,shade(sk,.1));sg.addColorStop(1,shade(sk,-.12));hF(c,sg,1.3);
+  if(!side&&!back){c.fillStyle=sk;for(const sd of[-1,1]){c.beginPath();c.ellipse(sd*hr,hy+1,1.6,2.2,0,0,7);c.fill();hOut(c,.8)}}
+  // face
+  if(!back){const ex=side?3.6:2.9,ey=hy+1;const eyes=side?[ex]:[-ex,ex];
+    for(const x of eyes){if(T.elder){c.strokeStyle='#2a1a14';c.lineWidth=.9;c.beginPath();c.moveTo(x-1.3,ey);c.quadraticCurveTo(x,ey+.9,x+1.3,ey);c.stroke()}
+      else{c.fillStyle='#1c1424';c.beginPath();c.ellipse(x,ey,T.eye===2?1.5:1.1,T.eye===1?1.2:1.7,0,0,7);c.fill();c.fillStyle='#fff';c.fillRect(x-.6,ey-1,.7,.7)}
+      if(T.brow){c.strokeStyle=shade(hc,-.2);c.lineWidth=.8;c.beginPath();c.moveTo(x-1.4,ey-2.8);c.lineTo(x+1.2,ey-3.2);c.stroke()}}
+    if(T.blush&&!side){c.fillStyle='rgba(255,120,120,.35)';c.beginPath();c.ellipse(-4.6,hy+3.4,1.5,.8,0,0,7);c.ellipse(4.6,hy+3.4,1.5,.8,0,0,7);c.fill()}
+    c.strokeStyle='#6a3a2a';c.lineWidth=.8;c.beginPath();const mx=side?3:0;c.moveTo(mx-1.2,hy+4.4);c.quadraticCurveTo(mx,hy+5.2,mx+1.2,hy+4.4);c.stroke();
+    if(L.beard){c.fillStyle=T.elder?'#e4e0d8':L.beard;c.beginPath();if(side){c.moveTo(-1,hy+2.5);c.quadraticCurveTo(6,hy+3,6.8,hy+3);c.quadraticCurveTo(5,hy+11,0,hy+9);}else{c.moveTo(-6,hy+2);c.quadraticCurveTo(-6,hy+11,0,hy+12.5);c.quadraticCurveTo(6,hy+11,6,hy+2);c.quadraticCurveTo(3,hy+5.6,0,hy+5);c.quadraticCurveTo(-3,hy+5.6,-6,hy+2)}c.fill();hOut(c,.8)}}
+  // hair styles (front)
+  c.fillStyle=hc;const hg=()=>hOut(c,1);
+  if(L.hat!=='helm'&&L.hat!=='hood'&&L.hat!=='wizard'){
+    if(back){c.beginPath();c.arc(0,hy-.5,hr+.4,Math.PI*1.02,Math.PI*1.98+.04);c.lineTo(hr,hy+4);c.lineTo(-hr,hy+4);c.closePath();c.fill();hg()}
+    else if(T.hair===5&&T.elder){c.beginPath();c.arc(-hr+1,hy-1,2.6,0,7);c.arc(hr-1,hy-1,2.6,0,7);c.fill()}
+    else{c.beginPath();c.moveTo(-hr-.4,hy+1);c.quadraticCurveTo(-hr-.6,hy-hr-1.6,0,hy-hr-1.4);c.quadraticCurveTo(hr+.6,hy-hr-1.6,hr+.4,hy+1);
+      if(T.hair===3){for(let i=0;i<5;i++){c.lineTo(hr-i*3.6,hy-3-(i%2)*3)}}else{c.quadraticCurveTo(hr-2,hy-4.6,side?2:3,hy-4.2);c.quadraticCurveTo(0,hy-2.4,side?-1:-3,hy-4.4);c.quadraticCurveTo(-hr+2,hy-4.6,-hr-.4,hy+1)}c.closePath();c.fill();hg();
+      if(T.hair===2&&!side){c.beginPath();c.arc(0,hy-hr-1.6,2.8,0,7);c.fill();hg()}
+      if(T.hair===2&&side){c.beginPath();c.moveTo(-hr+1,hy-3);c.quadraticCurveTo(-hr-6,hy+2,-hr-3,hy+9);c.quadraticCurveTo(-hr-1,hy+3,-hr+1,hy);c.fill();hg()}
+      if(T.hair===6){c.beginPath();c.arc(-3,hy-hr+.5,2.4,0,7);c.arc(3,hy-hr+.2,2.4,0,7);c.fill()}}}
+  // hats
+  const H=L.hat||(T.acc===0&&!T.elder?'straw':T.acc===1&&!T.kid?'beret':T.acc===2?'flower':null),hcol=L.hc||'#8a4a2a';
+  if(H==='helm'){c.beginPath();c.arc(0,hy-1,hr+1.2,Math.PI,0);c.lineTo(hr+1.2,hy+3);c.lineTo(-hr-1.2,hy+3);c.closePath();hF(c,hMetal(c,-hr,hy-8,hr,hy,hcol),1.2);c.fillStyle='#c0392b';c.beginPath();c.moveTo(0,hy-hr-1);c.quadraticCurveTo(5,hy-hr-6,7,hy-hr-1);c.quadraticCurveTo(3,hy-hr-2.4,0,hy-hr-1);c.fill();if(!back){c.fillStyle='#1a1424';c.fillRect(-hr+1.5,hy+.4,hr*2-3,1.4)}}
+  else if(H==='wizard'){c.beginPath();c.moveTo(-hr-3.5,hy-3);c.lineTo(hr+3.5,hy-3);c.lineTo(hr-1,hy-5.5);c.quadraticCurveTo(3,hy-16,side?-6:1.5,hy-22);c.quadraticCurveTo(-2,hy-13,-hr+1,hy-5.5);c.closePath();hF(c,hcol,1.2);c.fillStyle='#f2c14e';c.fillRect(-hr+.5,hy-5.6,hr*2-1,1.4);c.beginPath();c.arc(2,hy-11,1,0,7);c.fill()}
+  else if(H==='hood'){c.beginPath();c.arc(0,hy-.5,hr+2,Math.PI*1.0,0);c.lineTo(hr+2.5,hy+7);c.lineTo(hr-.5,hy+5);if(!back){c.lineTo(hr-1.5,hy-3.5);c.quadraticCurveTo(0,hy-6.5,-hr+1.5,hy-3.5);c.lineTo(-hr+.5,hy+5)}c.lineTo(-hr-2.5,hy+7);c.closePath();hF(c,hcol,1.2)}
+  else if(H==='cap'){c.beginPath();c.arc(0,hy-2,hr+.4,Math.PI,0);c.closePath();hF(c,hcol,1.1);c.fillStyle=shade(hcol,-.2);c.beginPath();c.ellipse(side?5:0,hy-1.6,side?5:hr+1.5,1.6,0,0,7);c.fill();hOut(c,.8)}
+  else if(H==='band'){c.fillStyle=hcol;c.fillRect(-hr,hy-4.4,hr*2,2.2);hOut(c,.6)}
+  else if(H==='straw'){c.fillStyle='#e0c070';c.beginPath();c.ellipse(0,hy-4.2,hr+5,2.6,0,0,7);c.fill();hOut(c,.8);c.beginPath();c.ellipse(0,hy-6.4,hr-1.5,3.2,0,Math.PI,0);c.fill();hOut(c,.8);c.fillStyle='#b0402a';c.fillRect(-hr+1.5,hy-5.6,hr*2-3,1.2)}
+  else if(H==='beret'){c.fillStyle=shade(top,-.25);c.beginPath();c.ellipse(side?-1:1,hy-hr+.8,hr+.6,3.4,-.15,0,7);c.fill();hOut(c,.8)}
+  else if(H==='flower'&&!back){c.fillStyle=['#ff8ab0','#ffe066','#9ad8ff'][L._sd%3];for(let i=0;i<5;i++){const a=i/5*Math.PI*2;c.beginPath();c.arc(-hr+2+Math.cos(a)*1.4,hy-hr+1.5+Math.sin(a)*1.4,1.1,0,7);c.fill()}c.fillStyle='#fff6c0';c.beginPath();c.arc(-hr+2,hy-hr+1.5,.8,0,7);c.fill()}
+  c.restore()}
+const _dcL=drawChar;drawChar=function(c,x,y,dir,fr,L,alpha){if(!L||L.ghost||L===LOOK||L.pix||window.PIXCHAR)return _dcL(c,x,y,dir,fr,L,alpha);c.save();if(alpha!==undefined)c.globalAlpha=alpha;try{drawFolk(c,x+16,y+30,dir||'down',fr||0,L,G.t||0)}finally{c.restore()}};
+// ---------- 3) monster variety ----------
+function hueShift(hex,deg,sat,lit){if(typeof hex!=='string'||hex[0]!=='#')return hex;let s=hex.slice(1);if(s.length===3)s=s.split('').map(x=>x+x).join('');let r=parseInt(s.slice(0,2),16)/255,g=parseInt(s.slice(2,4),16)/255,b=parseInt(s.slice(4,6),16)/255;
+  const mx=Math.max(r,g,b),mn=Math.min(r,g,b);let h=0,S=0,L=(mx+mn)/2;if(mx!==mn){const d=mx-mn;S=L>.5?d/(2-mx-mn):d/(mx+mn);h=mx===r?(g-b)/d+(g<b?6:0):mx===g?(b-r)/d+2:(r-g)/d+4;h/=6}
+  h=(h+deg/360+1)%1;S=clamp(S*(sat||1),0,1);L=clamp(L*(lit||1),0,1);const q=L<.5?L*(1+S):L+S-L*S,p=2*L-q,f=t=>{t=(t+1)%1;return t<1/6?p+(q-p)*6*t:t<.5?q:t<2/3?p+(q-p)*(2/3-t)*6:p};
+  const to=v=>Math.round(clamp(v,0,1)*255).toString(16).padStart(2,'0');return '#'+to(f(h+1/3))+to(f(h))+to(f(h-1/3))}
+const ELITE_OK=e=>e.d&&!e.d.boss&&(e.d.s||40)<70&&G.map&&(G.map.pool||G.map.zones);
+const _mmL=mkMob;mkMob=function(k,x,y){const e=_mmL(k,x,y);try{const R=mulberry32((Math.random()*4294967296)>>>0);const d=e.d;
+    e.vsc=.88+R()*.24;e.vacc=Math.floor(R()*7);const hd=(R()-.5)*44,sa=.85+R()*.3,li=.9+R()*.18;e.vh=[hd,sa,li];
+    if(Array.isArray(d.col)){e.d=Object.assign({},d,{col:d.col.map(c=>hueShift(c,hd,sa,li))})}
+    if(ELITE_OK(e)&&R()<.06){e.elite=1;e.vsc=1.32;e.d=Object.assign({},e.d,{xp:Math.round((d.xp||1)*3),g:[d.g[0]*2,d.g[1]*3],dmg:Math.ceil(d.dmg*1.4)});e.hp=Math.round(e.hp*2.6)}}catch(err){}return e};
+const _dmL=drawMob;drawMob=function(e,x,y,t){const s=e.vsc||1;if(e.elite){const c=ctx;c.save();c.globalCompositeOperation='lighter';const r=(e.d.s||40)*.75;gBlob(c,x,y-r*.6,r*1.6,'rgba(255,170,60,A)',.35+Math.sin(t*4)*.1);c.restore()}
+  if(s!==1){ctx.save();ctx.translate(x,y);ctx.scale(s,s);ctx.translate(-x,-y);try{_dmL(e,x,y,t)}finally{ctx.restore()}}else _dmL(e,x,y,t);
+  if(e.spawnT>0)return;const S=(e.d.s||40)*s,hx=x,hy=y-S*.82,c=ctx,a=e.vacc;c.save();
+  if(e.elite){c.fillStyle='#ffd24a';c.beginPath();c.moveTo(hx-7,hy-2);c.lineTo(hx-7,hy-9);c.lineTo(hx-3.5,hy-5);c.lineTo(hx,hy-11);c.lineTo(hx+3.5,hy-5);c.lineTo(hx+7,hy-9);c.lineTo(hx+7,hy-2);c.closePath();c.fill();c.strokeStyle='#7a4a00';c.lineWidth=1;c.stroke();
+    uT(c,'정예',hx,hy-15,'800 10px "Noto Sans KR",sans-serif','#ffd24a','center',0)}
+  else if(a===1){c.strokeStyle='#4a8a2a';c.lineWidth=1.4;c.beginPath();c.moveTo(hx,hy+2);c.quadraticCurveTo(hx+1,hy-4,hx-1,hy-7);c.stroke();c.fillStyle='#6ed05a';c.beginPath();c.ellipse(hx+3,hy-6,3.4,1.6,-.5,0,7);c.fill()}
+  else if(a===2){c.strokeStyle='rgba(60,20,20,.75)';c.lineWidth=1.3;c.beginPath();c.moveTo(hx-S*.18,hy+S*.18);c.lineTo(hx-S*.05,hy+S*.32);c.moveTo(hx-S*.17,hy+S*.27);c.lineTo(hx-S*.07,hy+S*.22);c.stroke()}
+  else if(a===3){c.fillStyle='#f0e8d8';c.save();c.translate(hx+S*.16,hy+S*.1);c.rotate(.5);c.fillRect(-4,-1.4,8,2.8);c.rotate(-1);c.fillRect(-4,-1.4,8,2.8);c.restore()}
+  c.restore()};
+/* =====================================================================
+   v6.0 — MULTIPLAYER (한 서버)
+   · 공개 MQTT(WebSocket) 브로커 하나를 모든 플레이어가 공유 → 같은 필드에 있으면 서로 보인다
+   · 필드 몬스터는 그 지역에 먼저 들어온 플레이어(호스트)가 움직이고, 모두에게 같은 몬스터가 보인다
+   · 같이 때린 몬스터를 잡으면 때린 사람 모두 + 근처 파티원이 경험치를 받는다
+   · 파티(최대 4명, 레벨 차이 5 이상 불가) · 사당/던전은 파티원끼리만 같이 들어감 · 스토리 지역은 언제나 혼자
+   ===================================================================== */
+const NET_PFX='aetherrpg/v1/';
+const NET_URLS=(()=>{try{const q=new URLSearchParams(location.search).get('mq');if(q)return[q]}catch(e){}return window.NET_URL?[window.NET_URL]:['wss://broker.emqx.io:8084/mqtt','wss://broker.hivemq.com:8884/mqtt','wss://test.mosquitto.org:8081/mqtt']})();
+// open world (everyone together) · party dungeons (party only) · everything else = story (solo)
+const NET_SHARED=new Set(['village','field','wood','desert','canyon','mount','ruins','ice','coast','sky','deep','vout','vcity','cland']);
+const NET_PARTY=new Set(['shrine','tomb','tmp1','tmp2','tmp3','fort1','fort2','fort3','castle1','castle2','castle3','lair1','lair2','scath','dpal','vmine','vcore','cwall','fcastle','fdeep','tr1','tr2','tr3','tr4','tr5']);
+const TE=new TextEncoder(),TD8=new TextDecoder();
+/* ---------- tiny MQTT 3.1.1 client over WebSocket (QoS 0) ---------- */
+class MQ{constructor(urls,cid,onMsg,onState){Object.assign(this,{urls,cid,onMsg,onState,ui:0,fails:0,subs:new Set(),ok:false,ws:null,pid:1});this.connect();setInterval(()=>{if(this.ok)this.raw(new Uint8Array([0xC0,0]))},25000)}
+  connect(){const url=this.urls[this.ui%this.urls.length];let ws;try{ws=new WebSocket(url,['mqtt'])}catch(e){return this.retry()}ws.binaryType='arraybuffer';this.ws=ws;this.buf=new Uint8Array(0);this.url=url;
+    const to=setTimeout(()=>{if(!this.ok&&this.ws===ws){try{ws.close()}catch(e){}}},7000);
+    ws.onopen=()=>{const vh=[0,4,77,81,84,84,4,2,0,60];this.send(0x10,[...vh,...this.s(this.cid)])};
+    ws.onmessage=ev=>{try{this.feed(new Uint8Array(ev.data))}catch(e){}};
+    ws.onclose=ws.onerror=()=>{clearTimeout(to);if(this.ws===ws){this.ws=null;const was=this.ok;this.ok=false;if(was)this.onState(false);this.retry()}}}
+  retry(){clearTimeout(this.rt);this.ui++;this.fails++;this.rt=setTimeout(()=>this.connect(),Math.min(15000,800*this.fails))}
+  s(str){const b=TE.encode(str);return[b.length>>8,b.length&255,...b]}
+  send(h,body,extra){const n=body.length+(extra?extra.length:0),L=[];let x=n;do{let d=x%128;x=Math.floor(x/128);if(x>0)d|=128;L.push(d)}while(x>0);const out=new Uint8Array(1+L.length+n);out[0]=h;out.set(L,1);out.set(body,1+L.length);if(extra)out.set(extra,1+L.length+body.length);this.raw(out)}
+  raw(u8){if(this.ws&&this.ws.readyState===1)try{this.ws.send(u8)}catch(e){}}
+  pub(topic,obj){if(!this.ok)return;this.send(0x30,this.s(topic),TE.encode(JSON.stringify(obj)))}
+  sub(t){this.subs.add(t);if(this.ok){const p=this.pid++&65535||1;this.send(0x82,[p>>8,p&255,...this.s(t),0])}}
+  unsub(t){this.subs.delete(t);if(this.ok){const p=this.pid++&65535||1;this.send(0xA2,[p>>8,p&255,...this.s(t)])}}
+  feed(ch){const b=new Uint8Array(this.buf.length+ch.length);b.set(this.buf);b.set(ch,this.buf.length);let i=0;
+    while(b.length-i>=2){let mul=1,len=0,j=i+1,dig;do{if(j>=b.length)break;dig=b[j++];len+=(dig&127)*mul;mul*=128}while(dig&128);if(dig&128||j+len>b.length)break;
+      const h=b[i],body=b.subarray(j,j+len);i=j+len;const ty=h>>4;
+      if(ty===2){this.ok=true;this.fails=0;for(const t of this.subs){const p=this.pid++&65535||1;this.send(0x82,[p>>8,p&255,...this.s(t),0])}this.onState(true)}
+      else if(ty===3){const tl=(body[0]<<8)|body[1],topic=TD8.decode(body.subarray(2,2+tl));const q=(h>>1)&3;let o=2+tl+(q?2:0);try{this.onMsg(topic,JSON.parse(TD8.decode(body.subarray(o))))}catch(e){}}}
+    this.buf=b.slice(i)}}
+/* ---------- state ---------- */
+const NET={on:true,mq:null,id:'',ok:false,room:null,roomT:0,j:0,peers:{},dir:{},party:null,isHost:false,hostId:null,lastSnap:0,nc:0,sendT:0,gT:0,mT:0,last:'',invite:null,rproj:[],hitP:new Set()};
+function netId(){let id='';try{id=localStorage.getItem('aether-netid')||''}catch(e){}if(!id){id=Math.random().toString(36).slice(2,10);try{localStorage.setItem('aether-netid',id)}catch(e){}}return id}
+function netName(){return (G.p&&G.p.name||'모험가')}
+function netTag(){return netName()+'#'+NET.id.slice(0,3)}
+function netStart(){if(NET.mq||!NET.on)return;NET.id=netId();NET.mq=new MQ(NET_URLS,'ae_'+NET.id+'_'+Math.random().toString(36).slice(2,6),netMsg,ok=>{NET.ok=ok;if(ok){toastNet('🌐 서버에 연결되었습니다')}});NET.mq.sub(NET_PFX+'g');NET.mq.sub(NET_PFX+'u/'+NET.id)}
+function escH(s){return String(s==null?'':s).slice(0,24).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function toastNet(s){try{toast(s)}catch(e){}}
+function netPub(sub,o){if(NET.mq&&NET.ok)NET.mq.pub(NET_PFX+sub,o)}
+function netRoomKey(){const m=G.map;if(!m||!G.p||G.mode!=='play')return null;const id=m.id;if(NET_SHARED.has(id))return id;if(NET_PARTY.has(id)&&NET.party)return id+'@'+NET.party.id;return null}
+function netKind(id){return NET_SHARED.has(id)?'shared':NET_PARTY.has(id)?'party':'story'}
+function myLv(){return G.p?G.p.lv:1}
+/* ---------- message handling ---------- */
+function netMsg(topic,o){if(!o||typeof o!=='object'||o.id===NET.id&&o.t!=='ros')return;if(o.n!==undefined)o.n=escH(o.n);if(o.mn!==undefined)o.mn=escH(o.mn);if(o.lv!==undefined)o.lv=clamp(o.lv|0,1,100);if(Array.isArray(o.members))o.members=o.members.slice(0,4).map(m=>({id:String(m.id).slice(0,12),n:escH(m.n),lv:clamp(m.lv|0,1,100)}));const now=Date.now();const sub=topic.slice(NET_PFX.length);
+  if(sub==='g'){if(o.t==='g')NET.dir[o.id]={id:o.id,n:o.n,lv:o.lv,map:o.map,mn:o.mn,pt:o.pt,last:now};else if(o.t==='bye')delete NET.dir[o.id];return}
+  if(sub.startsWith('u/')){netDirect(o);return}
+  if(sub.startsWith('p/')){netPartyMsg(o);return}
+  if(!NET.room||sub!=='r/'+NET.room)return;
+  if(o.t==='s'){let P=NET.peers[o.id];if(!P){P=NET.peers[o.id]={id:o.id,rx:o.x,ry:o.y,anim:0,inv:0,type:'rpl',x:o.x,y:o.y};toastNet(`👤 ${o.n} (Lv.${o.lv}) 님이 근처에 있습니다`)}Object.assign(P,o,{last:now});P.tx=o.x;P.ty=o.y;
+    if(P.s&&P.s!==P._ls){P.swT=G.t;P.swK=o.s}P._ls=P.s;return}
+  if(o.t==='bye'){delete NET.peers[o.id];return}
+  if(o.t==='m'){netSnap(o);return}
+  if(o.t==='h'&&NET.isHost){netRemoteHit(o);return}
+  if(o.t==='k'){netKill(o);return}
+  if(o.t==='bh'){netBossHit(o);return}}
+function netDirect(o){if(o.t==='inv'){if(NET.party){netPub('u/'+o.from,{t:'busy',id:NET.id,n:netTag()});return}if(Math.abs(o.lv-myLv())>=5){netPub('u/'+o.from,{t:'gap',id:NET.id,n:netTag(),lv:myLv()});return}showInvite(o)}
+  else if(o.t==='acc'){netAccept(o)}
+  else if(o.t==='busy'){toastNet(`${o.n} 님은 이미 다른 파티에 있습니다`)}
+  else if(o.t==='gap'){toastNet(`${o.n} (Lv.${o.lv}) — 레벨 차이가 5 이상이라 파티를 맺을 수 없습니다`)}
+  else if(o.t==='no'){toastNet(`${o.n} 님이 파티 초대를 거절했습니다`)}
+  else if(o.t==='ros'){netRoster(o)}
+  else if(o.t==='dmg'){netTakeDmg(o)}}
+/* ---------- party ---------- */
+function partyOK(lv){const L=[myLv(),...(NET.party?NET.party.members.map(m=>m.lv):[])];return L.every(v=>Math.abs(v-lv)<5)}
+function netInvite(P){if(!NET.ok){toastNet('서버에 연결되지 않았습니다');return}if(NET.party&&NET.party.id!==NET.id){toastNet('파티장만 초대할 수 있습니다');return}if(NET.party&&NET.party.members.length>=4){toastNet('파티는 최대 4명입니다');return}
+  if(!partyOK(P.lv)){toastNet(`레벨 차이가 5 이상이면 파티를 맺을 수 없습니다 (Lv.${myLv()} ↔ Lv.${P.lv})`);sfx('err');return}
+  netPub('u/'+P.id,{t:'inv',id:NET.id,from:NET.id,n:netTag(),lv:myLv(),pid:NET.id});toastNet(`${P.n} 님에게 파티 초대를 보냈습니다`);sfx('ok')}
+function showInvite(o){NET.invite=o;let el=document.getElementById('netinv');if(!el){el=document.createElement('div');el.id='netinv';el.style.cssText='position:absolute;left:50%;top:12%;transform:translateX(-50%);z-index:70;background:rgba(14,12,24,.94);border:2px solid #e8c870;border-radius:.6em;padding:.8em 1.2em;color:#fff;font:600 15px "Noto Sans KR",sans-serif;text-align:center;box-shadow:0 0 24px rgba(0,0,0,.6)';(document.getElementById('game')||document.body).appendChild(el)}
+  el.innerHTML=`👥 <b>${o.n}</b> (Lv.${o.lv}) 님이 파티에 초대했습니다<div style="margin-top:.6em;display:flex;gap:.6em;justify-content:center"><button id="niY" style="font:700 14px sans-serif;padding:.35em 1.1em;border-radius:.4em;border:0;background:#e8c870;cursor:pointer">수락 (Y)</button><button id="niN" style="font:700 14px sans-serif;padding:.35em 1.1em;border-radius:.4em;border:0;background:#555;color:#fff;cursor:pointer">거절 (N)</button></div>`;el.style.display='block';
+  const done=a=>{el.style.display='none';NET.invite=null;if(a){if(Math.abs(o.lv-myLv())>=5){toastNet('레벨 차이가 5 이상이라 파티를 맺을 수 없습니다');return}netPub('u/'+o.from,{t:'acc',id:NET.id,n:netTag(),lv:myLv()})}else netPub('u/'+o.from,{t:'no',id:NET.id,n:netTag()})};
+  el.querySelector('#niY').onclick=e=>{e.stopPropagation();done(1)};el.querySelector('#niN').onclick=e=>{e.stopPropagation();done(0)};clearTimeout(NET.invT);NET.invT=setTimeout(()=>{if(NET.invite===o)done(0)},20000)}
+addEventListener('keydown',e=>{if(!NET.invite)return;if(e.code==='KeyY'){document.getElementById('niY').click();e.stopImmediatePropagation()}else if(e.code==='KeyN'){document.getElementById('niN').click();e.stopImmediatePropagation()}},true);
+function netAccept(o){if(NET.party&&NET.party.id!==NET.id)return;if(!partyOK(o.lv)){netPub('u/'+o.id,{t:'gap',id:NET.id,n:netTag(),lv:myLv()});return}
+  if(!NET.party){NET.party={id:NET.id,members:[{id:NET.id,n:netTag(),lv:myLv()}]};NET.mq.sub(NET_PFX+'p/'+NET.id)}
+  if(NET.party.members.length>=4)return;if(!NET.party.members.some(m=>m.id===o.id))NET.party.members.push({id:o.id,n:o.n,lv:o.lv});sendRoster();toastNet(`👥 ${o.n} 님이 파티에 들어왔습니다`);sfx('chime3')}
+function sendRoster(){if(!NET.party||NET.party.id!==NET.id)return;const me=NET.party.members.find(m=>m.id===NET.id);if(me)me.lv=myLv();const R={t:'ros',id:NET.id,pid:NET.id,members:NET.party.members};netPub('p/'+NET.id,R);for(const m of NET.party.members)if(m.id!==NET.id)netPub('u/'+m.id,R);NET.rosT=Date.now()}
+function netRoster(o){if(o.pid===NET.id)return;const mine=o.members.some(m=>m.id===NET.id);if(!mine){if(NET.party&&NET.party.id===o.pid){NET.mq.unsub(NET_PFX+'p/'+o.pid);NET.party=null;toastNet('파티에서 나왔습니다')}return}
+  const fresh=!NET.party||NET.party.id!==o.pid;NET.party={id:o.pid,members:o.members,seen:Date.now()};if(fresh){NET.mq.sub(NET_PFX+'p/'+o.pid);toastNet(`👥 파티에 들어갔습니다 (${o.members.length}명)`);sfx('chime3')}}
+function netPartyMsg(o){if(o.t==='ros'){if(NET.party&&NET.party.id===o.pid&&o.pid!==NET.id){NET.party.members=o.members;NET.party.seen=Date.now();if(!o.members.some(m=>m.id===NET.id)){NET.mq.unsub(NET_PFX+'p/'+o.pid);NET.party=null}}}
+  else if(o.t==='dis'&&NET.party&&NET.party.id===o.pid&&o.pid!==NET.id){NET.mq.unsub(NET_PFX+'p/'+o.pid);NET.party=null;toastNet('파티가 해산되었습니다')}
+  else if(o.t==='lv'&&NET.party&&NET.party.id===NET.id){NET.party.members=NET.party.members.filter(m=>m.id!==o.id);toastNet(`${o.n} 님이 파티를 떠났습니다`);if(NET.party.members.length<=1){netPub('p/'+NET.id,{t:'dis',id:NET.id,pid:NET.id});NET.mq.unsub(NET_PFX+'p/'+NET.id);NET.party=null}else sendRoster()}}
+function netLeave(){if(!NET.party)return;if(NET.party.id===NET.id)netPub('p/'+NET.id,{t:'dis',id:NET.id,pid:NET.id});else netPub('p/'+NET.party.id,{t:'lv',id:NET.id,n:netTag()});NET.mq.unsub(NET_PFX+'p/'+NET.party.id);NET.party=null;toastNet('파티를 떠났습니다')}
+function inParty(id){return !!(NET.party&&NET.party.members.some(m=>m.id===id))}
+/* ---------- shared mobs (host authority) ---------- */
+function poolSet(){const m=G.map,S=new Set();if(!m)return S;const add=p=>{if(!p)return;for(const x of p)S.add(Array.isArray(x)?x[0]:x)};add(m.pool);if(m.zones)for(const z of m.zones)add(z[2]);return S}
+function netSnap(o){if(o.id===NET.id)return;NET.lastSnap=Date.now();
+  if(NET.isHost){if(o.j<NET.j||(o.j===NET.j&&o.id<NET.id)){NET.isHost=false;NET.hostId=o.id;netPurgeLocal()}else return}
+  if(NET.hostId!==o.id){NET.hostId=o.id;netPurgeLocal()}
+  const seen=new Set();for(const r of o.l){const[nid,k,x,y,hp,st,face,fl,z,el,vs,va,h1,h2,h3]=r;seen.add(nid);let e=G.ents.find(q=>q.nid===nid&&!q.gone);
+    if(!e){if(!MOB[k])continue;e=mkMob(k,x,y);e.net=1;e.nid=nid;e.vsc=vs/100;e.vacc=va;if(MOB[k].col)e.d=Object.assign({},MOB[k],{col:MOB[k].col.map(c=>hueShift(c,h1,h2/100,h3/100))});if(el){e.elite=1;e.d=Object.assign({},e.d,{xp:Math.round((MOB[k].xp||1)*3),g:[MOB[k].g[0]*2,MOB[k].g[1]*3]})}e.spawnT=0;G.ents.push(e)}
+    e.tx=x;e.ty=y;e.hp=Math.min(e.hp,hp);if(hp>e.hp+0)e.hp=hp;e.st=st;e.face=face;if(fl)e.flash=Math.max(e.flash||0,.08);e.z=z;e.netSeen=Date.now()}
+  for(const e of G.ents)if(e.net&&!e.gone&&!seen.has(e.nid)&&Date.now()-(e.netSeen||0)>600){e.gone=1}
+  NET.rproj=o.p||[]}
+function netPurgeLocal(){const P=poolSet();for(const e of G.ents)if(e.type==='mob'&&!e.net&&!e.gone&&P.has(e.k)){e.gone=1}}
+function netBecomeHost(){NET.isHost=true;NET.hostId=NET.id;for(const e of G.ents)if(e.net&&!e.gone){e.net=0;e.st='idle';e.t=0}toastNet('🛰 이 지역 몬스터를 내가 관리합니다')}
+function netSendSnap(){const P=poolSet(),l=[];for(const e of G.ents){if(e.type!=='mob'||e.gone||e.net||!P.has(e.k))continue;if(!e.nid)e.nid=NET.id.slice(0,4)+'-'+(++NET.nc);const vh=e.vh||[0,1,1];l.push([e.nid,e.k,Math.round(e.x),Math.round(e.y),Math.round(e.hp),e.st,e.face||1,e.flash>0?1:0,Math.round(e.z||0),e.elite?1:0,Math.round((e.vsc||1)*100),e.vacc||0,Math.round(vh[0]),Math.round(vh[1]*100),Math.round(vh[2]*100)])}
+  const p=[];for(const q of G.proj)if(q.from==='e'&&q.life>0){if(!q.nid)q.nid=++NET.nc;p.push([q.nid,q.k,Math.round(q.x),Math.round(q.y),Math.round(q.vx),Math.round(q.vy),+(q.a||0).toFixed(2),q.dmg])}
+  netPub('r/'+NET.room,{t:'m',id:NET.id,j:NET.j,l,p})}
+function netRemoteHit(o){const e=G.ents.find(q=>q.nid===o.nid&&!q.gone&&!q.net);if(!e)return;e.cont=e.cont||{};e.cont[o.by]=Date.now();e.hp-=o.dmg;e.flash=.12;
+  if(e.hp<=0){const near=Math.hypot(G.pl.x-e.x,G.pl.y-e.y)<700;const mine=e.cont[NET.id]&&Date.now()-e.cont[NET.id]<15000;const pm=Object.keys(e.cont).some(id=>inParty(id));
+    if(mine||(pm&&near))killMob(e);else{netSilentKill(e)}}}
+function netSilentKill(e){e.gone=1;clearTele(e);try{deathDissolve(e)}catch(err){}sfx('kill');netBroadcastKill(e)}
+function netBroadcastKill(e){if(!NET.room||!NET.isHost||!e.nid)return;const c=Object.keys(e.cont||{}).filter(id=>Date.now()-e.cont[id]<15000);netPub('r/'+NET.room,{t:'k',id:NET.id,nid:e.nid,c})}
+function netKill(o){const e=G.ents.find(q=>q.nid===o.nid&&!q.gone);if(!e)return;const near=Math.hypot(G.pl.x-e.x,G.pl.y-e.y)<700;
+  const share=o.c.includes(NET.id)||(near&&o.c.some(id=>inParty(id)));e.net=0;if(share){e._netKill=1;killMob(e);fpop(G.pl.x,G.pl.y-64,'🤝 함께 처치','#9fe8ff')}else{e.gone=1;clearTele(e);try{deathDissolve(e)}catch(err){}}}
+function netMobStep(e,dt){e.t=(e.t||0)+dt;if(e.tx!==undefined){const k=Math.min(1,dt*12);e.x+=(e.tx-e.x)*k;e.y+=(e.ty-e.y)*k}if(e.flash>0)e.flash-=dt;if(e.spawnT>0)e.spawnT-=dt}
+function netTakeDmg(o){if(!G.p||G.dead)return;const pl=G.pl;if(pl.inv>0)return;hurt(o.d,o.sx,o.sy)}
+function netBossHit(o){const b=G.fb||G.boss||G.worm;if(!b||b.hp===undefined||b.st==='dying')return;b.hp=Math.max(1,b.hp-o.d);b._nlh=b.hp;b.flash=Math.max(b.flash||0,.08);fpop(b.x,b.y-90,'🤝 -'+o.d,'#9fe8ff')}
+/* ---------- hooks into the game ---------- */
+const _maN=mobAI;mobAI=function(e,dt){if(e.net){netMobStep(e,dt);return}
+  if(NET.isHost&&NET.room&&e.nid){let best=null,bd=Math.hypot(G.pl.x-e.x,G.pl.y-e.y);for(const id in NET.peers){const P=NET.peers[id];if(P.dead)continue;const d=Math.hypot(P.rx-e.x,P.ry-e.y);if(d<bd){bd=d;best=P}}
+    if(best){const prox={x:best.rx,y:best.ry,inv:best.inv||0,roll:null,pose:false,z:best.z||0,air:(best.z||0)>8};const pl0=G.pl;G.pl=prox;G._mbT=best;try{_maN(e,dt)}finally{G.pl=pl0;G._mbT=null}return}}
+  _maN(e,dt)};
+const _huN=hurt;hurt=function(dmg,sx,sy){if(G._mbT){const P=G._mbT;if((P.inv||0)>0)return false;P.inv=1.1;netPub('u/'+P.id,{t:'dmg',id:NET.id,d:dmg,sx,sy});return true}return _huN(dmg,sx,sy)};
+const _hmN=hitMob;hitMob=function(e,base,sx,sy){if(e.net&&NET.room){const hp0=e.hp;e.hp=1e9;let r;try{r=_hmN.call(this,e,base,sx,sy)}finally{const dmg=Math.max(0,Math.round(1e9-e.hp));e.hp=Math.max(1,hp0-dmg);if(dmg>0)netPub('r/'+NET.room,{t:'h',id:NET.id,nid:e.nid,dmg,by:NET.id})}return r}
+  if(NET.isHost&&e.nid){e.cont=e.cont||{};e.cont[NET.id]=Date.now()}return _hmN.call(this,e,base,sx,sy)};
+const _kmN=killMob;killMob=function(e){const r=_kmN(e);if(NET.isHost&&e.nid&&!e._netKill)netBroadcastKill(e);return r};
+const _smN=spawnMob;spawnMob=function(){if(NET.room&&!NET.isHost&&NET.hostId)return;return _smN()};
+/* ---------- tick ---------- */
+function netTick(dt){if(!NET.on){return}if(!NET.mq)netStart();const now=Date.now();
+  // room
+  const rk=NET.ok?netRoomKey():null;if(rk!==NET.room){if(NET.room){netPub('r/'+NET.room,{t:'bye',id:NET.id});NET.mq.unsub(NET_PFX+'r/'+NET.room)}for(const e of G.ents)if(e.net)e.gone=1;NET.peers={};NET.room=rk;NET.isHost=false;NET.hostId=null;NET.j=now;NET.roomT=now;NET.lastSnap=0;NET.rproj=[];if(rk)NET.mq.sub(NET_PFX+'r/'+rk)}
+  for(const id in NET.peers){const P=NET.peers[id];if(now-P.last>4000){delete NET.peers[id];continue}const k=Math.min(1,dt*12);P.rx+=(P.tx-P.rx)*k;P.ry+=(P.ty-P.ry)*k;P.x=P.rx;P.y=P.ry;if(P.inv>0)P.inv-=dt;if(P.m)P.anim+=dt*8}
+  for(const id in NET.dir)if(now-NET.dir[id].last>25000)delete NET.dir[id];
+  if(NET.room){// host election: nobody is broadcasting monsters → earliest arrival takes over
+    if(!NET.isHost&&now-NET.roomT>1500&&now-NET.lastSnap>2500){const cand=[{id:NET.id,j:NET.j},...Object.values(NET.peers).map(P=>({id:P.id,j:P.j||0}))].sort((a,b)=>a.j-b.j||(a.id<b.id?-1:1));if(cand[0].id===NET.id)netBecomeHost();else NET.hostId=cand[0].id}
+    const pl=G.pl,sw=pl.sw;const st={t:'s',id:NET.id,n:netTag(),lv:myLv(),x:Math.round(pl.x),y:Math.round(pl.y),d:pl.dir,m:pl.mv?1:0,s:sw?(sw.spin?4:(sw.combo||1)):0,z:Math.round(pl.z||0),a:(G.p.armors&&G.p.armors[G.p.aeq]||{b:'cloth'}).b,h:G.p.hp,H:maxHp(),p:NET.party?NET.party.id:'',dead:G.dead?1:0,j:NET.j};
+    const sig=[st.x,st.y,st.d,st.m,st.s,st.z,st.h,st.dead].join();if((sig!==NET.last&&now-NET.sendT>110)||now-NET.sendT>1000){NET.last=sig;NET.sendT=now;netPub('r/'+NET.room,st)}
+    if(NET.isHost&&now-NET.mT>160){NET.mT=now;if(Object.keys(NET.peers).length)netSendSnap()}
+    if(!NET.isHost)netRemoteProj(dt)}
+  if(now-NET.gT>8000){NET.gT=now;netPub('g',{t:'g',id:NET.id,n:netTag(),lv:myLv(),map:G.map&&G.map.id,mn:G.map&&G.map.name,pt:NET.party?NET.party.id:''})}
+  if(NET.party&&NET.party.id===NET.id&&now-(NET.rosT||0)>5000)sendRoster();
+  if(NET.party&&NET.party.id!==NET.id&&now-(NET.party.seen||now)>16000){NET.mq.unsub(NET_PFX+'p/'+NET.party.id);NET.party=null;toastNet('파티장과 연결이 끊겨 파티가 해산되었습니다')}
+  // party boss damage mirroring (party dungeons only)
+  const b=G.fb||G.boss||G.worm;if(b&&NET.room&&NET.room.includes('@')&&b.hp!==undefined){if(b._nlh!==undefined&&b.hp<b._nlh&&b.st!=='dying'){netPub('r/'+NET.room,{t:'bh',id:NET.id,d:Math.round(b._nlh-b.hp)})}b._nlh=b.hp}}
+function netRemoteProj(dt){const pl=G.pl;for(const q of NET.rproj){if(!q._t){q._t=1}q[2]+=q[4]*dt;q[3]+=q[5]*dt;const id=q[0];if(NET.hitP.has(id))continue;if(Math.hypot(pl.x-q[2],pl.y-12-q[3])<14){NET.hitP.add(id);if(NET.hitP.size>200)NET.hitP.clear();hurt(q[7]||2,q[2]-q[4],q[3]-q[5])}}}
+const _upN=update;update=function(dt){_upN(dt);try{netTick(dt)}catch(e){console.warn(e)}};
+addEventListener('beforeunload',()=>{if(NET.room)netPub('r/'+NET.room,{t:'bye',id:NET.id});netPub('g',{t:'bye',id:NET.id})});
+/* ---------- drawing ---------- */
+function netPeersVisible(){if(!NET.room)return[];return Object.values(NET.peers)}
+function drawRemote(P,x,y,t){const c=ctx;c.save();if(P.dead)c.globalAlpha=.45;const z=P.z||0;
+  c.fillStyle='rgba(0,0,0,.25)';c.beginPath();c.ellipse(x,y+1,11,3.8,0,0,7);c.fill();
+  window.HERO_FORCE=P.a||'cloth';window.HERO_REMOTE=P;try{drawHero(c,x,y-z,P.d||'down',P.anim||0,!!P.m,t,{noAura:1})}finally{window.HERO_FORCE=null;window.HERO_REMOTE=null}
+  if(P.swT!==undefined&&G.t-P.swT<.22){const q=(G.t-P.swT)/.22,fa={down:Math.PI/2,up:-Math.PI/2,left:Math.PI,right:0}[P.d||'down'];if(P.swK===4)slashArc(c,x,y-14-z,42,fa,fa+q*Math.PI*2,1-q,'200,245,255',1);else slashArc(c,x,y-14-z,36,fa-1.4,fa-1.4+2.8*q,1-q*.6,'130,205,255',0)}
+  const pm=inParty(P.id),tag=`Lv.${P.lv} ${P.n}`;c.font='700 11px "Noto Sans KR",sans-serif';const w=c.measureText(tag).width+10;c.fillStyle=pm?'rgba(30,60,30,.75)':'rgba(10,10,20,.6)';c.beginPath();c.roundRect(x-w/2,y-66-z,w,15,4);c.fill();
+  uT(c,tag,x,y-55-z,'700 11px "Noto Sans KR",sans-serif',pm?'#a8ff9a':'#e6ecff','center',0);
+  if(pm&&P.H){c.fillStyle='#300';c.fillRect(x-14,y-49-z,28,3);c.fillStyle='#ff6b7a';c.fillRect(x-14,y-49-z,28*clamp(P.h/P.H,0,1),3)}c.restore()}
+const _hpN=heroPal;heroPal=function(){const P=_hpN();if(window.HERO_REMOTE){P.lv=window.HERO_REMOTE.lv||1;P.wings=false}return P};
+const _dweN=drawWorldExtra;drawWorldExtra=function(ox,oy,t){_dweN(ox,oy,t);if(NET.room&&!NET.isHost){for(const q of NET.rproj){const p={k:q[1],x:q[2],y:q[3],vx:q[4],vy:q[5],a:q[6],life:1,from:'e',tr:q.tr||(q.tr=[])};if(p.k==='arrow')dArrowHQ(ctx,p,ox,oy,true);else if(p.k==='sand')dFireHQ(ctx,p,ox,oy);else dOrbHQ(ctx,p,ox,oy)}}};
+const _dhN=drawCh6Hud;drawCh6Hud=function(){_dhN();if(!G.p||!NET.on)return;const c=ctx;c.save();const on=Object.keys(NET.dir).length+(NET.ok?1:0);let y=118;
+  const kind=G.map?netKind(G.map.id):'story',kt=kind==='shared'?'함께하는 지역':kind==='party'?(NET.party?'파티 던전':'던전 · 혼자'):'스토리 · 혼자';
+  uT(c,NET.ok?`🌐 온라인 ${on}명 · ${kt}${NET.room&&Object.keys(NET.peers).length?' · 근처 '+Object.keys(NET.peers).length+'명':''}`:'🌐 서버 연결 중…',20,y,'700 12px "Noto Sans KR",sans-serif',NET.ok?'#bfe6ff':'#999','left',0);
+  if(NET.party){y+=18;for(const m of NET.party.members){if(m.id===NET.id)continue;const P=NET.peers[m.id],d=NET.dir[m.id];uT(c,`👥 Lv.${m.lv} ${m.n}${P?'':d?' · '+(d.mn||''):''}`,20,y,'700 12px "Noto Sans KR",sans-serif','#a8ff9a','left',0);
+      if(P&&P.H){c.fillStyle='#300';c.fillRect(20,y+4,90,4);c.fillStyle='#ff6b7a';c.fillRect(20,y+4,90*clamp(P.h/P.H,0,1),4)}y+=20}}c.restore()};
+/* ---------- party / multiplayer page in the pause menu ---------- */
+function pgParty(body,active,back){const list=()=>Object.values(NET.dir).sort((a,b)=>(b.map===G.map.id)-(a.map===G.map.id)||Math.abs(a.lv-myLv())-Math.abs(b.lv-myLv())).slice(0,30);
+  const head=()=>`<div class="h2 ttl">👥 파티 · 멀티플레이</div><div class="box"><div class="kv"><span>서버</span><span>${NET.on?(NET.ok?'🟢 연결됨':'🟡 연결 중…'):'⚫ 꺼짐'}</span></div><div class="kv"><span>내 이름</span><span>${netTag()} · Lv.${myLv()}</span></div><div class="kv"><span>지금 지역</span><span>${G.map?G.map.name:''} — ${{shared:'모두 함께',party:'파티원만',story:'혼자 (스토리)'}[netKind(G.map.id)]}</span></div>
+    <div class="kv"><span>파티</span><span>${NET.party?NET.party.members.map(m=>`${m.n} Lv.${m.lv}`).join(', '):'없음'}</span></div></div><div class="dim" style="font-size:.85em;line-height:1.6">· 같은 필드에 있으면 서로 보이고, 함께 때린 몬스터를 잡으면 모두 경험치를 받습니다.<br>· 사당·던전은 파티원끼리만 함께 들어갑니다. 스토리 지역은 항상 혼자입니다.<br>· 레벨 차이가 5 이상이면 파티를 맺을 수 없습니다. 파티는 최대 4명.</div>`;
+  if(!active){body.innerHTML=head()+`<div class="dim" style="margin-top:.6em">Enter: 접속 중인 플레이어 보기 · 초대</div>`;return}
+  body.innerHTML=head()+'<div class="list" id="ptl" style="margin-top:.6em;max-height:13em;overflow:auto"></div>';const items=[];
+  for(const P of list()){const gap=Math.abs(P.lv-myLv())>=5,ok=!gap&&!(P.pt&&P.pt!==(NET.party&&NET.party.id)),mem=inParty(P.id);
+    items.push({h:`<span class="ic">${mem?'👥':'👤'}</span>Lv.${P.lv} ${P.n}<span class="r">${mem?'파티원':gap?'레벨 차이 5+':P.pt?'다른 파티':P.mn||''}</span>`,dis:!ok||mem,whyNot:gap?'레벨 차이가 5 이상이면 파티를 맺을 수 없습니다':'',f:()=>netInvite(P)})}
+  if(!items.length)items.push({h:'<span class="ic">…</span><span class="dim">지금 접속한 다른 플레이어가 없습니다</span>',dis:1});
+  items.push({h:`<span class="ic">🌐</span>멀티플레이 ${NET.on?'끄기':'켜기'}`,f:()=>{NET.on=!NET.on;if(!NET.on){netLeave&&NET.party&&netLeave();if(NET.room)netPub('r/'+NET.room,{t:'bye',id:NET.id});for(const e of G.ents)if(e.net)e.gone=1;NET.room=null;NET.peers={};NET.isHost=false}pop(m);pgParty(body,1,back)}});
+  if(NET.party)items.push({h:'<span class="ic">🚪</span>파티 나가기',f:()=>{netLeave();pop(m);pgParty(body,1,back)}});
+
+  const m=push(new Menu($('#ptl'),items,{onCancel:()=>{pop(m);back&&back()}}))}
 /* ===================== BOOT: studio splash → loading → title ===================== */
 (function(){const css=`
 #boot{position:fixed;inset:0;z-index:9999;background:#000;color:#fff;font-family:'Inter','Noto Sans KR',sans-serif;overflow:hidden;user-select:none;-webkit-user-select:none}
