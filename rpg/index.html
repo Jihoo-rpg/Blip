@@ -236,8 +236,8 @@ svg.ico{width:1em;height:1em;vertical-align:-.15em;flex:none}
 <div style="font-size:clamp(28px,6vw,64px);font-weight:900;margin:14px 0 6px;text-shadow:0 0 30px #a060ff">잃어버린 왕국 : 천년의 봉인</div>
 <div style="font-size:16px;color:#ffe0a0">정식 출시까지</div>
 <div id="lgT" style="font-size:clamp(48px,12vw,140px);font-weight:900;font-variant-numeric:tabular-nums;margin:10px 0;text-shadow:0 0 40px #ffcf6a">--:--</div>
-<div style="font-size:14px;opacity:.7">2026년 11월 19일 낮 12:00 (한국 시간) 오픈</div></div>
-<script>(function(){const T=Date.parse('2026-11-19T12:00:00+09:00'),g=document.getElementById('launchGate'),el=document.getElementById('lgT');
+<div style="font-size:14px;opacity:.7">카운트다운이 끝나면 바로 플레이할 수 있어요</div></div>
+<script>(function(){const T=Date.now()+60000,g=document.getElementById('launchGate'),el=document.getElementById('lgT');
 const block=e=>{if(document.getElementById('launchGate')){e.stopImmediatePropagation();e.preventDefault()}};['keydown','keyup','pointerdown','touchstart'].forEach(k=>addEventListener(k,block,true));
 function tick(){const d=T-Date.now();if(d<=0){el.textContent='OPEN!';g.style.opacity=0;setTimeout(()=>{g.remove();['keydown','keyup','pointerdown','touchstart'].forEach(k=>removeEventListener(k,block,true))},1200);return}
 const s=Math.ceil(d/1000),h=Math.floor(s/3600),m=Math.floor(s%3600/60),ss=s%60;el.textContent=(h?h+':':'')+String(m).padStart(2,'0')+':'+String(ss).padStart(2,'0');setTimeout(tick,250)}tick()})();</script>
